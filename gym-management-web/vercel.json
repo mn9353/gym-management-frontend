@@ -1,6 +1,5 @@
 {
-  "buildCommand": "npm ci && npm run build",
-  "installCommand": "npm ci",
+  "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist/gym-management-web",
   "env": {
     "API_URL": "@gym_api_url"
