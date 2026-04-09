@@ -1,0 +1,81 @@
+<div class="dashboard-page">
+  <app-topbar
+    title="Owner Dashboard"
+    subtitle="Track members, renewals, and monthly growth from one screen."
+  />
+
+  @if (isLoading) {
+    <p class="state">Loading dashboard...</p>
+  } @else if (errorMessage) {
+    <p class="state error">{{ errorMessage }}</p>
+  } @else if (overview) {
+    <section class="card-grid">
+      <article class="card">
+        <h3>Total Active Members</h3>
+        <p>{{ overview.stats.totalActiveMembers }}</p>
+      </article>
+      <article class="card">
+        <h3>New Joins (This Month)</h3>
+        <p>{{ overview.stats.newJoinsThisMonth }}</p>
+      </article>
+      <article class="card">
+        <h3>New Joins (Last Month)</h3>
+        <p>{{ overview.stats.newJoinsLastMonth }}</p>
+      </article>
+      <article class="card">
+        <h3>Revenue (This Month)</h3>
+        <p>{{ formatCurrency(overview.stats.revenueThisMonth) }}</p>
+      </article>
+      <article class="card alert">
+        <h3>Expiring in 7 Days</h3>
+        <p>{{ overview.stats.expiringInNext7Days }}</p>
+      </article>
+      <article class="card alert">
+        <h3>Expired Members</h3>
+        <p>{{ overview.stats.expiredMembers }}</p>
+      </article>
+    </section>
+
+    <section class="panel-grid">
+      <article class="panel">
+        <h3>Monthly Join Trend</h3>
+        <ul class="trend-list">
+          @for (trend of overview.monthlyTrends; track trend.month) {
+            <li>
+              <span>{{ trend.month }}</span>
+              <strong>{{ trend.joinCount }}</strong>
+            </li>
+          }
+        </ul>
+      </article>
+
+      <article class="panel">
+        <h3>Recently Joined Members</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Join Date</th>
+                <th>Plan End</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (member of overview.recentMembers; track member.id) {
+                <tr>
+                  <td data-label="Name">{{ member.fullName }}</td>
+                  <td data-label="Phone">{{ member.phone || '-' }}</td>
+                  <td data-label="Join Date">{{ member.joinDate | date: 'dd MMM yyyy' }}</td>
+                  <td data-label="Plan End">{{ member.planEndDate | date: 'dd MMM yyyy' }}</td>
+                  <td data-label="Status">{{ member.status }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  }
+</div>

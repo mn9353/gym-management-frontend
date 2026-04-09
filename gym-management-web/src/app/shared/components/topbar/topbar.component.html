@@ -1,0 +1,40 @@
+<header class="topbar-shell">
+  <div class="brand-group">
+    <button type="button" class="icon-button menu-btn" (click)="toggleMenu()" aria-label="Open navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="brand">
+      <span class="brand-full">{{ gymName }}</span>
+      <span class="brand-short">{{ gymShortName }}</span>
+    </div>
+  </div>
+
+  <div class="right-actions">
+    <button type="button" class="user-chip" (click)="toggleUserMenu()" aria-label="Open user menu">
+      {{ userInitials }}
+    </button>
+  </div>
+</header>
+
+@if (isMenuOpen) {
+  <aside class="side-menu">
+    <p class="menu-title">Sections</p>
+    <nav>
+      @for (item of menuItems; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
+      }
+    </nav>
+  </aside>
+}
+
+@if (isUserMenuOpen) {
+  <div class="user-menu">
+    <strong>{{ userName }}</strong>
+    <span>{{ userRole }}</span>
+    <span>{{ gymName }}</span>
+    <button type="button" (click)="logout()">Logout</button>
+  </div>
+}

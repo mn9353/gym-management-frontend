@@ -1,0 +1,46 @@
+<div class="dashboard-page">
+  <app-topbar />
+
+  @if (isLoading) {
+    <p class="state">Loading revenue insights...</p>
+  } @else if (errorMessage) {
+    <p class="state error">{{ errorMessage }}</p>
+  } @else if (stats) {
+    <section class="card-grid">
+      <article class="card">
+        <h3>Revenue This Month</h3>
+        <p>{{ formatCurrency(stats.revenueThisMonth) }}</p>
+      </article>
+      <article class="card">
+        <h3>New Joins This Month</h3>
+        <p>{{ stats.newJoinsThisMonth }}</p>
+      </article>
+      <article class="card">
+        <h3>New Joins Last Month</h3>
+        <p>{{ stats.newJoinsLastMonth }}</p>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Revenue Trend</h3>
+        <label class="range-picker">
+          Range
+          <select [value]="selectedMonths" (change)="onRangeChange($any($event.target).value)">
+            @for (months of monthOptions; track months) {
+              <option [value]="months">Last {{ months }} months</option>
+            }
+          </select>
+        </label>
+      </div>
+      <ul class="trend-list">
+        @for (item of trends; track item.month) {
+          <li>
+            <span>{{ item.month }}</span>
+            <strong>{{ formatCurrency(item.revenue) }}</strong>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

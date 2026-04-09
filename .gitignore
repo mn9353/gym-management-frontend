@@ -1,0 +1,28 @@
+# Node/Angular
+**/node_modules/
+**/dist/
+**/.angular/
+**/coverage/
+**/tmp/
+**/out-tsc/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# IDE/editor
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env and local overrides
+.env
+.env.*
+**/environment.local.ts
+**/environment.local.*.ts

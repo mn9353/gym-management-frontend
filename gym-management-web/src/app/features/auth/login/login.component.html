@@ -1,0 +1,36 @@
+<div class="login-page">
+  <section class="branding">
+    <p class="tag">Gym Management Suite</p>
+    <h1>Know every membership, payment, and renewal in one place.</h1>
+    <ul>
+      <li>Track expiring members before revenue leaks</li>
+      <li>View gym health with role-based dashboards</li>
+      <li>Secure access with JWT authentication</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>Sign in</h2>
+    <p>Use admin or owner credentials.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        Email
+        <input type="email" formControlName="email" placeholder="owner@gym.com" />
+      </label>
+
+      <label>
+        Password
+        <input type="password" formControlName="password" placeholder="••••••••" />
+      </label>
+
+      @if (errorMessage) {
+        <div class="error">{{ errorMessage }}</div>
+      }
+
+      <button type="submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Signing in...' : 'Sign in' }}
+      </button>
+    </form>
+  </section>
+</div>

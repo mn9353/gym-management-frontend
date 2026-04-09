@@ -1,0 +1,91 @@
+<div class="dashboard-page">
+  <app-topbar
+    title="Admin Dashboard"
+    subtitle="Manage gyms, owners, and platform-level visibility."
+  />
+
+  @if (isLoading) {
+    <p class="state">Loading admin dashboard...</p>
+  } @else if (errorMessage) {
+    <p class="state error">{{ errorMessage }}</p>
+  } @else {
+    <section class="card-grid">
+      <article class="card">
+        <h3>Total Gyms</h3>
+        <p>{{ gyms.length }}</p>
+      </article>
+      <article class="card">
+        <h3>Active Gyms</h3>
+        <p>{{ activeGyms }}</p>
+      </article>
+      <article class="card">
+        <h3>Total Users</h3>
+        <p>{{ visibleUsers.length }}</p>
+      </article>
+      <article class="card">
+        <h3>Owners</h3>
+        <p>{{ totalOwners }}</p>
+      </article>
+    </section>
+
+    <section class="panel-grid">
+      <article class="panel">
+        <h3>Gym List</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Gym</th>
+                <th>Owner</th>
+                <th>City</th>
+                <th>Plan</th>
+                <th>Users</th>
+                <th>Members</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (gym of gyms; track gym.id) {
+                <tr>
+                  <td data-label="Gym">{{ gym.gymName }}</td>
+                  <td data-label="Owner">{{ gym.ownerName }}</td>
+                  <td data-label="City">{{ gym.city || '-' }}</td>
+                  <td data-label="Plan">{{ gym.subscriptionPlan }}</td>
+                  <td data-label="Users">{{ gym.usersCount || 0 }}</td>
+                  <td data-label="Members">{{ gym.membersCount || 0 }}</td>
+                  <td data-label="Status">{{ gym.isActive ? 'Active' : 'Inactive' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="panel">
+        <h3>Users</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Gym Id</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of visibleUsers; track user.id) {
+                <tr>
+                  <td data-label="Name">{{ user.fullName }}</td>
+                  <td data-label="Email">{{ user.email }}</td>
+                  <td data-label="Role">{{ user.role }}</td>
+                  <td data-label="Gym Id">{{ user.gymId || '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  }
+</div>

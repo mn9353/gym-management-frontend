@@ -1,0 +1,133 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.login-page {
+  align-items: stretch;
+  background:
+    radial-gradient(circle at 16% 18%, #a8efe5 0%, transparent 40%),
+    radial-gradient(circle at 86% 12%, #ffe5a6 0%, transparent 42%),
+    linear-gradient(135deg, #f2fbff, #f7f9fc 58%, #fff8eb);
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1.15fr 1fr;
+  min-height: 100dvh;
+  padding: 1.5rem;
+}
+
+.branding {
+  background:
+    radial-gradient(circle at 80% 5%, rgba(255, 255, 255, 0.18), transparent 38%),
+    linear-gradient(145deg, #0c1a2e, #152947 65%, #1a3659);
+  border-radius: 24px;
+  box-shadow: 0 24px 48px rgba(17, 33, 54, 0.26);
+  color: #e9f4ff;
+  padding: 2rem;
+}
+
+.tag {
+  color: #86ffd1;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.branding h1 {
+  font-family: "Poppins", "Segoe UI", sans-serif;
+  font-size: clamp(1.5rem, 2.2vw, 2.2rem);
+  line-height: 1.25;
+  margin: 0.5rem 0 1rem;
+}
+
+.branding ul {
+  display: grid;
+  gap: 0.8rem;
+  padding-left: 1.1rem;
+}
+
+.panel {
+  align-self: center;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(7px);
+  border: 1px solid #dbe4f2;
+  border-radius: 24px;
+  box-shadow: var(--shadow-soft);
+  padding: 2rem;
+}
+
+.panel h2 {
+  color: var(--text);
+  margin: 0;
+}
+
+.panel p {
+  color: var(--text-dim);
+  margin: 0.4rem 0 1.2rem;
+}
+
+form {
+  display: grid;
+  gap: 1rem;
+}
+
+label {
+  color: #2f3d52;
+  display: grid;
+  font-weight: 600;
+  gap: 0.4rem;
+}
+
+input {
+  border: 1px solid #ccd8ea;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  padding: 0.78rem;
+}
+
+input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(11, 122, 117, 0.15);
+  outline: none;
+}
+
+.error {
+  background: #ffebe8;
+  border: 1px solid #ffcfc8;
+  border-radius: 10px;
+  color: #991b1b;
+  padding: 0.7rem;
+}
+
+button {
+  background: linear-gradient(125deg, var(--brand), #1da58b);
+  border: 0;
+  border-radius: 12px;
+  color: #f8fafc;
+  cursor: pointer;
+  font-size: 0.96rem;
+  font-weight: 700;
+  padding: 0.8rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  box-shadow: 0 12px 24px rgba(11, 122, 117, 0.3);
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+@media (max-width: 900px) {
+  .login-page {
+    grid-template-columns: 1fr;
+    padding: 1rem 0.85rem;
+  }
+
+  .panel {
+    padding: 1.4rem;
+  }
+}

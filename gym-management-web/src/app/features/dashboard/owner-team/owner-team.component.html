@@ -1,0 +1,62 @@
+<div class="dashboard-page">
+  <app-topbar />
+
+  <section class="panel">
+    <h3>Add Staff User</h3>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        Full Name
+        <input type="text" formControlName="fullName" />
+      </label>
+      <label>
+        Email
+        <input type="email" formControlName="email" />
+      </label>
+      <label>
+        Phone
+        <input type="text" formControlName="phone" />
+      </label>
+      <label>
+        Password
+        <input type="password" formControlName="password" />
+      </label>
+      <button type="submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Adding...' : 'Add Staff' }}
+      </button>
+    </form>
+  </section>
+
+  @if (errorMessage) {
+    <p class="state error">{{ errorMessage }}</p>
+  }
+
+  <section class="panel">
+    <h3>Team Users</h3>
+    @if (isLoading) {
+      <p class="state">Loading users...</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users; track user.id) {
+              <tr>
+                <td data-label="Name">{{ user.fullName }}</td>
+                <td data-label="Email">{{ user.email }}</td>
+                <td data-label="Role">{{ user.role }}</td>
+                <td data-label="Status">{{ user.isActive ? 'Active' : 'Inactive' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
