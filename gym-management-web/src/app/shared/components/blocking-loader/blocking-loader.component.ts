@@ -13,8 +13,6 @@ import { LoadingService } from '../../../core/services/loading.service';
 export class BlockingLoaderComponent {
   readonly isVisible$;
   readonly currentMessage$;
-  
-
   constructor(private readonly loadingService: LoadingService) {
     this.isVisible$ = this.loadingService.isLoading$.pipe(map((count) => count > 0));
     this.currentMessage$ = this.loadingService.currentMessage$;
