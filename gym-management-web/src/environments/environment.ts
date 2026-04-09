@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:5000'
+  apiBaseUrl: 'https://gym-management-6rvq.onrender.com'
 };
