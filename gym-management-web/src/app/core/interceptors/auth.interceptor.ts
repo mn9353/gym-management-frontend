@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, catchError, filter, finalize, switchMap, take, throwError } from 'rxjs';
 import { API_PATHS } from '../constants/api-paths';
-import { FORCE_GLOBAL_LOADER, SKIP_GLOBAL_LOADER } from './loading-context';
+import { FORCE_GLOBAL_LOADER, LOADING_MESSAGE, SKIP_GLOBAL_LOADER } from './loading-context';
 import { AuthService } from '../services/auth.service';
 import { LoadingService } from '../services/loading.service';
 
@@ -17,7 +17,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const shouldShowLoader = resolveShouldShowLoader(req);
   if (shouldShowLoader) {
-    loadingService.show();
+    const message = req.context.get(LOADING_MESSAGE);
+    loadingService.show(message);
   }
 
   const accessToken = authService.getAccessToken();

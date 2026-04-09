@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable, map, of, tap } from 'rxjs';
 import { LoginRequest, LoginResponse, RefreshTokenResponse, UserProfile, UserRole } from '../models/auth.models';
 import { API_PATHS } from '../constants/api-paths';
 import { buildApiUrl } from '../constants/api-url';
-import { SKIP_GLOBAL_LOADER } from '../interceptors/loading-context';
+import { SKIP_GLOBAL_LOADER, LOADING_MESSAGE } from '../interceptors/loading-context';
 
 const ACCESS_TOKEN_KEY = 'gm_access_token';
 const REFRESH_TOKEN_KEY = 'gm_refresh_token';
@@ -18,7 +18,8 @@ export class AuthService {
   constructor(private readonly http: HttpClient) {}
 
   login(payload: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.login), payload).pipe(
+    const context = new HttpContext().set(SKIP_GLOBAL_LOADER, true);
+    return this.http.post<LoginResponse>(buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.login), payload, { context }).pipe(
       tap((res) => {
         if (res.success && res.user && res.accessToken && res.refreshToken) {
           this.storeSession(res.user, res.accessToken, res.refreshToken);
@@ -53,7 +54,8 @@ export class AuthService {
 
   logout(): Observable<unknown> {
     const refreshToken = this.getRefreshToken();
-    return this.http.post(buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.logout), { refreshToken }).pipe(
+    const context = new HttpContext().set(LOADING_MESSAGE, 'Logging out...');
+    return this.http.post(buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.logout), { refreshToken }, { context }).pipe(
       tap(() => this.clearSession())
     );
   }
