@@ -5,7 +5,53 @@
   />
 
   @if (isLoading) {
-    <p class="state">Loading admin dashboard...</p>
+    <section class="card-grid skeleton-block">
+      @for (item of cardSkeletons; track item) {
+        <article class="card">
+          <span class="skeleton skeleton-line short"></span>
+          <span class="skeleton skeleton-line tall"></span>
+        </article>
+      }
+    </section>
+
+    <section class="panel-grid skeleton-block">
+      <article class="panel">
+        <span class="skeleton skeleton-line medium"></span>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              @for (row of tableSkeletons; track row) {
+                <tr>
+                  <td><span class="skeleton skeleton-line"></span></td>
+                  <td><span class="skeleton skeleton-line"></span></td>
+                  <td><span class="skeleton skeleton-line"></span></td>
+                  <td><span class="skeleton skeleton-line"></span></td>
+                  <td><span class="skeleton skeleton-line"></span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="panel">
+        <span class="skeleton skeleton-line medium"></span>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              @for (row of tableSkeletons; track row) {
+                <tr>
+                  <td><span class="skeleton skeleton-line"></span></td>
+                  <td><span class="skeleton skeleton-line"></span></td>
+                  <td><span class="skeleton skeleton-line"></span></td>
+                  <td><span class="skeleton skeleton-line"></span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
   } @else if (errorMessage) {
     <p class="state error">{{ errorMessage }}</p>
   } @else {

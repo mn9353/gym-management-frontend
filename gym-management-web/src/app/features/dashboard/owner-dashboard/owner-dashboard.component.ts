@@ -15,6 +15,9 @@ export class OwnerDashboardComponent implements OnInit {
   isLoading = true;
   overview: DashboardOverview | null = null;
   errorMessage = '';
+  readonly cardSkeletons = Array.from({ length: 6 }, (_, index) => index);
+  readonly trendSkeletons = Array.from({ length: 6 }, (_, index) => index);
+  readonly tableSkeletons = Array.from({ length: 5 }, (_, index) => index);
 
   constructor(private readonly dashboardService: DashboardService) {}
 

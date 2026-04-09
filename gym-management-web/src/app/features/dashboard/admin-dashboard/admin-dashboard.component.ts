@@ -18,6 +18,8 @@ export class AdminDashboardComponent implements OnInit {
   gyms: GymDto[] = [];
   users: AppUserDto[] = [];
   errorMessage = '';
+  readonly cardSkeletons = Array.from({ length: 4 }, (_, index) => index);
+  readonly tableSkeletons = Array.from({ length: 5 }, (_, index) => index);
 
   constructor(
     private readonly adminService: AdminService,

@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, of, tap } from 'rxjs';
 import { LoginRequest, LoginResponse, RefreshTokenResponse, UserProfile, UserRole } from '../models/auth.models';
 import { API_PATHS } from '../constants/api-paths';
 import { buildApiUrl } from '../constants/api-url';
+import { SKIP_GLOBAL_LOADER } from '../interceptors/loading-context';
 
 const ACCESS_TOKEN_KEY = 'gm_access_token';
 const REFRESH_TOKEN_KEY = 'gm_refresh_token';
@@ -28,8 +29,9 @@ export class AuthService {
 
   refreshToken(): Observable<RefreshTokenResponse> {
     const refreshToken = this.getRefreshToken();
+    const context = new HttpContext().set(SKIP_GLOBAL_LOADER, true);
     return this.http
-      .post<RefreshTokenResponse>(buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.refreshToken), { refreshToken })
+      .post<RefreshTokenResponse>(buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.refreshToken), { refreshToken }, { context })
       .pipe(
         tap((res) => {
           if (res.success && res.accessToken && res.refreshToken) {

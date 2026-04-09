@@ -1,9 +1,11 @@
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, catchError, filter, finalize, switchMap, take, throwError } from 'rxjs';
 import { API_PATHS } from '../constants/api-paths';
+import { FORCE_GLOBAL_LOADER, SKIP_GLOBAL_LOADER } from './loading-context';
 import { AuthService } from '../services/auth.service';
+import { LoadingService } from '../services/loading.service';
 
 let isRefreshing = false;
 const refreshTokenSubject = new BehaviorSubject<string | null>(null);
@@ -11,6 +13,12 @@ const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
+  const loadingService = inject(LoadingService);
+
+  const shouldShowLoader = resolveShouldShowLoader(req);
+  if (shouldShowLoader) {
+    loadingService.show();
+  }
 
   const accessToken = authService.getAccessToken();
   const authReq = accessToken
@@ -63,6 +71,22 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         take(1),
         switchMap((token) => next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })))
       );
+    }),
+    finalize(() => {
+      if (shouldShowLoader) {
+        loadingService.hide();
+      }
     })
   );
 };
+
+function resolveShouldShowLoader(req: HttpRequest<unknown>): boolean {
+  const force = req.context.get(FORCE_GLOBAL_LOADER);
+  const skip = req.context.get(SKIP_GLOBAL_LOADER);
+
+  if (skip) {
+    return false;
+  }
+
+  return force || req.method !== 'GET';
+}
