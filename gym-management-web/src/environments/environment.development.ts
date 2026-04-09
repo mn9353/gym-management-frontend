@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'https://gym-management-6rvq.onrender.com'
+  apiBaseUrl: 'gymmanagement-production-6787.up.railway.app'
 };
