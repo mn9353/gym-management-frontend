@@ -17,6 +17,12 @@ export interface MonthlyRevenueTrend {
   revenue: number;
 }
 
+export interface MonthlyMemberFlow {
+  month: string;
+  newJoinees: number;
+  inactiveMembers: number;
+}
+
 export interface RecentMember {
   id: string;
   fullName: string;

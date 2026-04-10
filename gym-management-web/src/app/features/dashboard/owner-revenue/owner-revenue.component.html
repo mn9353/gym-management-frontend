@@ -2,7 +2,29 @@
   <app-topbar />
 
   @if (isLoading) {
-    <p class="state">Loading revenue insights...</p>
+    <section class="card-grid skeleton-block">
+      @for (item of cardSkeletons; track item) {
+        <article class="card">
+          <span class="skeleton skeleton-line short"></span>
+          <span class="skeleton skeleton-line tall"></span>
+        </article>
+      }
+    </section>
+
+    <section class="panel skeleton-block">
+      <div class="panel-head">
+        <span class="skeleton skeleton-line medium"></span>
+        <span class="skeleton skeleton-line short"></span>
+      </div>
+      <ul class="trend-list">
+        @for (item of trendSkeletons; track item) {
+          <li>
+            <span class="skeleton skeleton-line medium"></span>
+            <span class="skeleton skeleton-line short"></span>
+          </li>
+        }
+      </ul>
+    </section>
   } @else if (errorMessage) {
     <p class="state error">{{ errorMessage }}</p>
   } @else if (stats) {
@@ -21,26 +43,55 @@
       </article>
     </section>
 
-    <section class="panel">
-      <div class="panel-head">
-        <h3>Revenue Trend</h3>
-        <label class="range-picker">
-          Range
-          <select [value]="selectedMonths" (change)="onRangeChange($any($event.target).value)">
-            @for (months of monthOptions; track months) {
-              <option [value]="months">Last {{ months }} months</option>
-            }
-          </select>
-        </label>
-      </div>
-      <ul class="trend-list">
-        @for (item of trends; track item.month) {
-          <li>
-            <span>{{ item.month }}</span>
-            <strong>{{ formatCurrency(item.revenue) }}</strong>
-          </li>
+    <section class="panel-grid">
+      <article class="panel">
+        <div class="panel-head">
+          <h3>Revenue Trend</h3>
+          <label class="range-picker">
+            Range
+            <select [(ngModel)]="revenueMonths" (ngModelChange)="onRevenueRangeChange($event)">
+              @for (months of monthOptions; track months) {
+                <option [ngValue]="months">Last {{ months }} months</option>
+              }
+            </select>
+          </label>
+        </div>
+        @if (revenueChartLoading) {
+          <p class="chart-state">Updating chart...</p>
+        } @else if (revenueError) {
+          <p class="chart-state error">{{ revenueError }}</p>
+        } @else if (!hasRevenueData) {
+          <p class="chart-state">No revenue recorded in this range yet.</p>
         }
-      </ul>
+        <div class="chart-wrap">
+          <canvas #revenueChartCanvas></canvas>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h3>New Joins Trend</h3>
+          <label class="range-picker">
+            Range
+            <select [(ngModel)]="joinsMonths" (ngModelChange)="onJoinsRangeChange($event)">
+              @for (months of monthOptions; track months) {
+                <option [ngValue]="months">Last {{ months }} months</option>
+              }
+            </select>
+          </label>
+        </div>
+        @if (joinsChartLoading) {
+          <p class="chart-state">Updating chart...</p>
+        } @else if (joinsError) {
+          <p class="chart-state error">{{ joinsError }}</p>
+        } @else if (!hasJoinData) {
+          <p class="chart-state">No joins recorded in this range yet.</p>
+        }
+        <div class="chart-wrap">
+          <canvas #joinsChartCanvas></canvas>
+        </div>
+      </article>
     </section>
+
   }
 </div>

@@ -13,6 +13,7 @@ export const API_PATHS = {
     stats: '/stats',
     trends: '/trends',
     revenueTrends: '/revenue-trends',
+    memberFlow: '/member-flow',
     recentMembers: '/recent-members'
   },
   gyms: {

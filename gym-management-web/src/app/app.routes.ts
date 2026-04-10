@@ -37,8 +37,8 @@ export const routes: Routes = [
       },
       {
         path: 'revenue',
-        loadComponent: () =>
-          import('./features/dashboard/owner-revenue/owner-revenue.component').then((m) => m.OwnerRevenueComponent)
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
       },
       {
         path: 'members/:status',

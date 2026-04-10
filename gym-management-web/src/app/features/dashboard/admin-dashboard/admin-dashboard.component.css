@@ -1,7 +1,11 @@
 .dashboard-page {
   display: grid;
   gap: 1.1rem;
-  padding: 5.2rem 1rem 1rem;
+  height: calc(100vh - var(--topbar-height));
+  margin-top: var(--topbar-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
 }
 
 .card-grid {
@@ -126,7 +130,9 @@ th {
 
 @media (max-width: 680px) {
   .dashboard-page {
-    padding: 4.8rem 0.75rem 0.75rem;
+    height: calc(100vh - var(--topbar-height-mobile));
+    margin-top: var(--topbar-height-mobile);
+    padding: 0.75rem;
   }
 
   .card-grid {

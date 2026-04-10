@@ -71,24 +71,79 @@
         <p>{{ overview.stats.expiringInNext7Days }}</p>
       </article>
       <article class="card alert">
-        <h3>Expired Members</h3>
+        <h3>Lapsed Members</h3>
         <p>{{ overview.stats.expiredMembers }}</p>
       </article>
     </section>
 
     <section class="panel-grid">
       <article class="panel">
-        <h3>Monthly Join Trend</h3>
-        <ul class="trend-list">
-          @for (trend of overview.monthlyTrends; track trend.month) {
-            <li>
-              <span>{{ trend.month }}</span>
-              <strong>{{ trend.joinCount }}</strong>
-            </li>
+        <div class="panel-head">
+          <h3>Revenue Trend</h3>
+          <label class="range-picker">
+            Range
+            <select
+              [disabled]="isRevenueChartLoading"
+              [value]="revenueMonths"
+              (change)="onRevenueRangeChange($any($event.target).value)">
+              @for (months of monthOptions; track months) {
+                <option [value]="months">Last {{ months }} months</option>
+              }
+            </select>
+          </label>
+        </div>
+        <div class="chart-wrap chart-shell" [class.is-loading]="isRevenueChartLoading">
+          @if (isRevenueChartLoading) {
+            <div class="chart-loader-overlay">
+              <span class="loader-spinner"></span>
+              <span>Updating chart...</span>
+            </div>
           }
-        </ul>
+          <canvas #revenueChartCanvas></canvas>
+        </div>
       </article>
 
+      <article class="panel">
+        <div class="panel-head">
+          <h3>Monthly Member Flow</h3>
+          <div class="flow-controls">
+            <label class="range-picker">
+              Range
+              <select
+                [disabled]="isJoinsChartLoading"
+                [value]="joinsMonths"
+                (change)="onJoinsRangeChange($any($event.target).value)">
+                @for (months of monthOptions; track months) {
+                  <option [value]="months">Last {{ months }} months</option>
+                }
+              </select>
+            </label>
+            <label class="range-picker">
+              Trend
+              <select
+                [disabled]="isJoinsChartLoading"
+                [value]="flowView"
+                (change)="onFlowViewChange($any($event.target).value)">
+                <option value="BOTH">Both</option>
+                <option value="NEW">New Joinees</option>
+                <option value="INACTIVE">Inactive Members</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="chart-wrap chart-shell" [class.is-loading]="isJoinsChartLoading">
+          @if (isJoinsChartLoading) {
+            <div class="chart-loader-overlay">
+              <span class="loader-spinner"></span>
+              <span>Updating chart...</span>
+            </div>
+          }
+          <canvas #joinsChartCanvas></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel-grid">
       <article class="panel">
         <h3>Recently Joined Members</h3>
         <div class="table-wrap">
