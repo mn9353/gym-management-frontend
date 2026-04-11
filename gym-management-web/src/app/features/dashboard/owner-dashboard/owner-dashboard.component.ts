@@ -20,6 +20,8 @@ Chart.register(...registerables);
   styleUrl: './owner-dashboard.component.css'
 })
 export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
+  private readonly expiringPageSize = 10;
+  private expiringOffset = 0;
   private readonly destroyRef = inject(DestroyRef);
   private revenueChart: Chart<'bar'> | null = null;
   private flowChart: Chart<'bar'> | null = null;
@@ -41,6 +43,8 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
   weeklyGrowth: WeeklyMemberGrowth[] = [];
   recentMembers: RecentMember[] = [];
   expiringSoon: MemberDto[] = [];
+  isExpiringLoadingMore = false;
+  hasMoreExpiring = false;
 
   readonly monthOptions = [6, 12, 24] as const;
   revenueMonths: (typeof this.monthOptions)[number] = 12;
@@ -200,7 +204,8 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
 
   get currentWeekOfMonth(): number {
     const day = new Date().getDate();
-    return Math.min(4, Math.max(1, Math.ceil(day / 7)));
+    const totalBuckets = Math.max(this.weeklyGrowth.length, 1);
+    return Math.min(totalBuckets, Math.max(1, Math.ceil(day / 7)));
   }
 
   private loadDashboardData(): void {
@@ -227,7 +232,7 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
           return of([]);
         })
       ),
-      weekly: this.dashboardService.getWeeklyGrowth(4).pipe(
+      weekly: this.dashboardService.getWeeklyGrowth(0).pipe(
         catchError(() => {
           this.partialLoadWarning = true;
           return of([]);
@@ -239,7 +244,7 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
           return of([]);
         })
       ),
-      expiring: this.memberService.getUpcomingRenewals(7, 10).pipe(
+      expiring: this.memberService.getUpcomingRenewals(7, this.expiringPageSize, 0).pipe(
         catchError(() => {
           this.partialLoadWarning = true;
           return of([]);
@@ -259,9 +264,53 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
         this.weeklyGrowth = result.weekly;
         this.recentMembers = result.recent;
         this.expiringSoon = result.expiring;
+        this.expiringOffset = this.expiringSoon.length;
+        this.hasMoreExpiring =
+          result.expiring.length === this.expiringPageSize
+          && this.expiringSoon.length < this.overview.stats.expiringInNext7Days;
         this.revenueChartNeedsRender = true;
         this.flowChartNeedsRender = true;
         this.isLoading = false;
+      });
+  }
+
+  onExpiringListScroll(event: Event): void {
+    if (!this.hasMoreExpiring || this.isExpiringLoadingMore || this.isLoading) {
+      return;
+    }
+
+    const container = event.target as HTMLElement | null;
+    if (!container) {
+      return;
+    }
+
+    const threshold = 28;
+    const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - threshold;
+    if (!nearBottom) {
+      return;
+    }
+
+    this.isExpiringLoadingMore = true;
+    this.memberService
+      .getUpcomingRenewals(7, this.expiringPageSize, this.expiringOffset)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        catchError(() => {
+          this.partialLoadWarning = true;
+          return of([]);
+        })
+      )
+      .subscribe((nextBatch) => {
+        if (nextBatch.length > 0) {
+          this.expiringSoon = [...this.expiringSoon, ...nextBatch];
+          this.expiringOffset += nextBatch.length;
+        }
+
+        const expectedTotal = this.overview?.stats.expiringInNext7Days ?? 0;
+        this.hasMoreExpiring =
+          nextBatch.length === this.expiringPageSize
+          && this.expiringOffset < expectedTotal;
+        this.isExpiringLoadingMore = false;
       });
   }
 

@@ -27,6 +27,8 @@ export const API_PATHS = {
   members: {
     base: '/api/members',
     search: '/search',
+    list: '/list',
+    segmentCounts: '/segment-counts',
     upcomingRenewals: '/upcoming-renewals',
     activeList: '/active/list',
     inactiveList: '/inactive/list',

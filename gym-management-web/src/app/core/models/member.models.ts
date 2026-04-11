@@ -101,6 +101,7 @@ export interface MemberListItem {
   id: string;
   fullName: string;
   phone?: string | null;
+  profileImageUrl?: string | null;
   gender?: string | null;
   joinDate: string;
   planStartDate: string;
@@ -118,6 +119,13 @@ export interface PagedResponse<T> {
   pageSize: number;
   totalCount: number;
   totalPages: number;
+}
+
+export interface MemberSegmentCounts {
+  all: number;
+  active: number;
+  expiring: number;
+  inactive: number;
 }
 
 export interface MemberGridSort {

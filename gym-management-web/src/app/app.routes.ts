@@ -36,19 +36,9 @@ export const routes: Routes = [
           import('./features/dashboard/owner-dashboard/owner-dashboard.component').then((m) => m.OwnerDashboardComponent)
       },
       {
-        path: 'users/active',
+        path: 'members',
         loadComponent: () =>
-          import('./features/dashboard/owner-active-members/owner-active-members.component').then((m) => m.OwnerActiveMembersComponent)
-      },
-      {
-        path: 'users/inactive',
-        loadComponent: () =>
-          import('./features/dashboard/owner-inactive-members/owner-inactive-members.component').then((m) => m.OwnerInactiveMembersComponent)
-      },
-      {
-        path: 'users/upcoming-renewals',
-        loadComponent: () =>
-          import('./features/dashboard/owner-upcoming-renewals/owner-upcoming-renewals.component').then((m) => m.OwnerUpcomingRenewalsComponent)
+          import('./features/dashboard/owner-members/owner-members.component').then((m) => m.OwnerMembersComponent)
       },
       {
         path: 'members/add',
@@ -56,8 +46,23 @@ export const routes: Routes = [
           import('./features/dashboard/owner-add-member/owner-add-member.component').then((m) => m.OwnerAddMemberComponent)
       },
       {
+        path: 'users/active',
+        redirectTo: 'members',
+        pathMatch: 'full'
+      },
+      {
+        path: 'users/inactive',
+        redirectTo: 'members',
+        pathMatch: 'full'
+      },
+      {
+        path: 'users/upcoming-renewals',
+        redirectTo: 'members',
+        pathMatch: 'full'
+      },
+      {
         path: 'members/:status',
-        redirectTo: 'users/active',
+        redirectTo: 'members',
         pathMatch: 'full'
       },
       {

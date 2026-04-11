@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/services/auth.service';
 type MenuItem = {
   label: string;
   path: string;
+  exact?: boolean;
 };
 
 @Component({
@@ -86,15 +87,13 @@ export class TopbarComponent {
 
   get menuItems(): MenuItem[] {
     if (this.userRole === 'ADMIN') {
-      return [{ label: 'Dashboard', path: '/admin/dashboard' }];
+      return [{ label: 'Dashboard', path: '/admin/dashboard', exact: true }];
     }
 
     return [
-      { label: 'Dashboard', path: '/owner/dashboard' },
-      { label: 'Active Users', path: '/owner/users/active' },
-      { label: 'Inactive Users', path: '/owner/users/inactive' },
-      { label: 'Upcoming Renewals', path: '/owner/users/upcoming-renewals' },
-      { label: 'Add Member', path: '/owner/members/add' }
+      { label: 'Dashboard', path: '/owner/dashboard', exact: true },
+      { label: 'Members', path: '/owner/members', exact: true },
+      { label: 'Add Member', path: '/owner/members/add', exact: true }
     ];
   }
 

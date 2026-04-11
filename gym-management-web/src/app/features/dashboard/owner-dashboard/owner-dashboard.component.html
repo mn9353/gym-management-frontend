@@ -7,8 +7,100 @@
         <article class="card skeleton-card">
           <span class="skeleton skeleton-line short"></span>
           <span class="skeleton skeleton-line tall"></span>
+          <span class="skeleton skeleton-line mid"></span>
         </article>
       }
+    </section>
+
+    <section class="panel-grid two-col">
+      <article class="panel skeleton-panel">
+        <div class="panel-head">
+          <div>
+            <span class="skeleton skeleton-line skeleton-title"></span>
+            <span class="skeleton skeleton-line skeleton-subtitle"></span>
+          </div>
+          <div class="chip-group">
+            <span class="skeleton skeleton-chip"></span>
+            <span class="skeleton skeleton-chip"></span>
+            <span class="skeleton skeleton-chip"></span>
+          </div>
+        </div>
+        <div class="skeleton-chart">
+          <span class="skeleton skeleton-bar" style="height: 35%"></span>
+          <span class="skeleton skeleton-bar" style="height: 65%"></span>
+          <span class="skeleton skeleton-bar" style="height: 48%"></span>
+          <span class="skeleton skeleton-bar" style="height: 80%"></span>
+          <span class="skeleton skeleton-bar" style="height: 58%"></span>
+          <span class="skeleton skeleton-bar" style="height: 72%"></span>
+        </div>
+      </article>
+
+      <article class="panel skeleton-panel">
+        <span class="skeleton skeleton-line skeleton-title"></span>
+        <div class="weekly-skeleton">
+          @for (item of rowSkeletons; track item) {
+            <div class="week-row-skeleton">
+              <span class="skeleton skeleton-line w-60"></span>
+              <span class="skeleton skeleton-line w-full"></span>
+              <span class="skeleton skeleton-line w-30"></span>
+            </div>
+          }
+        </div>
+        <span class="skeleton skeleton-box"></span>
+      </article>
+    </section>
+
+    <section class="panel-grid two-col">
+      <article class="panel skeleton-panel">
+        <div class="panel-head">
+          <span class="skeleton skeleton-line skeleton-title"></span>
+          <div class="chip-group">
+            <span class="skeleton skeleton-chip"></span>
+            <span class="skeleton skeleton-chip"></span>
+            <span class="skeleton skeleton-chip"></span>
+          </div>
+        </div>
+        <div class="skeleton-chart">
+          <span class="skeleton skeleton-bar" style="height: 42%"></span>
+          <span class="skeleton skeleton-bar" style="height: 52%"></span>
+          <span class="skeleton skeleton-bar" style="height: 74%"></span>
+          <span class="skeleton skeleton-bar" style="height: 36%"></span>
+          <span class="skeleton skeleton-bar" style="height: 62%"></span>
+          <span class="skeleton skeleton-bar" style="height: 50%"></span>
+        </div>
+      </article>
+
+      <article class="panel skeleton-panel">
+        <div class="panel-head">
+          <span class="skeleton skeleton-line skeleton-title"></span>
+          <span class="skeleton skeleton-chip"></span>
+        </div>
+        <div class="expiring-skeleton">
+          @for (item of rowSkeletons; track item) {
+            <div class="expiring-item-skeleton">
+              <span class="skeleton skeleton-avatar"></span>
+              <div>
+                <span class="skeleton skeleton-line w-140"></span>
+                <span class="skeleton skeleton-line w-100"></span>
+              </div>
+            </div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section class="panel skeleton-panel">
+      <span class="skeleton skeleton-line skeleton-title"></span>
+      <div class="recent-skeleton">
+        @for (item of rowSkeletons; track item) {
+          <div class="recent-row-skeleton">
+            <span class="skeleton skeleton-line w-180"></span>
+            <span class="skeleton skeleton-line w-120"></span>
+            <span class="skeleton skeleton-line w-100"></span>
+            <span class="skeleton skeleton-line w-110"></span>
+          </div>
+        }
+      </div>
     </section>
   } @else if (errorMessage) {
     <p class="state error">{{ errorMessage }}</p>
@@ -19,47 +111,59 @@
 
     <section class="card-grid">
       <article class="card stat">
-        <div class="icon icon-active">
-          <span class="material-symbols-outlined">groups</span>
+        <div class="card-top">
+          <div class="icon icon-active">
+            <span class="material-symbols-outlined">groups</span>
+          </div>
+          <span class="delta-chip" [class.positive]="activeDelta >= 0" [class.negative]="activeDelta < 0">
+            <span class="material-symbols-outlined">{{ activeDelta >= 0 ? 'trending_up' : 'trending_down' }}</span>
+            {{ formatChange(activeDelta) }}
+          </span>
         </div>
         <div class="meta">
           <h3>Active Members</h3>
           <p>{{ overview.stats.totalActiveMembers }}</p>
-          <small [class.positive]="activeDelta >= 0" [class.negative]="activeDelta < 0">
-            {{ formatChange(activeDelta) }} vs last month
-          </small>
         </div>
       </article>
 
       <article class="card stat">
-        <div class="icon icon-joins">
-          <span class="material-symbols-outlined">person_add</span>
+        <div class="card-top">
+          <div class="icon icon-joins">
+            <span class="material-symbols-outlined">person_add</span>
+          </div>
+          <span class="delta-chip" [class.positive]="joinsDelta >= 0" [class.negative]="joinsDelta < 0">
+            <span class="material-symbols-outlined">{{ joinsDelta >= 0 ? 'trending_up' : 'trending_down' }}</span>
+            {{ formatChange(joinsDelta) }}
+          </span>
         </div>
         <div class="meta">
           <h3>New Joins</h3>
           <p>{{ overview.stats.newJoinsThisMonth }}</p>
-          <small [class.positive]="joinsDelta >= 0" [class.negative]="joinsDelta < 0">
-            {{ formatChange(joinsDelta) }} vs last month ({{ overview.stats.newJoinsLastMonth }})
-          </small>
+          <small>vs {{ overview.stats.newJoinsLastMonth }} last month</small>
         </div>
       </article>
 
       <article class="card stat">
-        <div class="icon icon-revenue">
-          <span class="material-symbols-outlined">currency_rupee</span>
+        <div class="card-top">
+          <div class="icon icon-revenue">
+            <span class="material-symbols-outlined">currency_rupee</span>
+          </div>
+          <span class="delta-chip" [class.positive]="revenueDeltaPercent >= 0" [class.negative]="revenueDeltaPercent < 0">
+            <span class="material-symbols-outlined">{{ revenueDeltaPercent >= 0 ? 'trending_up' : 'trending_down' }}</span>
+            {{ formatPercent(revenueDeltaPercent) }}
+          </span>
         </div>
         <div class="meta">
           <h3>Monthly Revenue</h3>
           <p>{{ formatCurrency(overview.stats.revenueThisMonth) }}</p>
-          <small [class.positive]="revenueDeltaPercent >= 0" [class.negative]="revenueDeltaPercent < 0">
-            {{ formatPercent(revenueDeltaPercent) }} vs last month
-          </small>
         </div>
       </article>
 
       <article class="card stat alert-warning">
-        <div class="icon icon-warning">
-          <span class="material-symbols-outlined">alarm_on</span>
+        <div class="card-top">
+          <div class="icon icon-warning">
+            <span class="material-symbols-outlined">alarm_on</span>
+          </div>
         </div>
         <div class="meta">
           <h3>Expiring (7D)</h3>
@@ -69,8 +173,10 @@
       </article>
 
       <article class="card stat alert-danger">
-        <div class="icon icon-danger">
-          <span class="material-symbols-outlined">person_off</span>
+        <div class="card-top">
+          <div class="icon icon-danger">
+            <span class="material-symbols-outlined">person_off</span>
+          </div>
         </div>
         <div class="meta">
           <h3>Plans Ending This Month</h3>
@@ -148,17 +254,21 @@
       <article class="panel">
         <div class="panel-head">
           <h3>Monthly Member Flow</h3>
-          <div class="chip-group">
-            @for (months of monthOptions; track months) {
-              <button class="chip" [class.active]="flowMonths === months" (click)="onFlowRangeChange(months)">
-                {{ months }}M
-              </button>
-            }
-            @for (opt of flowViewOptions; track opt) {
-              <button class="chip soft" [class.active]="flowView === opt" (click)="onFlowViewChange(opt)">
-                {{ opt === 'BOTH' ? 'Both' : (opt === 'NEW' ? 'Joins' : 'Inactive') }}
-              </button>
-            }
+          <div class="chip-group dashboard-flow-filters">
+            <div class="flow-filter-group">
+              @for (months of monthOptions; track months) {
+                <button class="chip" [class.active]="flowMonths === months" (click)="onFlowRangeChange(months)">
+                  {{ months }}M
+                </button>
+              }
+            </div>
+            <div class="flow-filter-group">
+              @for (opt of flowViewOptions; track opt) {
+                <button class="chip soft" [class.active]="flowView === opt" (click)="onFlowViewChange(opt)">
+                  {{ opt === 'BOTH' ? 'Both' : (opt === 'NEW' ? 'Joins' : 'Inactive') }}
+                </button>
+              }
+            </div>
           </div>
         </div>
         <div class="chart-wrap chart-shell" [class.is-loading]="isFlowChartLoading">
@@ -174,7 +284,11 @@
           <h3>Expiring Soon</h3>
           <span class="tag">{{ overview.stats.expiringInNext7Days }} total</span>
         </div>
-        <div class="expiring-list" [class.scrollable]="expiringSoon.length > 5">
+        <div
+          class="expiring-list"
+          [class.scrollable]="expiringSoon.length > 5"
+          (scroll)="onExpiringListScroll($event)"
+        >
           @if (expiringSoon.length === 0) {
             <p class="empty-note">No renewals due in the next 7 days.</p>
           } @else {
@@ -185,6 +299,12 @@
                   <strong>{{ member.fullName }}</strong>
                   <p>Expires on {{ member.planEndDate | date: 'dd MMM yyyy' }}</p>
                 </div>
+              </div>
+            }
+            @if (isExpiringLoadingMore) {
+              <div class="expiring-loading-more">
+                <span class="mini-spinner" aria-hidden="true"></span>
+                <span>Loading more...</span>
               </div>
             }
           }

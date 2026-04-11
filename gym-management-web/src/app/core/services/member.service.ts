@@ -8,6 +8,7 @@ import {
   MemberDto,
   MemberGridRequest,
   MemberListItem,
+  MemberSegmentCounts,
   MemberListQuery,
   MemberSearchDto,
   PagedResponse,
@@ -75,10 +76,11 @@ export class MemberService {
     return this.http.post<MemberDto[]>(buildApiUrl(API_PATHS.members.base, API_PATHS.members.search), payload, { params });
   }
 
-  getUpcomingRenewals(days = 7, limit = 100, gymId?: string): Observable<MemberDto[]> {
+  getUpcomingRenewals(days = 7, limit = 100, skip = 0, gymId?: string): Observable<MemberDto[]> {
     let params = new HttpParams()
       .set('days', `${days}`)
-      .set('limit', `${limit}`);
+      .set('limit', `${limit}`)
+      .set('skip', `${skip}`);
 
     if (gymId) {
       params = params.set('gymId', gymId);
@@ -90,10 +92,34 @@ export class MemberService {
     );
   }
 
+  getSegmentCounts(upcomingDays = 7, gymId?: string): Observable<MemberSegmentCounts> {
+    let params = new HttpParams().set('upcomingDays', `${upcomingDays}`);
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+    return this.http.get<MemberSegmentCounts>(
+      buildApiUrl(API_PATHS.members.base, API_PATHS.members.segmentCounts),
+      { params }
+    );
+  }
+
   getActiveMembersList(query: MemberListQuery = {}, gymId?: string): Observable<PagedResponse<MemberListItem>> {
     return this.http.get<PagedResponse<MemberListItem>>(
       buildApiUrl(API_PATHS.members.base, API_PATHS.members.activeList),
       { params: this.buildMemberListParams(query, gymId) }
+    );
+  }
+
+  getMembersList(
+    query: MemberListQuery = {},
+    segment: 'all' | 'active' | 'expiring' | 'inactive' = 'all',
+    gymId?: string
+  ): Observable<PagedResponse<MemberListItem>> {
+    let params = this.buildMemberListParams(query, gymId);
+    params = params.set('segment', segment);
+    return this.http.get<PagedResponse<MemberListItem>>(
+      buildApiUrl(API_PATHS.members.base, API_PATHS.members.list),
+      { params }
     );
   }
 

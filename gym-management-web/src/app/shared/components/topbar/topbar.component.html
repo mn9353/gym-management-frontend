@@ -24,7 +24,13 @@
     <p class="menu-title">Sections</p>
     <nav>
       @for (item of menuItems; track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.exact ?? true }"
+        >
+          {{ item.label }}
+        </a>
       }
     </nav>
   </aside>

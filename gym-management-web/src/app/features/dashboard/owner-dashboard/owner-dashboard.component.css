@@ -22,9 +22,8 @@
 }
 
 .stat {
-  align-items: center;
-  display: flex;
-  gap: 0.75rem;
+  display: grid;
+  gap: 0.55rem;
 }
 
 .icon {
@@ -79,20 +78,20 @@
 
 .meta h3 {
   color: var(--text-dim);
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   margin: 0;
   text-transform: uppercase;
 }
 
 .meta p {
-  font-size: 1.9rem;
+  font-size: 2rem;
   font-weight: 800;
   margin: 0.08rem 0;
 }
 
 .meta small {
   color: var(--text-dim);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
 }
 
 .alert-warning .meta small {
@@ -103,14 +102,6 @@
 .alert-danger .meta small {
   color: #b00722;
   font-weight: 600;
-}
-
-.meta small.positive {
-  color: #118d57;
-}
-
-.meta small.negative {
-  color: #b42318;
 }
 
 .panel-grid {
@@ -143,7 +134,6 @@
 
 .panel-head p {
   color: var(--text-dim);
-  margin: 0.2rem 0 0;
 }
 
 .chip-group {
@@ -161,10 +151,6 @@
   font-size: 0.76rem;
   font-weight: 700;
   padding: 0.3rem 0.65rem;
-}
-
-.chip.soft {
-  background: #f4f7fb;
 }
 
 .chip.active {
@@ -263,12 +249,7 @@
   padding: 0.45rem 0.55rem;
 }
 
-.summary-chip .material-symbols-outlined {
-  font-size: 1.1rem;
-}
-
 .summary-chip small {
-  color: #0a6a3f;
   display: block;
   font-size: 0.72rem;
 }
@@ -283,13 +264,8 @@
   color: #a21839;
 }
 
-.summary-chip.danger small {
-  color: #a21839;
-}
-
 .progress-note {
   color: var(--text-dim);
-  font-size: 0.79rem;
   margin: 0.55rem 0 0;
 }
 
@@ -309,7 +285,6 @@
   color: #b46700;
   font-size: 0.72rem;
   font-weight: 700;
-  padding: 0.18rem 0.56rem;
 }
 
 .expiring-list {
@@ -320,16 +295,16 @@
 .expiring-list.scrollable {
   max-height: 340px;
   overflow-y: auto;
-  padding-right: 0.2rem;
-  scrollbar-color: rgba(17, 37, 61, 0.22) transparent;
+  scrollbar-color: rgba(17, 37, 61, 0.18) transparent;
+  scrollbar-width: thin;
 }
 
 .expiring-list.scrollable::-webkit-scrollbar {
-  width: 5px;
+  width: 4px;
 }
 
 .expiring-list.scrollable::-webkit-scrollbar-thumb {
-  background: rgba(17, 37, 61, 0.22);
+  background: rgba(17, 37, 61, 0.2);
   border-radius: 999px;
 }
 
@@ -359,7 +334,25 @@
 .expiring-item p {
   color: var(--text-dim);
   font-size: 0.8rem;
-  margin: 0.08rem 0 0;
+}
+
+.expiring-loading-more {
+  align-items: center;
+  color: var(--text-dim);
+  display: flex;
+  justify-content: center;
+  padding: 0.35rem 0;
+}
+
+.mini-spinner {
+  animation: spin 0.8s linear infinite;
+  border: 2px solid rgba(47, 69, 176, 0.2);
+  border-radius: 50%;
+  border-top-color: #2f45b0;
+  display: inline-block;
+  height: 12px;
+  margin-right: 0.35rem;
+  width: 12px;
 }
 
 .recent-list {
@@ -425,12 +418,6 @@
   width: 100%;
 }
 
-.member-meta small {
-  color: var(--text-dim);
-  display: none;
-  font-size: 0.74rem;
-}
-
 .empty-note {
   color: var(--text-dim);
   font-size: 0.9rem;
@@ -479,6 +466,99 @@
   height: 28px;
   margin-top: 0.6rem;
   width: 70%;
+}
+
+.skeleton-line.mid {
+  margin-top: 0.55rem;
+  width: 55%;
+}
+
+.skeleton-title {
+  height: 15px;
+  width: 180px;
+}
+
+.skeleton-subtitle {
+  height: 12px;
+  width: 140px;
+}
+
+.skeleton-chip {
+  border-radius: 999px;
+  height: 28px;
+  width: 52px;
+}
+
+.skeleton-panel {
+  overflow: hidden;
+}
+
+.skeleton-chart {
+  align-items: end;
+  display: flex;
+  gap: 0.45rem;
+  height: 240px;
+  padding-top: 0.5rem;
+}
+
+.skeleton-bar {
+  border-radius: 8px 8px 4px 4px;
+  width: 100%;
+}
+
+.weekly-skeleton,
+.expiring-skeleton,
+.recent-skeleton {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.week-row-skeleton {
+  align-items: center;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 66px 1fr 36px;
+}
+
+.w-full { width: 100%; }
+.w-30 { width: 30px; }
+.w-60 { width: 60px; }
+.w-100 { width: 100px; }
+.w-110 { width: 110px; }
+.w-120 { width: 120px; }
+.w-140 { width: 140px; }
+.w-180 { width: 180px; }
+
+.skeleton-box {
+  border-radius: 10px;
+  display: block;
+  height: 56px;
+  margin-top: 0.8rem;
+  width: 100%;
+}
+
+.expiring-item-skeleton {
+  align-items: center;
+  display: flex;
+  gap: 0.6rem;
+}
+
+.skeleton-avatar {
+  border-radius: 999px;
+  height: 30px;
+  width: 30px;
+}
+
+.expiring-item-skeleton .skeleton-line + .skeleton-line {
+  margin-top: 0.35rem;
+}
+
+.recent-row-skeleton {
+  align-items: center;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 2.2fr 1.1fr 0.8fr 0.9fr;
 }
 
 @keyframes pulse {
@@ -568,7 +648,11 @@
     text-align: right;
   }
 
-  .member-meta small {
-    display: block;
+  .skeleton-chart {
+    height: 190px;
+  }
+
+  .recent-row-skeleton {
+    grid-template-columns: 1fr;
   }
 }
