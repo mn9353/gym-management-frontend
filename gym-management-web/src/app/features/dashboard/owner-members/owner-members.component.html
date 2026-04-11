@@ -31,6 +31,27 @@
       </div>
     </div>
 
+    <div class="contact-filter-row">
+      <label>
+        <span>Phone</span>
+        <input
+          type="text"
+          placeholder="Filter by phone"
+          [(ngModel)]="query.phone"
+          (ngModelChange)="onContactFilterChange()"
+        />
+      </label>
+      <label>
+        <span>Email</span>
+        <input
+          type="text"
+          placeholder="Filter by email"
+          [(ngModel)]="query.email"
+          (ngModelChange)="onContactFilterChange()"
+        />
+      </label>
+    </div>
+
     <div class="date-filter-row">
       <label class="date-filter">
         <span>Joined From</span>
@@ -87,14 +108,34 @@
                 <span class="badge" [class]="badge.className">{{ badge.label }}</span>
               </div>
 
-              <p class="plan">
-                <span>{{ member.membershipType || 'Member Plan' }}</span>
-                <span class="amount-inline">{{ formatAmount(member.amountPaid) }}</span>
-              </p>
-              <div class="meta">
+              <div class="plan-and-amount">
+                <span class="plan-chip">{{ getPlanMonthsLabel(member.planStartDate, member.planEndDate) }}</span>
+                <span class="amount-inline">Paid {{ formatAmount(member.amountPaid) }}</span>
+              </div>
+              <div class="meta compact">
                 <span>Joined <strong>{{ formatDate(member.joinDate) }}</strong></span>
                 <span>Expires <strong>{{ formatDate(member.planEndDate) }}</strong></span>
               </div>
+              <div class="contact-row">
+                <span class="contact-item">
+                  <span class="material-symbols-outlined">call</span>
+                  <strong>{{ member.phone || '-' }}</strong>
+                </span>
+                <span class="contact-item">
+                  <span class="material-symbols-outlined">mail</span>
+                  <strong>{{ member.email || '-' }}</strong>
+                </span>
+                @if (hasOutstandingPayment(member)) {
+                  <span class="payment-progress"><strong>{{ getPaymentProgressText(member) }}</strong></span>
+                }
+              </div>
+            </div>
+
+            <div class="action-buttons">
+              @if (hasOutstandingPayment(member)) {
+                <button type="button" class="quick-pay-btn" (click)="openPaymentDrawer(member)">Collect Payment</button>
+              }
+              <button type="button" class="quick-pay-btn renewal" (click)="openRenewalDrawer(member)">Renew / Extend</button>
             </div>
           </article>
         }
@@ -112,4 +153,131 @@
       </div>
     }
   </section>
+
+  @if (isPaymentDrawerOpen && selectedMember) {
+    <div class="drawer-backdrop" (click)="closePaymentDrawer()"></div>
+    <aside class="payment-drawer" (click)="$event.stopPropagation()">
+      <div class="drawer-head">
+        <h3>Member Billing</h3>
+        <button type="button" (click)="closePaymentDrawer()" [disabled]="isSavingPayment || isSavingRenewal">Close</button>
+      </div>
+      <div class="drawer-action-tabs">
+        <button
+          type="button"
+          class="drawer-tab"
+          [class.active]="activeDrawerAction === 'payment'"
+          (click)="activeDrawerAction = 'payment'"
+        >
+          Payment
+        </button>
+        <button
+          type="button"
+          class="drawer-tab"
+          [class.active]="activeDrawerAction === 'renewal'"
+          (click)="activeDrawerAction = 'renewal'"
+        >
+          Renewal
+        </button>
+      </div>
+
+      <p class="drawer-member">{{ selectedMember.fullName }}</p>
+
+      @if (paymentErrorMessage) {
+        <p class="state error">{{ paymentErrorMessage }}</p>
+      }
+      @if (paymentSuccessMessage) {
+        <p class="state success">{{ paymentSuccessMessage }}</p>
+      }
+
+      @if (activeDrawerAction === 'payment') {
+      <section class="drawer-section">
+        <h4>Update Paid Amount</h4>
+        <div class="drawer-grid">
+          <label>
+            <span>Current Amount To Pay</span>
+            <input [value]="formatAmount(selectedMember.amountToPay)" readonly />
+          </label>
+          <label>
+            <span>Already Paid</span>
+            <input [value]="formatAmount(selectedMember.amountPaid)" readonly />
+          </label>
+          <label>
+            <span>Remaining</span>
+            <input [value]="formatAmount((selectedMember.amountToPay ?? 0) - (selectedMember.amountPaid ?? 0))" readonly />
+          </label>
+          <label>
+            <span>Paying Now</span>
+            <input type="number" [(ngModel)]="paymentDraft.amountPaidNow" min="0.01" step="0.01" />
+          </label>
+          <label>
+            <span>Payment Date</span>
+            <input type="date" [(ngModel)]="paymentDraft.paymentDate" />
+          </label>
+          <label>
+            <span>Payment Mode</span>
+            <select [(ngModel)]="paymentDraft.paymentMode">
+              <option value="CASH">CASH</option>
+              <option value="UPI">UPI</option>
+              <option value="CARD">CARD</option>
+            </select>
+          </label>
+          <label class="full">
+            <span>Remarks</span>
+            <input type="text" [(ngModel)]="paymentDraft.remarks" placeholder="Optional note" />
+          </label>
+          <label>
+            <span>Pending Preview</span>
+            <input [value]="getPendingAmountPreview()" readonly />
+          </label>
+        </div>
+        <button type="button" class="primary" (click)="savePaymentUpdate()" [disabled]="isSavingPayment || isSavingRenewal">
+          {{ isSavingPayment ? 'Saving...' : 'Save Payment Update' }}
+        </button>
+      </section>
+      }
+
+      @if (activeDrawerAction === 'renewal') {
+      <section class="drawer-section">
+        <h4>Renew / Extend Plan</h4>
+        <div class="drawer-grid">
+          <label>
+            <span>Plan Start Date</span>
+            <input type="date" [(ngModel)]="renewalDraft.planStartDate" [min]="getMinimumRenewalDate()" />
+          </label>
+          <label>
+            <span>Duration (months)</span>
+            <input type="number" [(ngModel)]="renewalDraft.planDurationMonths" min="1" max="20" />
+          </label>
+          <label>
+            <span>Amount To Pay (new plan)</span>
+            <input type="number" [(ngModel)]="renewalDraft.amountToPayIncrement" min="0.01" step="0.01" />
+          </label>
+          <label>
+            <span>Amount Paying Now</span>
+            <input type="number" [(ngModel)]="renewalDraft.amountPaidNow" min="0" step="0.01" />
+          </label>
+          <label>
+            <span>Payment Date</span>
+            <input type="date" [(ngModel)]="renewalDraft.paymentDate" />
+          </label>
+          <label>
+            <span>Payment Mode</span>
+            <select [(ngModel)]="renewalDraft.paymentMode">
+              <option value="CASH">CASH</option>
+              <option value="UPI">UPI</option>
+              <option value="CARD">CARD</option>
+            </select>
+          </label>
+          <label class="full">
+            <span>Remarks</span>
+            <input type="text" [(ngModel)]="renewalDraft.remarks" placeholder="Optional note" />
+          </label>
+        </div>
+        <button type="button" class="primary" (click)="saveRenewal()" [disabled]="isSavingPayment || isSavingRenewal">
+          {{ isSavingRenewal ? 'Saving...' : 'Save Renewal' }}
+        </button>
+      </section>
+      }
+    </aside>
+  }
 </div>

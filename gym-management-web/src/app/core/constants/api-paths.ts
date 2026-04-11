@@ -35,7 +35,9 @@ export const API_PATHS = {
     upcomingRenewalsList: '/upcoming-renewals/list',
     activeGrid: '/active/grid',
     inactiveGrid: '/inactive/grid',
-    upcomingRenewalsGrid: '/upcoming-renewals/grid'
+    upcomingRenewalsGrid: '/upcoming-renewals/grid',
+    ownerPaymentUpdate: '/owner/payment-update',
+    ownerRenew: '/owner/renew'
   },
   diagnostics: {
     base: '/api/diagnostics',

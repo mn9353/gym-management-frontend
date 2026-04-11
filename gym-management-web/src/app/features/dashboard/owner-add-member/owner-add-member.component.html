@@ -10,9 +10,45 @@
     @if (errorMessage) {
       <p class="state error">{{ errorMessage }}</p>
     }
+    @if (duplicateMember) {
+      <div class="state warning">
+        <strong>Existing member found:</strong> {{ duplicateMember.fullName }} ({{ duplicateMember.phone || 'no phone' }})<br />
+        Current plan: {{ duplicateMember.planStartDate | date: 'dd MMM yyyy' }} to {{ duplicateMember.planEndDate | date: 'dd MMM yyyy' }}
+        <div class="warning-actions">
+          <button type="button" class="renew-btn" (click)="renewExistingMember()" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Processing...' : 'Renew Existing Member' }}
+          </button>
+        </div>
+      </div>
+    }
 
     <form [formGroup]="form" (ngSubmit)="submit()">
       <div class="grid">
+        <label class="profile-photo">
+          Profile Photo
+          <div class="photo-actions">
+            <label class="photo-btn">
+              Choose image
+              <input type="file" accept="image/*" (change)="onProfileImageSelected($event)" hidden />
+            </label>
+            <label class="photo-btn">
+              Take photo
+              <input type="file" accept="image/*" capture="environment" (change)="onProfileImageSelected($event)" hidden />
+            </label>
+            @if (profileImagePreviewUrl) {
+              <button type="button" class="photo-clear" (click)="clearProfileImage()">Remove</button>
+            }
+          </div>
+          @if (profileImagePreviewUrl) {
+            <div class="photo-preview">
+              <img [src]="profileImagePreviewUrl" alt="Profile preview" />
+              <small>{{ profileImageName || 'Selected image' }}</small>
+            </div>
+          } @else {
+            <small class="hint">Image is local preview only for now and is not uploaded yet.</small>
+          }
+        </label>
+
         <label>
           Full Name
           <input type="text" formControlName="fullName" />
@@ -21,6 +57,11 @@
         <label>
           Phone
           <input type="text" formControlName="phone" />
+        </label>
+
+        <label>
+          Email
+          <input type="email" formControlName="email" placeholder="member@example.com" />
         </label>
 
         <label>
@@ -34,13 +75,8 @@
         </label>
 
         <label>
-          Plan End Date
-          <input type="date" formControlName="planEndDate" />
-        </label>
-
-        <label>
-          Membership Type
-          <input type="text" formControlName="membershipType" />
+          Plan Duration (months)
+          <input type="number" min="1" max="20" formControlName="planDurationMonths" />
         </label>
 
         <label>
@@ -56,9 +92,15 @@
           Amount Paid
           <input type="number" formControlName="amountPaid" />
         </label>
+
+        <label class="computed">
+          Computed Plan End Date
+          <input type="text" [value]="computedPlanEndDateLabel" readonly />
+        </label>
+
       </div>
 
-      <button type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Saving...' : 'Add Member' }}</button>
+      <button type="submit" class="submit-btn" [disabled]="isSubmitting">{{ isSubmitting ? 'Saving...' : 'Add Member' }}</button>
     </form>
   </section>
 </div>

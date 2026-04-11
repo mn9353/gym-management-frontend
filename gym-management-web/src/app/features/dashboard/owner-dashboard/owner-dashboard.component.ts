@@ -27,6 +27,40 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
   private flowChart: Chart<'bar'> | null = null;
   private revenueChartNeedsRender = false;
   private flowChartNeedsRender = false;
+  private readonly revenueDataLabelPlugin = {
+    id: 'revenueDataLabelPlugin',
+    afterDatasetsDraw: (chart: Chart<'bar'>) => {
+      const { ctx } = chart;
+      const meta = chart.getDatasetMeta(0);
+      const dataset = chart.data.datasets[0];
+
+      if (!meta?.data?.length || !dataset?.data?.length) {
+        return;
+      }
+
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = '#3c4a5f';
+      ctx.font = '600 11px "Plus Jakarta Sans", "Manrope", sans-serif';
+
+      meta.data.forEach((barElement, index) => {
+        const raw = Number(dataset.data[index] ?? 0);
+        if (raw <= 0) {
+          return;
+        }
+
+        const point = barElement.tooltipPosition(true);
+        if (point.x == null || point.y == null) {
+          return;
+        }
+
+        ctx.fillText(this.formatCompactCurrencyAxis(raw), point.x, point.y - 6);
+      });
+
+      ctx.restore();
+    }
+  };
 
   @ViewChild('revenueChartCanvas') revenueChartCanvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('flowChartCanvas') flowChartCanvas?: ElementRef<HTMLCanvasElement>;
@@ -326,6 +360,7 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
 
     this.revenueChart = new Chart(this.revenueChartCanvas.nativeElement, {
       type: 'bar',
+      plugins: [this.revenueDataLabelPlugin],
       data: {
         labels: this.revenueTrends.map((item) => item.month),
         datasets: [
@@ -486,6 +521,20 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
       return words[0].slice(0, 2).toUpperCase();
     }
     return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  }
+
+  getPlanMonthsLabel(planStartDate: string, planEndDate: string): string {
+    const start = new Date(planStartDate);
+    const end = new Date(planEndDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+      return 'Plan -';
+    }
+
+    const months =
+      (end.getFullYear() - start.getFullYear()) * 12 +
+      (end.getMonth() - start.getMonth()) +
+      1;
+    return `Plan ${Math.max(1, months)} month${months > 1 ? 's' : ''}`;
   }
 
   private formatCompactCurrencyAxis(value: string | number): string {

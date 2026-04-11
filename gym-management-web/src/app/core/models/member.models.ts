@@ -3,6 +3,7 @@ export interface MemberDto {
   gymId: string;
   fullName: string;
   phone?: string | null;
+  email?: string | null;
   gender?: string | null;
   dateOfBirth?: string | null;
   joinDate: string;
@@ -11,6 +12,7 @@ export interface MemberDto {
   lastPaymentDate?: string | null;
   membershipType?: string | null;
   amountPaid?: number | null;
+  amountToPay?: number | null;
   paymentStatus: string;
   status: string;
   notes?: string | null;
@@ -28,13 +30,16 @@ export interface MemberDto {
 export interface CreateMemberDto {
   fullName: string;
   phone?: string | null;
+  email?: string | null;
   gender?: string | null;
   dateOfBirth?: string | null;
   joinDate: string;
   planStartDate: string;
-  planEndDate: string;
+  planEndDate?: string;
+  planDurationMonths?: number;
   membershipType?: string | null;
   amountPaid?: number | null;
+  amountToPay?: number | null;
   paymentStatus?: string;
   emergencyContact?: string | null;
   height?: number | null;
@@ -45,14 +50,37 @@ export interface CreateMemberDto {
   notes?: string | null;
 }
 
+export interface RenewMemberDto {
+  planStartDate: string;
+  planDurationMonths: number;
+  amountPaid?: number | null;
+  amountToPay?: number | null;
+  paymentStatus?: string;
+  paymentDate?: string;
+  paymentMode?: string | null;
+  remarks?: string | null;
+}
+
+export interface ExistingMemberSummary {
+  id: string;
+  fullName: string;
+  phone?: string | null;
+  planStartDate: string;
+  planEndDate: string;
+  status: string;
+  membershipType?: string | null;
+}
+
 export interface UpdateMemberDto {
   fullName?: string;
   phone?: string | null;
+  email?: string | null;
   gender?: string | null;
   dateOfBirth?: string | null;
   planEndDate?: string;
   membershipType?: string | null;
   amountPaid?: number | null;
+  amountToPay?: number | null;
   paymentStatus?: string;
   status?: string;
   emergencyContact?: string | null;
@@ -73,13 +101,14 @@ export interface MemberSearchDto {
 export interface MemberListQuery {
   pageNumber?: number;
   pageSize?: number;
-  sortBy?: 'planEndDate' | 'planStartDate' | 'joinDate' | 'name' | 'phone' | 'amountPaid' | 'status';
+  sortBy?: 'planEndDate' | 'planStartDate' | 'joinDate' | 'name' | 'phone' | 'email' | 'amountPaid' | 'status';
   sortDirection?: 'asc' | 'desc';
   includeAmount?: boolean;
   upcomingDays?: number;
   searchTerm?: string;
   fullName?: string;
   phone?: string;
+  email?: string;
   gender?: string;
   paymentStatus?: string;
   membershipType?: string;
@@ -95,12 +124,15 @@ export interface MemberListQuery {
   planEndDateTo?: string;
   amountPaidMin?: number;
   amountPaidMax?: number;
+  amountToPayMin?: number;
+  amountToPayMax?: number;
 }
 
 export interface MemberListItem {
   id: string;
   fullName: string;
   phone?: string | null;
+  email?: string | null;
   profileImageUrl?: string | null;
   gender?: string | null;
   joinDate: string;
@@ -111,6 +143,63 @@ export interface MemberListItem {
   membershipType?: string | null;
   trainerAssigned?: string | null;
   amountPaid?: number | null;
+  amountToPay?: number | null;
+}
+
+export interface AddMemberPaymentDto {
+  amount: number;
+  paymentDate?: string;
+  paymentMode?: 'CASH' | 'UPI' | 'CARD' | null;
+  remarks?: string | null;
+}
+
+export interface PaymentTransactionDto {
+  id: string;
+  amount: number;
+  paymentDate: string;
+  paymentMode?: string | null;
+  remarks?: string | null;
+  createdAt: string;
+}
+
+export interface MemberPaymentUpdateDto {
+  memberId: string;
+  amountPaid: number;
+  amountToPay: number;
+  pendingAmount: number;
+  paymentStatus: string;
+  lastPaymentDate?: string | null;
+  payment: PaymentTransactionDto;
+}
+
+export interface OwnerPaymentUpdateDto {
+  amountPaidNow: number;
+  paymentDate?: string;
+  paymentMode?: 'CASH' | 'UPI' | 'CARD' | null;
+  remarks?: string | null;
+}
+
+export interface OwnerRenewMemberDto {
+  planStartDate: string;
+  planDurationMonths: number;
+  amountToPayIncrement: number;
+  amountPaidNow: number;
+  paymentDate?: string;
+  paymentMode?: 'CASH' | 'UPI' | 'CARD' | null;
+  remarks?: string | null;
+}
+
+export interface MemberRenewalUpdateDto {
+  memberId: string;
+  planStartDate: string;
+  planEndDate: string;
+  membershipType?: string | null;
+  amountPaid: number;
+  amountToPay: number;
+  pendingAmount: number;
+  paymentStatus: string;
+  lastPaymentDate?: string | null;
+  payment?: PaymentTransactionDto | null;
 }
 
 export interface PagedResponse<T> {

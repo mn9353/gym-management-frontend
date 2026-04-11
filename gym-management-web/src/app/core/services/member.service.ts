@@ -4,13 +4,19 @@ import { Observable } from 'rxjs';
 import { API_PATHS } from '../constants/api-paths';
 import { buildApiUrl } from '../constants/api-url';
 import {
+  AddMemberPaymentDto,
   CreateMemberDto,
   MemberDto,
+  MemberRenewalUpdateDto,
+  MemberPaymentUpdateDto,
   MemberGridRequest,
   MemberListItem,
   MemberSegmentCounts,
   MemberListQuery,
+  OwnerPaymentUpdateDto,
+  OwnerRenewMemberDto,
   MemberSearchDto,
+  RenewMemberDto,
   PagedResponse,
   UpdateMemberDto
 } from '../models/member.models';
@@ -47,6 +53,58 @@ export class MemberService {
     }
 
     return this.http.post<MemberDto>(buildApiUrl(API_PATHS.members.base), payload, { params });
+  }
+
+  renewMember(memberId: string, payload: RenewMemberDto, gymId?: string): Observable<MemberDto> {
+    let params = new HttpParams();
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+
+    return this.http.post<MemberDto>(
+      buildApiUrl(API_PATHS.members.base, `/${memberId}/renew`),
+      payload,
+      { params }
+    );
+  }
+
+  addMemberPayment(memberId: string, payload: AddMemberPaymentDto, gymId?: string): Observable<MemberPaymentUpdateDto> {
+    let params = new HttpParams();
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+
+    return this.http.post<MemberPaymentUpdateDto>(
+      buildApiUrl(API_PATHS.members.base, `/${memberId}/payments`),
+      payload,
+      { params }
+    );
+  }
+
+  updatePaidAmountWithTransaction(memberId: string, payload: OwnerPaymentUpdateDto, gymId?: string): Observable<MemberPaymentUpdateDto> {
+    let params = new HttpParams();
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+
+    return this.http.post<MemberPaymentUpdateDto>(
+      buildApiUrl(API_PATHS.members.base, `/${memberId}${API_PATHS.members.ownerPaymentUpdate}`),
+      payload,
+      { params }
+    );
+  }
+
+  renewMemberWithTransaction(memberId: string, payload: OwnerRenewMemberDto, gymId?: string): Observable<MemberRenewalUpdateDto> {
+    let params = new HttpParams();
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+
+    return this.http.post<MemberRenewalUpdateDto>(
+      buildApiUrl(API_PATHS.members.base, `/${memberId}${API_PATHS.members.ownerRenew}`),
+      payload,
+      { params }
+    );
   }
 
   updateMember(memberId: string, payload: UpdateMemberDto, gymId?: string): Observable<MemberDto> {
@@ -190,6 +248,7 @@ export class MemberService {
     appendIfDefined('searchTerm', query.searchTerm);
     appendIfDefined('fullName', query.fullName);
     appendIfDefined('phone', query.phone);
+    appendIfDefined('email', query.email);
     appendIfDefined('gender', query.gender);
     appendIfDefined('paymentStatus', query.paymentStatus);
     appendIfDefined('membershipType', query.membershipType);
@@ -205,6 +264,8 @@ export class MemberService {
     appendIfDefined('planEndDateTo', query.planEndDateTo);
     appendIfDefined('amountPaidMin', query.amountPaidMin);
     appendIfDefined('amountPaidMax', query.amountPaidMax);
+    appendIfDefined('amountToPayMin', query.amountToPayMin);
+    appendIfDefined('amountToPayMax', query.amountToPayMax);
 
     if (gymId) {
       params = params.set('gymId', gymId);

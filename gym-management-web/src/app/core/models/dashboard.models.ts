@@ -33,6 +33,7 @@ export interface RecentMember {
   phone?: string | null;
   profileImageUrl?: string | null;
   joinDate: string;
+  planStartDate: string;
   planEndDate: string;
   status: string;
   membershipType?: string | null;
