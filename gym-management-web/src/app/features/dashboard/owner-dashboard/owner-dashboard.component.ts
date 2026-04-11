@@ -527,14 +527,14 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
     const start = new Date(planStartDate);
     const end = new Date(planEndDate);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
-      return 'Plan -';
+      return '';
     }
 
     const months =
       (end.getFullYear() - start.getFullYear()) * 12 +
       (end.getMonth() - start.getMonth()) +
       1;
-    return `Plan ${Math.max(1, months)} month${months > 1 ? 's' : ''}`;
+    return `${Math.max(1, months)} month${months > 1 ? 's' : ''}`;
   }
 
   private formatCompactCurrencyAxis(value: string | number): string {
