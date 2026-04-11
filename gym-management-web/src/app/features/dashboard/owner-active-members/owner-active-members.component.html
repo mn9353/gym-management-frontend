@@ -1,0 +1,148 @@
+<div class="dashboard-page">
+  <app-topbar />
+
+  <section class="panel">
+    <div class="panel-head">
+      <h3>Active Users</h3>
+      <div class="head-right">
+        <p>{{ totalCount }} results</p>
+        <button type="button" class="icon-btn mobile-only" (click)="toggleMobileFilters()">Filters</button>
+      </div>
+    </div>
+
+    <div class="toolbar desktop-only">
+      <label>
+        Sort
+        <select [(ngModel)]="filters.sortBy" (ngModelChange)="onFilterChanged()">
+          @for (sort of sortOptions; track sort.value) {
+            <option [value]="sort.value">{{ sort.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Direction
+        <select [(ngModel)]="filters.sortDirection" (ngModelChange)="onFilterChanged()">
+          <option value="asc">Asc</option>
+          <option value="desc">Desc</option>
+        </select>
+      </label>
+      <label>
+        Size
+        <select [(ngModel)]="filters.pageSize" (ngModelChange)="onFilterChanged()">
+          @for (size of pageSizeOptions; track size) {
+            <option [value]="size">{{ size }}</option>
+          }
+        </select>
+      </label>
+      <label class="inline-toggle">
+        <input type="checkbox" [(ngModel)]="filters.includeAmount" (ngModelChange)="onFilterChanged()" />
+        Show amount
+      </label>
+      <button type="button" class="btn ghost" (click)="resetFilters()">Reset</button>
+    </div>
+
+    @if (errorMessage) {
+      <p class="state error">{{ errorMessage }}</p>
+    } @else if (isLoading) {
+      <p class="state">Loading active users...</p>
+    } @else {
+      <div class="desktop-grid desktop-only ag-theme-quartz">
+        <ag-grid-angular
+          [rowData]="members"
+          [columnDefs]="columnDefs"
+          [defaultColDef]="defaultColDef"
+          [suppressCellFocus]="true"
+          [animateRows]="true"
+          (gridReady)="onDesktopGridReady($event)"
+          (filterChanged)="onDesktopFilterChanged($event)"
+          (sortChanged)="onDesktopSortChanged($event)"
+        ></ag-grid-angular>
+      </div>
+
+      <div class="mobile-cards mobile-only" #mobileScroll (scroll)="onPageScroll(mobileScroll)">
+        @for (member of mobileMembers; track member.id) {
+          <article class="member-card">
+            <div class="title-row">
+              <h4>{{ member.fullName }}</h4>
+              <span class="badge">{{ formatGender(member.gender) }}</span>
+            </div>
+            <p>{{ member.phone || '-' }}</p>
+            <p>Start: {{ member.planStartDate | date: 'dd MMM yyyy' }}</p>
+            <p>End: {{ member.planEndDate | date: 'dd MMM yyyy' }}</p>
+            @if (filters.includeAmount) {
+              <p>Amount: {{ (member.amountPaid ?? 0) | currency: 'INR':'symbol':'1.0-0' }}</p>
+            }
+          </article>
+        }
+
+        @if (isLoadingMoreMobile) {
+          <p class="state">Loading more...</p>
+        }
+      </div>
+    }
+
+    <div class="pager desktop-only">
+      <button type="button" class="btn ghost" (click)="previousPage()" [disabled]="(filters.pageNumber ?? 1) <= 1 || isLoading">
+        Previous
+      </button>
+      <span>Page {{ filters.pageNumber ?? 1 }} / {{ totalPages }}</span>
+      <button type="button" class="btn ghost" (click)="nextPage()" [disabled]="(filters.pageNumber ?? 1) >= totalPages || isLoading">
+        Next
+      </button>
+    </div>
+  </section>
+
+  @if (isMobileFilterOpen) {
+    <div class="mobile-filter-backdrop" (click)="toggleMobileFilters()"></div>
+    <aside class="mobile-filter-drawer">
+      <div class="drawer-head">
+        <h4>Filters</h4>
+        <button type="button" class="icon-btn" (click)="toggleMobileFilters()">Close</button>
+      </div>
+      <label>
+        Search
+        <input type="text" [(ngModel)]="filters.searchTerm" placeholder="Name or phone" />
+      </label>
+      <label>
+        Phone
+        <input type="text" [(ngModel)]="filters.phone" />
+      </label>
+      <label>
+        Gender
+        <select [(ngModel)]="filters.gender">
+          <option value="">All</option>
+          <option value="M">M</option>
+          <option value="F">F</option>
+        </select>
+      </label>
+      <label>
+        Plan Start (Exact)
+        <input type="date" [(ngModel)]="filters.planStartDate" />
+      </label>
+      <label>
+        Plan Start From
+        <input type="date" [(ngModel)]="filters.planStartDateFrom" />
+      </label>
+      <label>
+        Plan Start To
+        <input type="date" [(ngModel)]="filters.planStartDateTo" />
+      </label>
+      <label>
+        Plan End (Exact)
+        <input type="date" [(ngModel)]="filters.planEndDate" />
+      </label>
+      <label>
+        Plan End From
+        <input type="date" [(ngModel)]="filters.planEndDateFrom" />
+      </label>
+      <label>
+        Plan End To
+        <input type="date" [(ngModel)]="filters.planEndDateTo" />
+      </label>
+      <div class="drawer-actions">
+        <button type="button" class="btn ghost" (click)="resetFilters()">Reset</button>
+        <button type="button" class="btn primary" (click)="applyMobileFilters()">Apply</button>
+      </div>
+    </aside>
+  }
+</div>

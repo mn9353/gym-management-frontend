@@ -91,9 +91,10 @@ export class TopbarComponent {
 
     return [
       { label: 'Dashboard', path: '/owner/dashboard' },
-      { label: 'Active Members', path: '/owner/members/active' },
-      { label: 'Lapsed Members', path: '/owner/members/expired' },
-      { label: 'Team', path: '/owner/team' }
+      { label: 'Active Users', path: '/owner/users/active' },
+      { label: 'Inactive Users', path: '/owner/users/inactive' },
+      { label: 'Upcoming Renewals', path: '/owner/users/upcoming-renewals' },
+      { label: 'Add Member', path: '/owner/members/add' }
     ];
   }
 

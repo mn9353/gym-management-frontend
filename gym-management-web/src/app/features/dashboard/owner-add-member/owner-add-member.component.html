@@ -1,0 +1,64 @@
+<div class="dashboard-page">
+  <app-topbar />
+
+  <section class="panel">
+    <h3>Add Member</h3>
+
+    @if (successMessage) {
+      <p class="state success">{{ successMessage }}</p>
+    }
+    @if (errorMessage) {
+      <p class="state error">{{ errorMessage }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="grid">
+        <label>
+          Full Name
+          <input type="text" formControlName="fullName" />
+        </label>
+
+        <label>
+          Phone
+          <input type="text" formControlName="phone" />
+        </label>
+
+        <label>
+          Join Date
+          <input type="date" formControlName="joinDate" />
+        </label>
+
+        <label>
+          Plan Start Date
+          <input type="date" formControlName="planStartDate" />
+        </label>
+
+        <label>
+          Plan End Date
+          <input type="date" formControlName="planEndDate" />
+        </label>
+
+        <label>
+          Membership Type
+          <input type="text" formControlName="membershipType" />
+        </label>
+
+        <label>
+          Payment Status
+          <select formControlName="paymentStatus">
+            <option value="PAID">PAID</option>
+            <option value="PENDING">PENDING</option>
+            <option value="PARTIAL">PARTIAL</option>
+          </select>
+        </label>
+
+        <label>
+          Amount Paid
+          <input type="number" formControlName="amountPaid" />
+        </label>
+      </div>
+
+      <button type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Saving...' : 'Add Member' }}</button>
+    </form>
+  </section>
+</div>

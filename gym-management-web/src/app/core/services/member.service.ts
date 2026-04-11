@@ -3,7 +3,16 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_PATHS } from '../constants/api-paths';
 import { buildApiUrl } from '../constants/api-url';
-import { CreateMemberDto, MemberDto, MemberSearchDto, UpdateMemberDto } from '../models/member.models';
+import {
+  CreateMemberDto,
+  MemberDto,
+  MemberGridRequest,
+  MemberListItem,
+  MemberListQuery,
+  MemberSearchDto,
+  PagedResponse,
+  UpdateMemberDto
+} from '../models/member.models';
 
 @Injectable({ providedIn: 'root' })
 export class MemberService {
@@ -64,5 +73,117 @@ export class MemberService {
     }
 
     return this.http.post<MemberDto[]>(buildApiUrl(API_PATHS.members.base, API_PATHS.members.search), payload, { params });
+  }
+
+  getUpcomingRenewals(days = 7, limit = 100, gymId?: string): Observable<MemberDto[]> {
+    let params = new HttpParams()
+      .set('days', `${days}`)
+      .set('limit', `${limit}`);
+
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+
+    return this.http.get<MemberDto[]>(
+      buildApiUrl(API_PATHS.members.base, API_PATHS.members.upcomingRenewals),
+      { params }
+    );
+  }
+
+  getActiveMembersList(query: MemberListQuery = {}, gymId?: string): Observable<PagedResponse<MemberListItem>> {
+    return this.http.get<PagedResponse<MemberListItem>>(
+      buildApiUrl(API_PATHS.members.base, API_PATHS.members.activeList),
+      { params: this.buildMemberListParams(query, gymId) }
+    );
+  }
+
+  getInactiveMembersList(query: MemberListQuery = {}, gymId?: string): Observable<PagedResponse<MemberListItem>> {
+    return this.http.get<PagedResponse<MemberListItem>>(
+      buildApiUrl(API_PATHS.members.base, API_PATHS.members.inactiveList),
+      { params: this.buildMemberListParams(query, gymId) }
+    );
+  }
+
+  getUpcomingRenewalsList(query: MemberListQuery = {}, gymId?: string): Observable<PagedResponse<MemberListItem>> {
+    return this.http.get<PagedResponse<MemberListItem>>(
+      buildApiUrl(API_PATHS.members.base, API_PATHS.members.upcomingRenewalsList),
+      { params: this.buildMemberListParams(query, gymId) }
+    );
+  }
+
+  getActiveMembersGrid(payload: MemberGridRequest, gymId?: string): Observable<PagedResponse<MemberListItem>> {
+    let params = new HttpParams();
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+    return this.http.post<PagedResponse<MemberListItem>>(
+      buildApiUrl(API_PATHS.members.base, API_PATHS.members.activeGrid),
+      payload,
+      { params }
+    );
+  }
+
+  getInactiveMembersGrid(payload: MemberGridRequest, gymId?: string): Observable<PagedResponse<MemberListItem>> {
+    let params = new HttpParams();
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+    return this.http.post<PagedResponse<MemberListItem>>(
+      buildApiUrl(API_PATHS.members.base, API_PATHS.members.inactiveGrid),
+      payload,
+      { params }
+    );
+  }
+
+  getUpcomingRenewalsGrid(payload: MemberGridRequest, gymId?: string): Observable<PagedResponse<MemberListItem>> {
+    let params = new HttpParams();
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+    return this.http.post<PagedResponse<MemberListItem>>(
+      buildApiUrl(API_PATHS.members.base, API_PATHS.members.upcomingRenewalsGrid),
+      payload,
+      { params }
+    );
+  }
+
+  private buildMemberListParams(query: MemberListQuery, gymId?: string): HttpParams {
+    let params = new HttpParams();
+    const appendIfDefined = (key: string, value: unknown) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, `${value}`);
+      }
+    };
+
+    appendIfDefined('pageNumber', query.pageNumber);
+    appendIfDefined('pageSize', query.pageSize);
+    appendIfDefined('sortBy', query.sortBy);
+    appendIfDefined('sortDirection', query.sortDirection);
+    appendIfDefined('includeAmount', query.includeAmount);
+    appendIfDefined('upcomingDays', query.upcomingDays);
+    appendIfDefined('searchTerm', query.searchTerm);
+    appendIfDefined('fullName', query.fullName);
+    appendIfDefined('phone', query.phone);
+    appendIfDefined('gender', query.gender);
+    appendIfDefined('paymentStatus', query.paymentStatus);
+    appendIfDefined('membershipType', query.membershipType);
+    appendIfDefined('trainerAssigned', query.trainerAssigned);
+    appendIfDefined('leadSource', query.leadSource);
+    appendIfDefined('joinDateFrom', query.joinDateFrom);
+    appendIfDefined('joinDateTo', query.joinDateTo);
+    appendIfDefined('planStartDate', query.planStartDate);
+    appendIfDefined('planStartDateFrom', query.planStartDateFrom);
+    appendIfDefined('planStartDateTo', query.planStartDateTo);
+    appendIfDefined('planEndDate', query.planEndDate);
+    appendIfDefined('planEndDateFrom', query.planEndDateFrom);
+    appendIfDefined('planEndDateTo', query.planEndDateTo);
+    appendIfDefined('amountPaidMin', query.amountPaidMin);
+    appendIfDefined('amountPaidMax', query.amountPaidMax);
+
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+
+    return params;
   }
 }

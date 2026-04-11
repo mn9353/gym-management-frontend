@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { DashboardOverview, DashboardStats, MonthlyJoinTrend, MonthlyMemberFlow, MonthlyRevenueTrend, RecentMember } from '../models/dashboard.models';
+import { DashboardOverview, DashboardStats, MonthlyJoinTrend, MonthlyMemberFlow, MonthlyRevenueTrend, RecentMember, WeeklyMemberGrowth } from '../models/dashboard.models';
 import { API_PATHS } from '../constants/api-paths';
 import { buildApiUrl } from '../constants/api-url';
 
@@ -46,6 +46,14 @@ export class DashboardService {
     let params = this.buildParams(gymId).set('limit', `${limit}`);
     return this.http.get<RecentMember[]>(
       buildApiUrl(API_PATHS.dashboard.base, API_PATHS.dashboard.recentMembers),
+      { params }
+    );
+  }
+
+  getWeeklyGrowth(weeks = 4, gymId?: string): Observable<WeeklyMemberGrowth[]> {
+    const params = this.buildParams(gymId).set('weeks', `${weeks}`);
+    return this.http.get<WeeklyMemberGrowth[]>(
+      buildApiUrl(API_PATHS.dashboard.base, API_PATHS.dashboard.weeklyGrowth),
       { params }
     );
   }

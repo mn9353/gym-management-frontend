@@ -1,10 +1,14 @@
 export interface DashboardStats {
   totalActiveMembers: number;
+  totalActiveMembersLastMonth: number;
   newJoinsThisMonth: number;
   newJoinsLastMonth: number;
   revenueThisMonth: number;
+  revenueLastMonth: number;
   expiringInNext7Days: number;
+  expiringThisMonth: number;
   expiredMembers: number;
+  inactiveThisMonth: number;
 }
 
 export interface MonthlyJoinTrend {
@@ -27,10 +31,18 @@ export interface RecentMember {
   id: string;
   fullName: string;
   phone?: string | null;
+  profileImageUrl?: string | null;
   joinDate: string;
   planEndDate: string;
   status: string;
   membershipType?: string | null;
+  amountPaid?: number | null;
+}
+
+export interface WeeklyMemberGrowth {
+  week: string;
+  newJoinees: number;
+  inactiveMembers: number;
 }
 
 export interface DashboardOverview {
