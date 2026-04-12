@@ -93,7 +93,8 @@ export class TopbarComponent {
     return [
       { label: 'Dashboard', path: '/owner/dashboard', exact: true },
       { label: 'Members', path: '/owner/members', exact: true },
-      { label: 'Add Member', path: '/owner/members/add', exact: true }
+      { label: 'Add Member', path: '/owner/members/add', exact: true },
+      { label: 'Transactions', path: '/owner/transactions', exact: true }
     ];
   }
 
@@ -109,6 +110,11 @@ export class TopbarComponent {
     if (this.isUserMenuOpen) {
       this.isMenuOpen = false;
     }
+  }
+
+  closeMenus(): void {
+    this.isMenuOpen = false;
+    this.isUserMenuOpen = false;
   }
 
   @HostListener('document:click', ['$event'])

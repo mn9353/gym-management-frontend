@@ -5,6 +5,7 @@ export interface DashboardStats {
   newJoinsLastMonth: number;
   revenueThisMonth: number;
   revenueLastMonth: number;
+  pendingAmountTotal: number;
   expiringInNext7Days: number;
   expiringThisMonth: number;
   expiredMembers: number;
