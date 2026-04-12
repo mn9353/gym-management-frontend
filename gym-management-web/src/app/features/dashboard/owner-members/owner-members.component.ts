@@ -511,6 +511,7 @@ export class OwnerMembersComponent implements OnInit {
         this.paymentDraft.paymentDate = this.todayIsoDate();
         this.notificationService.success(`Payment recorded: ${this.formatAmount(response.payment.amount)}. Pending: ${this.formatAmount(response.pendingAmount)}.`);
         this.isSavingPayment = false;
+        this.closePaymentDrawer();
       },
       error: (error) => {
         this.notificationService.error(extractApiErrorMessage(error, 'Unable to update payment.'));
