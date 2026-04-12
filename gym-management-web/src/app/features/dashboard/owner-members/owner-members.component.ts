@@ -12,6 +12,7 @@ import {
 import { MemberService } from '../../../core/services/member.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/api-error.util';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TopbarComponent } from '../../../shared/components/topbar/topbar.component';
 
 type MemberSegment = 'all' | 'active' | 'expiring' | 'inactive';
@@ -19,7 +20,7 @@ type MemberSegment = 'all' | 'active' | 'expiring' | 'inactive';
 @Component({
   selector: 'app-owner-members',
   standalone: true,
-  imports: [CommonModule, FormsModule, TopbarComponent],
+  imports: [CommonModule, FormsModule, TopbarComponent, ConfirmDialogComponent],
   templateUrl: './owner-members.component.html',
   styleUrl: './owner-members.component.css'
 })
@@ -35,6 +36,8 @@ export class OwnerMembersComponent implements OnInit {
   isPaymentDrawerOpen = false;
   isSavingPayment = false;
   isSavingRenewal = false;
+  paymentSubmitAttempted = false;
+  renewalSubmitAttempted = false;
   activeDrawerAction: 'payment' | 'renewal' = 'payment';
 
   paymentDraft = {
@@ -52,6 +55,17 @@ export class OwnerMembersComponent implements OnInit {
     paymentDate: this.todayIsoDate(),
     paymentMode: 'UPI' as 'CASH' | 'UPI' | 'CARD',
     remarks: ''
+  };
+
+  pendingConfirmAction: 'payment' | 'renewal' | null = null;
+  pendingPaymentRequest: { memberId: string; payload: OwnerPaymentUpdateDto } | null = null;
+  pendingRenewalRequest: { memberId: string; payload: OwnerRenewMemberDto } | null = null;
+  confirmDialog = {
+    open: false,
+    title: '',
+    lines: [] as string[],
+    confirmText: 'Confirm',
+    tone: 'primary' as 'primary' | 'warning'
   };
 
   readonly segmentTabs: Array<{ label: string; value: MemberSegment; tone: 'all' | 'active' | 'expiring' | 'inactive' }> = [
@@ -429,6 +443,8 @@ export class OwnerMembersComponent implements OnInit {
     this.selectedMember = member;
     this.isPaymentDrawerOpen = true;
     this.activeDrawerAction = 'payment';
+    this.paymentSubmitAttempted = false;
+    this.renewalSubmitAttempted = false;
 
     this.paymentDraft.amountPaidNow = null;
     this.paymentDraft.paymentDate = this.todayIsoDate();
@@ -451,12 +467,17 @@ export class OwnerMembersComponent implements OnInit {
 
     this.isPaymentDrawerOpen = false;
     this.selectedMember = null;
+    this.paymentSubmitAttempted = false;
+    this.renewalSubmitAttempted = false;
+    this.onConfirmDialogClose();
   }
 
   openRenewalDrawer(member: MemberListItem): void {
     this.selectedMember = member;
     this.isPaymentDrawerOpen = true;
     this.activeDrawerAction = 'renewal';
+    this.paymentSubmitAttempted = false;
+    this.renewalSubmitAttempted = false;
 
     this.paymentDraft.amountPaidNow = null;
     this.paymentDraft.paymentDate = this.todayIsoDate();
@@ -476,10 +497,19 @@ export class OwnerMembersComponent implements OnInit {
     if (!this.selectedMember) {
       return;
     }
+    this.paymentSubmitAttempted = true;
 
     const amountPaidNow = this.normalizeOptionalNumber(this.paymentDraft.amountPaidNow);
     if (!amountPaidNow || amountPaidNow <= 0) {
       this.notificationService.warning('Enter a valid amount in Paying Now.');
+      return;
+    }
+    if (!this.paymentDraft.paymentDate) {
+      this.notificationService.warning('Payment date is required.');
+      return;
+    }
+    if (!this.paymentDraft.paymentMode) {
+      this.notificationService.warning('Payment mode is required.');
       return;
     }
 
@@ -496,31 +526,42 @@ export class OwnerMembersComponent implements OnInit {
       remarks: this.paymentDraft.remarks?.trim() || undefined
     };
 
-    this.isSavingPayment = true;
-
-    this.memberService.updatePaidAmountWithTransaction(this.selectedMember.id, payload).subscribe({
-      next: (response) => {
-        this.syncMemberInList({
-          id: response.memberId,
-          amountPaid: response.amountPaid,
-          amountToPay: response.amountToPay,
-          paymentStatus: response.paymentStatus
-        });
-        this.paymentDraft.amountPaidNow = null;
-        this.paymentDraft.remarks = '';
-        this.paymentDraft.paymentDate = this.todayIsoDate();
-        this.notificationService.success(`Payment recorded: ${this.formatAmount(response.payment.amount)}. Pending: ${this.formatAmount(response.pendingAmount)}.`);
-        this.isSavingPayment = false;
-      },
-      error: (error) => {
-        this.notificationService.error(extractApiErrorMessage(error, 'Unable to update payment.'));
-        this.isSavingPayment = false;
-      }
-    });
+    this.pendingConfirmAction = 'payment';
+    this.pendingPaymentRequest = { memberId: this.selectedMember.id, payload };
+    this.openConfirmDialog(
+      'Confirm Payment Collection',
+      [
+        `Member: ${this.selectedMember.fullName}`,
+        `Paying now: ${this.formatAmount(amountPaidNow)}`,
+        `Remaining after payment: ${this.getPendingAmountPreview()}`,
+        'Do you want to save this payment update?'
+      ],
+      'Save Payment',
+      'primary'
+    );
   }
 
   saveRenewal(): void {
     if (!this.selectedMember) {
+      return;
+    }
+    this.renewalSubmitAttempted = true;
+
+    if (!this.renewalDraft.planStartDate) {
+      this.notificationService.warning('Plan start date is required.');
+      return;
+    }
+    const duration = Number(this.renewalDraft.planDurationMonths || 1);
+    if (!Number.isFinite(duration) || duration < 1 || duration > 24) {
+      this.notificationService.warning('Duration must be between 1 and 24 months.');
+      return;
+    }
+    if (!this.renewalDraft.paymentDate) {
+      this.notificationService.warning('Payment date is required.');
+      return;
+    }
+    if (!this.renewalDraft.paymentMode) {
+      this.notificationService.warning('Payment mode is required.');
       return;
     }
 
@@ -536,7 +577,7 @@ export class OwnerMembersComponent implements OnInit {
 
     const payload: OwnerRenewMemberDto = {
       planStartDate: this.renewalDraft.planStartDate,
-      planDurationMonths: Math.max(1, Math.min(20, Number(this.renewalDraft.planDurationMonths || 1))),
+      planDurationMonths: Math.max(1, Math.min(24, duration)),
       amountToPayIncrement,
       amountPaidNow: Math.max(0, Number(this.renewalDraft.amountPaidNow || 0)),
       paymentDate: this.renewalDraft.paymentDate || undefined,
@@ -544,30 +585,42 @@ export class OwnerMembersComponent implements OnInit {
       remarks: this.renewalDraft.remarks?.trim() || undefined
     };
 
-    this.isSavingRenewal = true;
+    const isZeroPaid = payload.amountPaidNow <= 0;
+    this.pendingConfirmAction = 'renewal';
+    this.pendingRenewalRequest = { memberId: this.selectedMember.id, payload };
+    this.openConfirmDialog(
+      'Confirm Renew / Extend',
+      [
+        `Member: ${this.selectedMember.fullName}`,
+        `Plan amount: ${this.formatAmount(amountToPayIncrement)}`,
+        `Amount paying now: ${this.formatAmount(payload.amountPaidNow)}`,
+        isZeroPaid
+          ? 'You are renewing with zero payment. Pending amount will be increased. Continue?'
+          : 'Do you want to save this renewal?'
+      ],
+      'Save Renewal',
+      isZeroPaid ? 'warning' : 'primary'
+    );
+  }
 
-    this.memberService.renewMemberWithTransaction(this.selectedMember.id, payload).subscribe({
-      next: (response) => {
-        this.syncMemberInList({
-          id: response.memberId,
-          amountPaid: response.amountPaid,
-          amountToPay: response.amountToPay,
-          paymentStatus: response.paymentStatus
-        });
-        this.paymentDraft.amountPaidNow = null;
-        this.renewalDraft.amountToPayIncrement = null;
-        this.renewalDraft.amountPaidNow = 0;
-        this.renewalDraft.remarks = '';
-        this.renewalDraft.paymentDate = this.todayIsoDate();
-        this.renewalDraft.planStartDate = this.getDefaultRenewalStartDate(response.planEndDate);
-        this.notificationService.success(`Renewal saved. New plan until ${this.formatDate(response.planEndDate)}. Pending: ${this.formatAmount(response.pendingAmount)}.`);
-        this.isSavingRenewal = false;
-      },
-      error: (error) => {
-        this.notificationService.error(extractApiErrorMessage(error, 'Unable to save renewal.'));
-        this.isSavingRenewal = false;
-      }
-    });
+  onConfirmDialogClose(): void {
+    if (this.isSavingPayment || this.isSavingRenewal) {
+      return;
+    }
+    this.confirmDialog.open = false;
+    this.pendingConfirmAction = null;
+    this.pendingPaymentRequest = null;
+    this.pendingRenewalRequest = null;
+  }
+
+  onConfirmDialogSubmit(): void {
+    if (this.pendingConfirmAction === 'payment' && this.pendingPaymentRequest) {
+      this.executePaymentUpdate(this.pendingPaymentRequest.memberId, this.pendingPaymentRequest.payload);
+      return;
+    }
+    if (this.pendingConfirmAction === 'renewal' && this.pendingRenewalRequest) {
+      this.executeRenewal(this.pendingRenewalRequest.memberId, this.pendingRenewalRequest.payload);
+    }
   }
 
   getPendingAmountPreview(): string {
@@ -601,6 +654,45 @@ export class OwnerMembersComponent implements OnInit {
       return false;
     }
     return new Date(this.selectedMember.planEndDate) < new Date(this.todayIsoDate());
+  }
+
+  showPaymentRequired(field: 'amountPaidNow' | 'paymentDate' | 'paymentMode'): boolean {
+    if (!this.paymentSubmitAttempted || this.activeDrawerAction !== 'payment') {
+      return false;
+    }
+    if (field === 'amountPaidNow') {
+      const amount = this.normalizeOptionalNumber(this.paymentDraft.amountPaidNow);
+      return !amount || amount <= 0;
+    }
+    if (field === 'paymentDate') {
+      return !this.paymentDraft.paymentDate;
+    }
+    return !this.paymentDraft.paymentMode;
+  }
+
+  showRenewalRequired(field: 'planStartDate' | 'amountToPayIncrement' | 'paymentDate' | 'paymentMode'): boolean {
+    if (!this.renewalSubmitAttempted || this.activeDrawerAction !== 'renewal') {
+      return false;
+    }
+    if (field === 'planStartDate') {
+      return !this.renewalDraft.planStartDate;
+    }
+    if (field === 'amountToPayIncrement') {
+      const amount = this.normalizeOptionalNumber(this.renewalDraft.amountToPayIncrement);
+      return !amount || amount <= 0;
+    }
+    if (field === 'paymentDate') {
+      return !this.renewalDraft.paymentDate;
+    }
+    return !this.renewalDraft.paymentMode;
+  }
+
+  showRenewalDurationError(): boolean {
+    if (!this.renewalSubmitAttempted || this.activeDrawerAction !== 'renewal') {
+      return false;
+    }
+    const duration = Number(this.renewalDraft.planDurationMonths || 1);
+    return !Number.isFinite(duration) || duration < 1 || duration > 24;
   }
 
   isExpiredMember(member: MemberListItem): boolean {
@@ -685,5 +777,74 @@ export class OwnerMembersComponent implements OnInit {
     };
     this.draftJoinedDateMode = this.joinedDateMode;
     this.draftExpiryDateMode = this.expiryDateMode;
+  }
+
+  private openConfirmDialog(
+    title: string,
+    lines: string[],
+    confirmText: string,
+    tone: 'primary' | 'warning'
+  ): void {
+    this.confirmDialog = {
+      open: true,
+      title,
+      lines,
+      confirmText,
+      tone
+    };
+  }
+
+  private executePaymentUpdate(memberId: string, payload: OwnerPaymentUpdateDto): void {
+    this.isSavingPayment = true;
+    this.memberService.updatePaidAmountWithTransaction(memberId, payload).subscribe({
+      next: (response) => {
+        this.syncMemberInList({
+          id: response.memberId,
+          amountPaid: response.amountPaid,
+          amountToPay: response.amountToPay,
+          paymentStatus: response.paymentStatus
+        });
+        this.paymentDraft.amountPaidNow = null;
+        this.paymentDraft.remarks = '';
+        this.paymentDraft.paymentDate = this.todayIsoDate();
+        this.notificationService.success(`Payment recorded: ${this.formatAmount(response.payment.amount)}. Pending: ${this.formatAmount(response.pendingAmount)}.`);
+        this.isSavingPayment = false;
+        this.paymentSubmitAttempted = false;
+        this.onConfirmDialogClose();
+        this.closePaymentDrawer();
+      },
+      error: (error) => {
+        this.notificationService.error(extractApiErrorMessage(error, 'Unable to update payment.'));
+        this.isSavingPayment = false;
+      }
+    });
+  }
+
+  private executeRenewal(memberId: string, payload: OwnerRenewMemberDto): void {
+    this.isSavingRenewal = true;
+    this.memberService.renewMemberWithTransaction(memberId, payload).subscribe({
+      next: (response) => {
+        this.syncMemberInList({
+          id: response.memberId,
+          amountPaid: response.amountPaid,
+          amountToPay: response.amountToPay,
+          paymentStatus: response.paymentStatus
+        });
+        this.paymentDraft.amountPaidNow = null;
+        this.renewalDraft.amountToPayIncrement = null;
+        this.renewalDraft.amountPaidNow = 0;
+        this.renewalDraft.remarks = '';
+        this.renewalDraft.paymentDate = this.todayIsoDate();
+        this.renewalDraft.planStartDate = this.getDefaultRenewalStartDate(response.planEndDate);
+        this.notificationService.success(`Renewal saved. New plan until ${this.formatDate(response.planEndDate)}. Pending: ${this.formatAmount(response.pendingAmount)}.`);
+        this.renewalSubmitAttempted = false;
+        this.isSavingRenewal = false;
+        this.onConfirmDialogClose();
+      },
+      error: (error) => {
+        this.notificationService.error(extractApiErrorMessage(error, 'Unable to save renewal.'));
+        this.isSavingRenewal = false;
+      }
+    });
   }
 }

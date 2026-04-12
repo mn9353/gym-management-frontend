@@ -442,6 +442,10 @@
   font-weight: 600;
 }
 
+.required {
+  color: #b42318;
+}
+
 .drawer-grid input,
 .drawer-grid select {
   height: 36px;
@@ -451,6 +455,19 @@
   color: var(--text);
   font: inherit;
   padding: 0 0.55rem;
+}
+
+.drawer-grid input.input-error,
+.drawer-grid select.input-error {
+  border-color: #f0a7a1;
+  background: #fff7f7;
+}
+
+.field-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .drawer-actions {

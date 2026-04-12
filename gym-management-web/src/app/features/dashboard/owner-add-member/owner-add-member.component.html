@@ -50,13 +50,32 @@
         </label>
 
         <label>
-          Full Name
+          <span class="label-text">Full Name <span class="required">*</span></span>
           <input type="text" formControlName="fullName" />
+          @if (showRequired('fullName')) {
+            <small class="field-error">Full name is required.</small>
+          }
         </label>
 
         <label>
-          Phone
-          <input type="text" formControlName="phone" />
+          <span class="label-text">Phone <span class="required">*</span></span>
+          <div class="phone-input-wrap">
+            <span class="phone-prefix">+91</span>
+            <input
+              type="tel"
+              formControlName="phone"
+              inputmode="numeric"
+              maxlength="10"
+              placeholder="Enter 10-digit number"
+              (input)="onPhoneInput($event)"
+            />
+          </div>
+          @if (showRequired('phone')) {
+            <small class="field-error">Phone is required.</small>
+          }
+          @if (showPhoneFormatError()) {
+            <small class="field-error">Phone must be exactly 10 digits.</small>
+          }
         </label>
 
         <label>
@@ -65,32 +84,47 @@
         </label>
 
         <label>
-          Join Date
+          <span class="label-text">Start / Join Date <span class="required">*</span></span>
           <input type="date" formControlName="joinDate" />
+          @if (showRequired('joinDate')) {
+            <small class="field-error">Start / Join date is required.</small>
+          }
         </label>
 
         <label>
-          Plan Start Date
-          <input type="date" formControlName="planStartDate" />
+          <span class="label-text">Plan Duration (months) <span class="required">*</span></span>
+          <input type="number" min="1" max="24" formControlName="planDurationMonths" />
+          @if (showRequired('planDurationMonths')) {
+            <small class="field-error">Plan duration is required.</small>
+          }
+          @if (showRangeError('planDurationMonths')) {
+            <small class="field-error">Plan duration must be between 1 and 24 months.</small>
+          }
         </label>
 
         <label>
-          Plan Duration (months)
-          <input type="number" min="1" max="20" formControlName="planDurationMonths" />
-        </label>
-
-        <label>
-          Payment Status
-          <select formControlName="paymentStatus">
-            <option value="PAID">PAID</option>
-            <option value="PENDING">PENDING</option>
-            <option value="PARTIAL">PARTIAL</option>
-          </select>
+          <span class="label-text">Amount To Pay <span class="required">*</span></span>
+          <input type="number" min="0" formControlName="amountToPay" />
+          @if (showRequired('amountToPay')) {
+            <small class="field-error">Amount to pay is required.</small>
+          }
         </label>
 
         <label>
           Amount Paid
           <input type="number" formControlName="amountPaid" />
+        </label>
+
+        <label>
+          Payment Mode
+          <select formControlName="paymentMode">
+            <option value="UPI">UPI</option>
+            <option value="CASH">CASH</option>
+            <option value="CARD">CARD</option>
+          </select>
+          @if (showPaymentModeRequired()) {
+            <small class="field-error">Payment mode is required when amount paid is greater than 0.</small>
+          }
         </label>
 
         <label class="computed">
@@ -104,3 +138,14 @@
     </form>
   </section>
 </div>
+
+<app-confirm-dialog
+  [open]="confirmDialog.open"
+  [title]="confirmDialog.title"
+  [messageLines]="confirmDialog.lines"
+  [confirmText]="confirmDialog.confirmText"
+  [tone]="confirmDialog.tone"
+  [busy]="isSubmitting"
+  (cancel)="onConfirmDialogClose()"
+  (confirm)="onConfirmDialogSubmit()"
+/>
