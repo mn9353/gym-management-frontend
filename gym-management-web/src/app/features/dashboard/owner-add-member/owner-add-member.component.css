@@ -77,6 +77,17 @@
   font-size: 0.77rem;
 }
 
+.required {
+  color: #b42318;
+  font-weight: 800;
+}
+
+.field-error {
+  color: #b42318;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .computed input {
   background: #f7f9fc;
   color: #27405f;
@@ -91,12 +102,40 @@ label {
   gap: 0.35rem;
 }
 
+.label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  line-height: 1.2;
+}
+
 input,
 select {
   border: 1px solid var(--line);
   border-radius: 10px;
   font: inherit;
   padding: 0.55rem 0.65rem;
+}
+
+.phone-input-wrap {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.phone-prefix {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  min-width: 48px;
+  padding: 0 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f7f9fc;
+  color: #27405f;
+  font-weight: 700;
 }
 
 .submit-btn {

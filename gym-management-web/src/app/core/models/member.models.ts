@@ -29,7 +29,7 @@ export interface MemberDto {
 
 export interface CreateMemberDto {
   fullName: string;
-  phone?: string | null;
+  phone: string;
   email?: string | null;
   gender?: string | null;
   dateOfBirth?: string | null;
@@ -41,6 +41,7 @@ export interface CreateMemberDto {
   amountPaid?: number | null;
   amountToPay?: number | null;
   paymentStatus?: string;
+  paymentMode?: 'CASH' | 'UPI' | 'CARD' | null;
   emergencyContact?: string | null;
   height?: number | null;
   weight?: number | null;

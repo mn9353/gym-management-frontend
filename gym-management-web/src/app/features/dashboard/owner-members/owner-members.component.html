@@ -157,20 +157,36 @@
         </div>
         <div class="drawer-grid">
           <label class="full">
-            <span>Paying Now</span>
-            <input type="number" [(ngModel)]="paymentDraft.amountPaidNow" min="0.01" step="0.01" [max]="getRemainingAmount(selectedMember)" />
+            <span>Paying Now <strong class="required">*</strong></span>
+            <input
+              type="number"
+              [(ngModel)]="paymentDraft.amountPaidNow"
+              min="0.01"
+              step="0.01"
+              [max]="getRemainingAmount(selectedMember)"
+              [class.input-error]="showPaymentRequired('amountPaidNow')"
+            />
+            @if (showPaymentRequired('amountPaidNow')) {
+              <small class="field-error">Paying now is required.</small>
+            }
           </label>
           <label>
-            <span>Payment Date</span>
-            <input type="date" [(ngModel)]="paymentDraft.paymentDate" />
+            <span>Payment Date <strong class="required">*</strong></span>
+            <input type="date" [(ngModel)]="paymentDraft.paymentDate" [class.input-error]="showPaymentRequired('paymentDate')" />
+            @if (showPaymentRequired('paymentDate')) {
+              <small class="field-error">Payment date is required.</small>
+            }
           </label>
           <label>
-            <span>Payment Mode</span>
-            <select [(ngModel)]="paymentDraft.paymentMode">
+            <span>Payment Mode <strong class="required">*</strong></span>
+            <select [(ngModel)]="paymentDraft.paymentMode" [class.input-error]="showPaymentRequired('paymentMode')">
               <option value="CASH">CASH</option>
               <option value="UPI">UPI</option>
               <option value="CARD">CARD</option>
             </select>
+            @if (showPaymentRequired('paymentMode')) {
+              <small class="field-error">Payment mode is required.</small>
+            }
           </label>
           <label class="full">
             <span>Remarks</span>
@@ -208,16 +224,43 @@
         <h4>Renew / Extend Plan</h4>
         <div class="drawer-grid">
           <label>
-            <span>Plan Start Date</span>
-            <input type="date" [(ngModel)]="renewalDraft.planStartDate" [min]="getMinimumRenewalDate()" [readonly]="!canEditRenewalStartDate()" />
+            <span>Plan Start Date <strong class="required">*</strong></span>
+            <input
+              type="date"
+              [(ngModel)]="renewalDraft.planStartDate"
+              [min]="getMinimumRenewalDate()"
+              [readonly]="!canEditRenewalStartDate()"
+              [class.input-error]="showRenewalRequired('planStartDate')"
+            />
+            @if (showRenewalRequired('planStartDate')) {
+              <small class="field-error">Plan start date is required.</small>
+            }
           </label>
           <label>
-            <span>Duration (months)</span>
-            <input type="number" [(ngModel)]="renewalDraft.planDurationMonths" min="1" max="20" />
+            <span>Duration (months) <strong class="required">*</strong></span>
+            <input
+              type="number"
+              [(ngModel)]="renewalDraft.planDurationMonths"
+              min="1"
+              max="24"
+              [class.input-error]="showRenewalDurationError()"
+            />
+            @if (showRenewalDurationError()) {
+              <small class="field-error">Duration must be between 1 and 24 months.</small>
+            }
           </label>
           <label>
-            <span>Amount To Pay (new plan)</span>
-            <input type="number" [(ngModel)]="renewalDraft.amountToPayIncrement" min="0.01" step="0.01" />
+            <span>Amount To Pay (new plan) <strong class="required">*</strong></span>
+            <input
+              type="number"
+              [(ngModel)]="renewalDraft.amountToPayIncrement"
+              min="0.01"
+              step="0.01"
+              [class.input-error]="showRenewalRequired('amountToPayIncrement')"
+            />
+            @if (showRenewalRequired('amountToPayIncrement')) {
+              <small class="field-error">Amount to pay is required.</small>
+            }
           </label>
           <label>
             <span>Amount Paying Now</span>
@@ -227,16 +270,22 @@
             }
           </label>
           <label>
-            <span>Payment Date</span>
-            <input type="date" [(ngModel)]="renewalDraft.paymentDate" />
+            <span>Payment Date <strong class="required">*</strong></span>
+            <input type="date" [(ngModel)]="renewalDraft.paymentDate" [class.input-error]="showRenewalRequired('paymentDate')" />
+            @if (showRenewalRequired('paymentDate')) {
+              <small class="field-error">Payment date is required.</small>
+            }
           </label>
           <label>
-            <span>Payment Mode</span>
-            <select [(ngModel)]="renewalDraft.paymentMode">
+            <span>Payment Mode <strong class="required">*</strong></span>
+            <select [(ngModel)]="renewalDraft.paymentMode" [class.input-error]="showRenewalRequired('paymentMode')">
               <option value="CASH">CASH</option>
               <option value="UPI">UPI</option>
               <option value="CARD">CARD</option>
             </select>
+            @if (showRenewalRequired('paymentMode')) {
+              <small class="field-error">Payment mode is required.</small>
+            }
           </label>
           <label class="full">
             <span>Remarks</span>
@@ -322,4 +371,15 @@
       </div>
     </aside>
   }
+
+  <app-confirm-dialog
+    [open]="confirmDialog.open"
+    [title]="confirmDialog.title"
+    [messageLines]="confirmDialog.lines"
+    [confirmText]="confirmDialog.confirmText"
+    [tone]="confirmDialog.tone"
+    [busy]="isSavingPayment || isSavingRenewal"
+    (cancel)="onConfirmDialogClose()"
+    (confirm)="onConfirmDialogSubmit()"
+  />
 </div>
