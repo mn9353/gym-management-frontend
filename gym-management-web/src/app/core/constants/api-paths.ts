@@ -39,6 +39,10 @@ export const API_PATHS = {
     ownerPaymentUpdate: '/owner/payment-update',
     ownerRenew: '/owner/renew'
   },
+  payments: {
+    base: '/api/payments',
+    list: '/list'
+  },
   diagnostics: {
     base: '/api/diagnostics',
     db: '/db',

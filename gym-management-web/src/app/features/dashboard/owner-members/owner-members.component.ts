@@ -10,6 +10,8 @@ import {
   OwnerRenewMemberDto
 } from '../../../core/models/member.models';
 import { MemberService } from '../../../core/services/member.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/api-error.util';
 import { TopbarComponent } from '../../../shared/components/topbar/topbar.component';
 
 type MemberSegment = 'all' | 'active' | 'expiring' | 'inactive';
@@ -34,8 +36,6 @@ export class OwnerMembersComponent implements OnInit {
   isSavingPayment = false;
   isSavingRenewal = false;
   activeDrawerAction: 'payment' | 'renewal' = 'payment';
-  paymentErrorMessage = '';
-  paymentSuccessMessage = '';
 
   paymentDraft = {
     amountPaidNow: null as number | null,
@@ -69,6 +69,24 @@ export class OwnerMembersComponent implements OnInit {
   };
 
   selectedSegment: MemberSegment = 'all';
+  joinedDateMode: 'any' | 'single' | 'range' = 'any';
+  expiryDateMode: 'any' | 'single' | 'range' = 'any';
+  isAdvancedFiltersOpen = false;
+  draftJoinedDateMode: 'any' | 'single' | 'range' = 'any';
+  draftExpiryDateMode: 'any' | 'single' | 'range' = 'any';
+  advancedFilterDraft: {
+    phone: string;
+    email: string;
+    paymentStatus: string;
+    joinDateFrom?: string;
+    joinDateTo?: string;
+    planEndDateFrom?: string;
+    planEndDateTo?: string;
+  } = {
+    phone: '',
+    email: '',
+    paymentStatus: ''
+  };
   private readonly searchChanged$ = new Subject<void>();
 
   query: MemberListQuery = {
@@ -80,10 +98,14 @@ export class OwnerMembersComponent implements OnInit {
     upcomingDays: 7,
     searchTerm: '',
     phone: '',
-    email: ''
+    email: '',
+    paymentStatus: ''
   };
 
-  constructor(private readonly memberService: MemberService) {}
+  constructor(
+    private readonly memberService: MemberService,
+    private readonly notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.searchChanged$.pipe(debounceTime(350)).subscribe(() => {
@@ -92,6 +114,7 @@ export class OwnerMembersComponent implements OnInit {
     });
     this.fetchSegmentCounts();
     this.fetchMembers();
+    this.syncAdvancedFilterDraft();
   }
 
   onSearchChange(): void {
@@ -103,8 +126,41 @@ export class OwnerMembersComponent implements OnInit {
     this.fetchMembers();
   }
 
+  onJoinedDateModeChange(mode: 'any' | 'single' | 'range'): void {
+    this.joinedDateMode = mode;
+    if (mode === 'any') {
+      this.query.joinDateFrom = '';
+      this.query.joinDateTo = '';
+    } else if (mode === 'single') {
+      this.query.joinDateFrom = this.query.joinDateFrom || this.query.joinDateTo || '';
+      this.query.joinDateTo = '';
+    } else {
+      this.query.joinDateTo = this.query.joinDateTo || this.query.joinDateFrom || '';
+    }
+    this.onDateFilterChange();
+  }
+
+  onExpiryDateModeChange(mode: 'any' | 'single' | 'range'): void {
+    this.expiryDateMode = mode;
+    if (mode === 'any') {
+      this.query.planEndDateFrom = '';
+      this.query.planEndDateTo = '';
+    } else if (mode === 'single') {
+      this.query.planEndDateFrom = this.query.planEndDateFrom || this.query.planEndDateTo || '';
+      this.query.planEndDateTo = '';
+    } else {
+      this.query.planEndDateTo = this.query.planEndDateTo || this.query.planEndDateFrom || '';
+    }
+    this.onDateFilterChange();
+  }
+
   onContactFilterChange(): void {
     this.searchChanged$.next();
+  }
+
+  onPaymentStatusChange(): void {
+    this.query.pageNumber = 1;
+    this.fetchMembers();
   }
 
   clearDateFilters(): void {
@@ -112,8 +168,97 @@ export class OwnerMembersComponent implements OnInit {
     this.query.joinDateTo = undefined;
     this.query.planEndDateFrom = undefined;
     this.query.planEndDateTo = undefined;
+    this.joinedDateMode = 'any';
+    this.expiryDateMode = 'any';
     this.query.pageNumber = 1;
     this.fetchMembers();
+  }
+
+  openAdvancedFilters(): void {
+    this.syncAdvancedFilterDraft();
+    this.isAdvancedFiltersOpen = true;
+  }
+
+  closeAdvancedFilters(): void {
+    this.isAdvancedFiltersOpen = false;
+  }
+
+  onDraftJoinedDateModeChange(mode: 'any' | 'single' | 'range'): void {
+    this.draftJoinedDateMode = mode;
+    if (mode === 'any') {
+      this.advancedFilterDraft.joinDateFrom = '';
+      this.advancedFilterDraft.joinDateTo = '';
+    } else if (mode === 'single') {
+      this.advancedFilterDraft.joinDateFrom = this.advancedFilterDraft.joinDateFrom || this.advancedFilterDraft.joinDateTo || '';
+      this.advancedFilterDraft.joinDateTo = '';
+    } else {
+      this.advancedFilterDraft.joinDateTo = this.advancedFilterDraft.joinDateTo || this.advancedFilterDraft.joinDateFrom || '';
+    }
+  }
+
+  onDraftExpiryDateModeChange(mode: 'any' | 'single' | 'range'): void {
+    this.draftExpiryDateMode = mode;
+    if (mode === 'any') {
+      this.advancedFilterDraft.planEndDateFrom = '';
+      this.advancedFilterDraft.planEndDateTo = '';
+    } else if (mode === 'single') {
+      this.advancedFilterDraft.planEndDateFrom = this.advancedFilterDraft.planEndDateFrom || this.advancedFilterDraft.planEndDateTo || '';
+      this.advancedFilterDraft.planEndDateTo = '';
+    } else {
+      this.advancedFilterDraft.planEndDateTo = this.advancedFilterDraft.planEndDateTo || this.advancedFilterDraft.planEndDateFrom || '';
+    }
+  }
+
+  applyAdvancedFilters(): void {
+    this.query.phone = this.advancedFilterDraft.phone;
+    this.query.email = this.advancedFilterDraft.email;
+    this.query.paymentStatus = this.advancedFilterDraft.paymentStatus;
+
+    const joinFrom = this.advancedFilterDraft.joinDateFrom || '';
+    const joinTo = this.advancedFilterDraft.joinDateTo || '';
+    if (this.draftJoinedDateMode === 'any') {
+      this.query.joinDateFrom = '';
+      this.query.joinDateTo = '';
+    } else if (this.draftJoinedDateMode === 'single') {
+      this.query.joinDateFrom = joinFrom;
+      this.query.joinDateTo = joinFrom;
+    } else {
+      this.query.joinDateFrom = joinFrom;
+      this.query.joinDateTo = joinTo;
+    }
+
+    const endFrom = this.advancedFilterDraft.planEndDateFrom || '';
+    const endTo = this.advancedFilterDraft.planEndDateTo || '';
+    if (this.draftExpiryDateMode === 'any') {
+      this.query.planEndDateFrom = '';
+      this.query.planEndDateTo = '';
+    } else if (this.draftExpiryDateMode === 'single') {
+      this.query.planEndDateFrom = endFrom;
+      this.query.planEndDateTo = endFrom;
+    } else {
+      this.query.planEndDateFrom = endFrom;
+      this.query.planEndDateTo = endTo;
+    }
+
+    this.joinedDateMode = this.draftJoinedDateMode;
+    this.expiryDateMode = this.draftExpiryDateMode;
+    this.query.pageNumber = 1;
+    this.fetchMembers();
+    this.closeAdvancedFilters();
+  }
+
+  resetAdvancedFilters(): void {
+    this.advancedFilterDraft = {
+      phone: '',
+      email: '',
+      paymentStatus: '',
+      joinDateFrom: '',
+      joinDateTo: '',
+      planEndDateFrom: '',
+      planEndDateTo: ''
+    };
+    this.draftJoinedDateMode = 'any';
+    this.draftExpiryDateMode = 'any';
   }
 
   setSegment(segment: MemberSegment): void {
@@ -142,8 +287,8 @@ export class OwnerMembersComponent implements OnInit {
         this.query.pageSize = response.pageSize;
         this.isLoading = false;
       },
-      error: () => {
-        this.errorMessage = 'Unable to load members.';
+      error: (error) => {
+        this.errorMessage = extractApiErrorMessage(error, 'Unable to load members.');
         this.isLoading = false;
       }
     });
@@ -250,26 +395,47 @@ export class OwnerMembersComponent implements OnInit {
       return `${this.formatAmount(pending)} pending`;
     }
 
-    return `${this.formatAmount(paid)} / ${this.formatAmount(total)} paid · ${this.formatAmount(pending)} pending`;
+    return `${this.formatAmount(paid)} / ${this.formatAmount(total)} paid | ${this.formatAmount(pending)} pending`;
+  }
+
+  getRemainingAmount(member: MemberListItem | null = this.selectedMember): number {
+    if (!member) {
+      return 0;
+    }
+
+    const total = member.amountToPay ?? 0;
+    const paid = member.amountPaid ?? 0;
+    return Math.max(0, total - paid);
   }
 
   getSegmentCount(segment: MemberSegment): number {
     return this.segmentCounts[segment] ?? 0;
   }
 
+  getSegmentIcon(segment: MemberSegment): string {
+    switch (segment) {
+      case 'active':
+        return 'check_circle';
+      case 'expiring':
+        return 'timer';
+      case 'inactive':
+        return 'person_off';
+      default:
+        return 'groups';
+    }
+  }
+
   openPaymentDrawer(member: MemberListItem): void {
     this.selectedMember = member;
     this.isPaymentDrawerOpen = true;
     this.activeDrawerAction = 'payment';
-    this.paymentErrorMessage = '';
-    this.paymentSuccessMessage = '';
 
     this.paymentDraft.amountPaidNow = null;
     this.paymentDraft.paymentDate = this.todayIsoDate();
     this.paymentDraft.paymentMode = 'UPI';
     this.paymentDraft.remarks = '';
 
-    this.renewalDraft.planStartDate = this.nextDate(member.planEndDate);
+    this.renewalDraft.planStartDate = this.getDefaultRenewalStartDate(member.planEndDate);
     this.renewalDraft.planDurationMonths = 1;
     this.renewalDraft.amountToPayIncrement = null;
     this.renewalDraft.amountPaidNow = 0;
@@ -285,23 +451,19 @@ export class OwnerMembersComponent implements OnInit {
 
     this.isPaymentDrawerOpen = false;
     this.selectedMember = null;
-    this.paymentErrorMessage = '';
-    this.paymentSuccessMessage = '';
   }
 
   openRenewalDrawer(member: MemberListItem): void {
     this.selectedMember = member;
     this.isPaymentDrawerOpen = true;
     this.activeDrawerAction = 'renewal';
-    this.paymentErrorMessage = '';
-    this.paymentSuccessMessage = '';
 
     this.paymentDraft.amountPaidNow = null;
     this.paymentDraft.paymentDate = this.todayIsoDate();
     this.paymentDraft.paymentMode = 'UPI';
     this.paymentDraft.remarks = '';
 
-    this.renewalDraft.planStartDate = this.nextDate(member.planEndDate);
+    this.renewalDraft.planStartDate = this.getDefaultRenewalStartDate(member.planEndDate);
     this.renewalDraft.planDurationMonths = 1;
     this.renewalDraft.amountToPayIncrement = null;
     this.renewalDraft.amountPaidNow = 0;
@@ -317,7 +479,13 @@ export class OwnerMembersComponent implements OnInit {
 
     const amountPaidNow = this.normalizeOptionalNumber(this.paymentDraft.amountPaidNow);
     if (!amountPaidNow || amountPaidNow <= 0) {
-      this.paymentErrorMessage = 'Enter valid amount paid now.';
+      this.notificationService.warning('Enter a valid amount in Paying Now.');
+      return;
+    }
+
+    const remaining = this.getRemainingAmount(this.selectedMember);
+    if (amountPaidNow > remaining) {
+      this.notificationService.warning(`Cannot collect more than remaining amount ${this.formatAmount(remaining)}.`);
       return;
     }
 
@@ -329,8 +497,6 @@ export class OwnerMembersComponent implements OnInit {
     };
 
     this.isSavingPayment = true;
-    this.paymentErrorMessage = '';
-    this.paymentSuccessMessage = '';
 
     this.memberService.updatePaidAmountWithTransaction(this.selectedMember.id, payload).subscribe({
       next: (response) => {
@@ -343,11 +509,11 @@ export class OwnerMembersComponent implements OnInit {
         this.paymentDraft.amountPaidNow = null;
         this.paymentDraft.remarks = '';
         this.paymentDraft.paymentDate = this.todayIsoDate();
-        this.paymentSuccessMessage = `Payment of ${this.formatAmount(response.payment.amount)} recorded. Pending: ${this.formatAmount(response.pendingAmount)}.`;
+        this.notificationService.success(`Payment recorded: ${this.formatAmount(response.payment.amount)}. Pending: ${this.formatAmount(response.pendingAmount)}.`);
         this.isSavingPayment = false;
       },
       error: (error) => {
-        this.paymentErrorMessage = error?.error?.message ?? 'Unable to update payment.';
+        this.notificationService.error(extractApiErrorMessage(error, 'Unable to update payment.'));
         this.isSavingPayment = false;
       }
     });
@@ -360,7 +526,11 @@ export class OwnerMembersComponent implements OnInit {
 
     const amountToPayIncrement = this.normalizeOptionalNumber(this.renewalDraft.amountToPayIncrement);
     if (!amountToPayIncrement || amountToPayIncrement <= 0) {
-      this.paymentErrorMessage = 'Enter valid renewal amount to pay.';
+      this.notificationService.warning('Enter valid renewal amount to pay.');
+      return;
+    }
+    if (this.isRenewalPayingNowExceeded()) {
+      this.notificationService.warning('Cannot exceed amount to pay for this renewal.');
       return;
     }
 
@@ -375,8 +545,6 @@ export class OwnerMembersComponent implements OnInit {
     };
 
     this.isSavingRenewal = true;
-    this.paymentErrorMessage = '';
-    this.paymentSuccessMessage = '';
 
     this.memberService.renewMemberWithTransaction(this.selectedMember.id, payload).subscribe({
       next: (response) => {
@@ -391,12 +559,12 @@ export class OwnerMembersComponent implements OnInit {
         this.renewalDraft.amountPaidNow = 0;
         this.renewalDraft.remarks = '';
         this.renewalDraft.paymentDate = this.todayIsoDate();
-        this.renewalDraft.planStartDate = this.nextDate(response.planEndDate);
-        this.paymentSuccessMessage = `Renewal saved. New plan until ${this.formatDate(response.planEndDate)}. Pending: ${this.formatAmount(response.pendingAmount)}.`;
+        this.renewalDraft.planStartDate = this.getDefaultRenewalStartDate(response.planEndDate);
+        this.notificationService.success(`Renewal saved. New plan until ${this.formatDate(response.planEndDate)}. Pending: ${this.formatAmount(response.pendingAmount)}.`);
         this.isSavingRenewal = false;
       },
       error: (error) => {
-        this.paymentErrorMessage = error?.error?.message ?? 'Unable to save renewal.';
+        this.notificationService.error(extractApiErrorMessage(error, 'Unable to save renewal.'));
         this.isSavingRenewal = false;
       }
     });
@@ -415,7 +583,44 @@ export class OwnerMembersComponent implements OnInit {
     if (!this.selectedMember) {
       return this.todayIsoDate();
     }
-    return this.nextDate(this.selectedMember.planEndDate);
+    const today = this.todayIsoDate();
+    if (new Date(this.selectedMember.planEndDate) < new Date(today)) {
+      return today;
+    }
+    return this.getDefaultRenewalStartDate(this.selectedMember.planEndDate);
+  }
+
+  isRenewalPayingNowExceeded(): boolean {
+    const amountToPayIncrement = this.normalizeOptionalNumber(this.renewalDraft.amountToPayIncrement) ?? 0;
+    const amountPayingNow = this.normalizeOptionalNumber(this.renewalDraft.amountPaidNow) ?? 0;
+    return amountToPayIncrement > 0 && amountPayingNow > amountToPayIncrement;
+  }
+
+  canEditRenewalStartDate(): boolean {
+    if (!this.selectedMember) {
+      return false;
+    }
+    return new Date(this.selectedMember.planEndDate) < new Date(this.todayIsoDate());
+  }
+
+  isExpiredMember(member: MemberListItem): boolean {
+    const status = (member.status || '').toUpperCase();
+    if (status === 'EXPIRED') {
+      return true;
+    }
+    return new Date(member.planEndDate) < new Date(this.todayIsoDate());
+  }
+
+  isExpiringMember(member: MemberListItem): boolean {
+    if (this.isExpiredMember(member)) {
+      return false;
+    }
+    const dayDiff =
+      Math.ceil(
+        (new Date(member.planEndDate).getTime() - new Date(this.todayIsoDate()).getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+    return dayDiff <= (this.query.upcomingDays ?? 7);
   }
 
   private syncMemberInList(update: { id: string; amountPaid?: number | null; amountToPay?: number | null; paymentStatus?: string }): void {
@@ -460,5 +665,25 @@ export class OwnerMembersComponent implements OnInit {
     }
     date.setDate(date.getDate() + 1);
     return date.toISOString().split('T')[0];
+  }
+
+  private getDefaultRenewalStartDate(planEndDate: string): string {
+    const nextPlanDate = this.nextDate(planEndDate);
+    const today = this.todayIsoDate();
+    return nextPlanDate > today ? nextPlanDate : today;
+  }
+
+  private syncAdvancedFilterDraft(): void {
+    this.advancedFilterDraft = {
+      phone: this.query.phone || '',
+      email: this.query.email || '',
+      paymentStatus: this.query.paymentStatus || '',
+      joinDateFrom: this.query.joinDateFrom || '',
+      joinDateTo: this.query.joinDateTo || '',
+      planEndDateFrom: this.query.planEndDateFrom || '',
+      planEndDateTo: this.query.planEndDateTo || ''
+    };
+    this.draftJoinedDateMode = this.joinedDateMode;
+    this.draftExpiryDateMode = this.expiryDateMode;
   }
 }

@@ -46,6 +46,11 @@ export const routes: Routes = [
           import('./features/dashboard/owner-add-member/owner-add-member.component').then((m) => m.OwnerAddMemberComponent)
       },
       {
+        path: 'transactions',
+        loadComponent: () =>
+          import('./features/dashboard/owner-transactions/owner-transactions.component').then((m) => m.OwnerTransactionsComponent)
+      },
+      {
         path: 'users/active',
         redirectTo: 'members',
         pathMatch: 'full'
