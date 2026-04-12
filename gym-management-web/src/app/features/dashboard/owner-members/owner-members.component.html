@@ -1,143 +1,143 @@
 <div class="members-page">
   <app-topbar title="Members" subtitle="Track active, expiring, and inactive members in one place." />
 
-  <section class="members-panel">
-    <div class="toolbar">
-      <label class="search">
-        <span class="material-symbols-outlined">search</span>
-        <input
-          type="text"
-          placeholder="Filter by name or status..."
-          [(ngModel)]="query.searchTerm"
-          (ngModelChange)="onSearchChange()"
-        />
-      </label>
+  <main class="members-shell">
+    <section class="members-panel">
+      <div class="toolbar">
+        <label class="search">
+          <span class="material-symbols-outlined">search</span>
+          <input
+            type="text"
+            placeholder="Search by name / status / phone / email..."
+            [(ngModel)]="query.searchTerm"
+            (ngModelChange)="onSearchChange()"
+          />
+        </label>
 
-      <div class="toolbar-actions">
-        <div class="tabs" role="tablist" aria-label="Member filters">
-          @for (tab of segmentTabs; track tab.value) {
-            <button
-              type="button"
-              class="tab-chip"
-              [class]="'tab-chip tone-' + tab.tone"
-              [class.active]="selectedSegment === tab.value"
-              (click)="setSegment(tab.value)"
-            >
-              <span class="material-symbols-outlined tab-icon">{{ getSegmentIcon(tab.value) }}</span>
-              <span>{{ tab.label }}</span>
-              @if (!isCountsLoading) {
-                <small>{{ getSegmentCount(tab.value) }}</small>
-              }
-            </button>
-          }
-        </div>
-        <button type="button" class="advanced-btn" (click)="openAdvancedFilters()">
-          <span class="material-symbols-outlined">tune</span>
-          Advanced Filters
-        </button>
-      </div>
-    </div>
-
-    @if (errorMessage) {
-      <p class="state error">{{ errorMessage }}</p>
-    } @else if (isLoading) {
-      <div class="cards-grid">
-        @for (n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track n) {
-          <article class="member-card skeleton-card">
-            <div class="avatar skeleton"></div>
-            <div class="member-main">
-              <span class="skeleton line w-160"></span>
-              <span class="skeleton line w-100"></span>
-              <span class="skeleton line w-220"></span>
-            </div>
-          </article>
-        }
-      </div>
-    } @else {
-      <div class="cards-grid" [class.single-item]="members.length === 1">
-        @if (members.length === 0) {
-          <article class="empty-card">
-            <h4>No members found</h4>
-            <p>Try changing search or advanced filters.</p>
-          </article>
-        } @else {
-          @for (member of members; track member.id) {
-            <article class="member-card">
-              <div class="member-top">
-                <div class="avatar-wrap">
-                  <div class="avatar">
-                    @if (member.profileImageUrl) {
-                      <img [src]="member.profileImageUrl" [alt]="member.fullName" />
-                    } @else {
-                      <span>{{ getAvatarText(member.fullName) }}</span>
-                    }
-                  </div>
-                </div>
-
-                <div class="member-main">
-                  <div class="name-row">
-                    <h3>{{ member.fullName }}</h3>
-                    @let badge = getBadge(member);
-                    <span class="badge" [class]="badge.className">{{ badge.label }}</span>
-                  </div>
-
-                  <div class="plan-and-amount">
-                    <span class="plan-chip">{{ getPlanMonthsLabel(member.planStartDate, member.planEndDate) }}</span>
-                    <span class="amount-inline">
-                      Paid {{ formatAmount(member.amountPaid) }}
-                      @if (hasOutstandingPayment(member)) {
-                        <small class="pending-inline">({{ formatAmount(getRemainingAmount(member)) }} pending)</small>
-                      }
-                    </span>
-                  </div>
-                  <div class="meta compact">
-                    <span>Joined <strong>{{ formatDate(member.joinDate) }}</strong></span>
-                    <span [class.expired-text]="isExpiredMember(member)" [class.expiring-text]="isExpiringMember(member)">
-                      {{ isExpiredMember(member) ? 'Expired' : 'Expires' }} <strong>{{ formatDate(member.planEndDate) }}</strong>
-                    </span>
-                  </div>
-                  <div class="contact-row">
-                    <span class="contact-item">
-                      <span class="material-symbols-outlined">call</span>
-                      <strong>{{ member.phone || '-' }}</strong>
-                    </span>
-                    <span class="contact-item">
-                      <span class="material-symbols-outlined">mail</span>
-                      <strong>{{ member.email || '-' }}</strong>
-                    </span>
-                </div>
-              </div>
-            </div>
-
-              <div class="action-buttons">
-                @if (hasOutstandingPayment(member)) {
-                  <button type="button" class="quick-pay-btn" (click)="openPaymentDrawer(member)">Collect Payment</button>
+        <div class="toolbar-actions">
+          <div class="tabs" role="tablist" aria-label="Member filters">
+            @for (tab of segmentTabs; track tab.value) {
+              <button
+                type="button"
+                class="tab-chip"
+                [class]="'tab-chip tone-' + tab.tone"
+                [class.active]="selectedSegment === tab.value"
+                (click)="setSegment(tab.value)"
+              >
+                <span class="material-symbols-outlined tab-icon">{{ getSegmentIcon(tab.value) }}</span>
+                <span>{{ tab.label }}</span>
+                @if (!isCountsLoading) {
+                  <small>{{ getSegmentCount(tab.value) }}</small>
                 }
-                <button type="button" class="quick-pay-btn renewal" (click)="openRenewalDrawer(member)">Renew / Extend</button>
-              </div>
-            </article>
-          }
-        }
-      </div>
-    }
-
-    @if (!isLoading && !errorMessage) {
-      <div
-        class="members-footer"
-        style="position: static !important; inset: auto !important; top: auto !important; right: auto !important; bottom: auto !important; left: auto !important; transform: none !important;"
-      >
-        <p>Showing {{ members.length }} of {{ totalCount }} members</p>
-        <div
-          class="members-pager"
-          style="position: static !important; inset: auto !important; top: auto !important; right: auto !important; bottom: auto !important; left: auto !important; transform: none !important;"
-        >
-          <button type="button" (click)="previousPage()" [disabled]="(query.pageNumber ?? 1) <= 1 || isLoading">Prev</button>
-          <span>{{ query.pageNumber ?? 1 }} / {{ totalPages }}</span>
-          <button type="button" (click)="nextPage()" [disabled]="(query.pageNumber ?? 1) >= totalPages || isLoading">Next</button>
+              </button>
+            }
+          </div>
+          <button type="button" class="advanced-btn" (click)="openAdvancedFilters()">
+            <span class="material-symbols-outlined">tune</span>
+            Advanced Filters
+          </button>
         </div>
       </div>
-    }
-  </section>
+
+      <div class="members-list-region">
+        @if (errorMessage) {
+          <p class="state error">{{ errorMessage }}</p>
+        } @else if (isLoading) {
+          <div class="cards-grid skeleton-grid">
+            @for (n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track n) {
+              <article class="member-card skeleton-card">
+                <div class="avatar skeleton"></div>
+                <div class="member-main">
+                  <span class="skeleton line w-160"></span>
+                  <span class="skeleton line w-100"></span>
+                  <span class="skeleton line w-220"></span>
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="cards-grid" [class.single-item]="members.length === 1">
+            @if (members.length === 0) {
+              <article class="empty-card">
+                <h4>No members found</h4>
+                <p>Try changing search or advanced filters.</p>
+              </article>
+            } @else {
+              @for (member of members; track member.id) {
+                <article class="member-card">
+                  <div class="member-top">
+                    <div class="avatar-wrap">
+                      <div class="avatar">
+                        @if (member.profileImageUrl) {
+                          <img [src]="member.profileImageUrl" [alt]="member.fullName" />
+                        } @else {
+                          <span>{{ getAvatarText(member.fullName) }}</span>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="member-main">
+                      <div class="name-row">
+                        <h3>{{ member.fullName }}</h3>
+                        @let badge = getBadge(member);
+                        <span class="badge" [class]="badge.className">{{ badge.label }}</span>
+                      </div>
+
+                      <div class="plan-and-amount">
+                        <span class="plan-chip">{{ getPlanMonthsLabel(member.planStartDate, member.planEndDate) }}</span>
+                        <span class="amount-inline">
+                          Paid {{ formatAmount(member.amountPaid) }}
+                          @if (hasOutstandingPayment(member)) {
+                            <small class="pending-inline">({{ formatAmount(getRemainingAmount(member)) }} pending)</small>
+                          }
+                        </span>
+                      </div>
+
+                      <div class="meta compact">
+                        <span>Joined <strong>{{ formatDate(member.joinDate) }}</strong></span>
+                        <span [class.expired-text]="isExpiredMember(member)" [class.expiring-text]="isExpiringMember(member)">
+                          {{ isExpiredMember(member) ? 'Expired' : 'Expires' }} <strong>{{ formatDate(member.planEndDate) }}</strong>
+                        </span>
+                      </div>
+
+                      <div class="contact-row">
+                        <span class="contact-item">
+                          <span class="material-symbols-outlined">call</span>
+                          <strong>{{ member.phone || '-' }}</strong>
+                        </span>
+                        <span class="contact-item">
+                          <span class="material-symbols-outlined">mail</span>
+                          <strong>{{ member.email || '-' }}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="action-buttons">
+                    @if (hasOutstandingPayment(member)) {
+                      <button type="button" class="quick-pay-btn" (click)="openPaymentDrawer(member)">Collect Payment</button>
+                    }
+                    <button type="button" class="quick-pay-btn renewal" (click)="openRenewalDrawer(member)">Renew / Extend</button>
+                  </div>
+                </article>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      @if (!isLoading && !errorMessage) {
+        <div class="members-footer">
+          <p>Showing {{ members.length }} of {{ totalCount }} members</p>
+          <div class="members-pager">
+            <button type="button" (click)="previousPage()" [disabled]="(query.pageNumber ?? 1) <= 1 || isLoading">Prev</button>
+            <span>{{ query.pageNumber ?? 1 }} / {{ totalPages }}</span>
+            <button type="button" (click)="nextPage()" [disabled]="(query.pageNumber ?? 1) >= totalPages || isLoading">Next</button>
+          </div>
+        </div>
+      }
+    </section>
+  </main>
 
   @if (isPaymentDrawerOpen && selectedMember) {
     <div class="drawer-backdrop" (click)="closePaymentDrawer()"></div>
@@ -158,13 +158,7 @@
         <div class="drawer-grid">
           <label class="full">
             <span>Paying Now</span>
-            <input
-              type="number"
-              [(ngModel)]="paymentDraft.amountPaidNow"
-              min="0.01"
-              step="0.01"
-              [max]="getRemainingAmount(selectedMember)"
-            />
+            <input type="number" [(ngModel)]="paymentDraft.amountPaidNow" min="0.01" step="0.01" [max]="getRemainingAmount(selectedMember)" />
           </label>
           <label>
             <span>Payment Date</span>
@@ -184,12 +178,7 @@
           </label>
           <p class="pending-preview">Pending after this payment: <strong>{{ getPendingAmountPreview() }}</strong></p>
         </div>
-        <button
-          type="button"
-          class="primary"
-          (click)="savePaymentUpdate()"
-          [disabled]="isSavingPayment || isSavingRenewal || getRemainingAmount(selectedMember) <= 0"
-        >
+        <button type="button" class="primary" (click)="savePaymentUpdate()" [disabled]="isSavingPayment || isSavingRenewal || getRemainingAmount(selectedMember) <= 0">
           {{ isSavingPayment ? 'Saving...' : 'Save Payment Update' }}
         </button>
       </section>

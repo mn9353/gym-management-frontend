@@ -1,107 +1,105 @@
 <div class="transactions-page">
   <app-topbar title="Transactions" subtitle="Track collections with server-side filters and paging." />
 
-  <section class="transactions-panel">
-    <div class="toolbar">
-      <label class="search">
-        <span class="material-symbols-outlined">search</span>
-        <input
-          type="text"
-          placeholder="Search member name / phone"
-          [(ngModel)]="query.searchTerm"
-          (ngModelChange)="onSearchChange()"
-        />
-      </label>
+  <main class="transactions-shell">
+    <section class="transactions-panel">
+      <div class="toolbar">
+        <label class="search">
+          <span class="material-symbols-outlined">search</span>
+          <input
+            type="text"
+            placeholder="Search member name"
+            [(ngModel)]="query.searchTerm"
+            (ngModelChange)="onSearchChange()"
+          />
+        </label>
 
-      <div class="toolbar-actions">
-        <button type="button" class="advanced-btn" (click)="openAdvancedFilters()">
-          <span class="material-symbols-outlined">tune</span>
-          Advanced Filters
-        </button>
-        <button type="button" class="export-btn" disabled>
-          <span class="material-symbols-outlined">download</span>
-          Export
-        </button>
-      </div>
-    </div>
-
-    @if (errorMessage) {
-      <p class="state error">{{ errorMessage }}</p>
-    } @else if (isLoading) {
-      <div class="loading-grid">
-        @for (n of [1,2,3,4,5,6,7,8,9,10]; track n) {
-          <div class="loading-card"></div>
-        }
-      </div>
-    } @else {
-      <div class="list">
-        @if (items.length === 0) {
-          <article class="empty-card">
-            <h4>No transactions found</h4>
-            <p>Try a different search or filter combination.</p>
-          </article>
-        } @else {
-          @for (row of items; track row.paymentId) {
-            <article class="tx-card">
-              <div class="member-block">
-                <div class="avatar">
-                  @if (row.memberProfileImageUrl) {
-                    <img [src]="row.memberProfileImageUrl" [alt]="row.memberName" />
-                  } @else {
-                    <span>{{ getAvatarText(row.memberName) }}</span>
-                  }
-                </div>
-                <div>
-                  <strong>{{ row.memberName }}</strong>
-                  <p>Joined {{ formatDate(row.memberJoinDate) }} | Plan {{ row.planMonths }} month{{ row.planMonths > 1 ? 's' : '' }}</p>
-                </div>
-              </div>
-
-              <div class="tx-meta">
-                <div class="meta-cell amount-cell">
-                  <small>Amount</small>
-                  <strong class="amount">{{ formatCurrency(row.amount) }}</strong>
-                </div>
-                <div class="meta-cell">
-                  <small>Mode</small>
-                  <strong>{{ row.paymentMode || '-' }}</strong>
-                </div>
-                <div class="meta-cell">
-                  <small>Paid On</small>
-                  <strong>{{ formatDate(row.paymentDate) }}</strong>
-                </div>
-                <div class="meta-cell">
-                  <small>Status</small>
-                  @if (row.memberPendingAmount > 0) {
-                    <strong class="pending-tag">Pending {{ formatCurrency(row.memberPendingAmount) }}</strong>
-                  } @else {
-                    <strong class="paid-tag">Settled</strong>
-                  }
-                </div>
-              </div>
-            </article>
-          }
-        }
-      </div>
-    }
-
-    @if (!isLoading && !errorMessage) {
-      <div
-        class="tx-footer"
-        style="position: static !important; inset: auto !important; top: auto !important; right: auto !important; bottom: auto !important; left: auto !important; transform: none !important;"
-      >
-        <p>Showing {{ items.length }} of {{ totalCount }} transactions</p>
-        <div
-          class="tx-pager"
-          style="position: static !important; inset: auto !important; top: auto !important; right: auto !important; bottom: auto !important; left: auto !important; transform: none !important;"
-        >
-          <button type="button" (click)="previousPage()" [disabled]="(query.pageNumber ?? 1) <= 1 || isLoading">Prev</button>
-          <span>{{ query.pageNumber ?? 1 }} / {{ totalPages }}</span>
-          <button type="button" (click)="nextPage()" [disabled]="(query.pageNumber ?? 1) >= totalPages || isLoading">Next</button>
+        <div class="toolbar-actions">
+          <button type="button" class="advanced-btn" (click)="openAdvancedFilters()">
+            <span class="material-symbols-outlined">tune</span>
+            Advanced Filters
+          </button>
+          <button type="button" class="export-btn" disabled>
+            <span class="material-symbols-outlined">download</span>
+            Export
+          </button>
         </div>
       </div>
-    }
-  </section>
+
+      <div class="tx-list-region">
+        @if (errorMessage) {
+          <p class="state error">{{ errorMessage }}</p>
+        } @else if (isLoading) {
+          <div class="loading-grid">
+            @for (n of [1,2,3,4,5,6,7,8,9,10]; track n) {
+              <div class="loading-card"></div>
+            }
+          </div>
+        } @else {
+          <div class="tx-list">
+            @if (items.length === 0) {
+              <article class="empty-card">
+                <h4>No transactions found</h4>
+                <p>Try a different search or filter combination.</p>
+              </article>
+            } @else {
+              @for (row of items; track row.paymentId) {
+                <article class="tx-card">
+                  <div class="member-block">
+                    <div class="avatar">
+                      @if (row.memberProfileImageUrl) {
+                        <img [src]="row.memberProfileImageUrl" [alt]="row.memberName" />
+                      } @else {
+                        <span>{{ getAvatarText(row.memberName) }}</span>
+                      }
+                    </div>
+                    <div>
+                      <strong>{{ row.memberName }}</strong>
+                      <p>Joined {{ formatDate(row.memberJoinDate) }} | Plan {{ row.planMonths }} month{{ row.planMonths > 1 ? 's' : '' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="tx-meta">
+                    <div class="meta-cell amount-cell">
+                      <small>Amount</small>
+                      <strong class="amount">{{ formatCurrency(row.amount) }}</strong>
+                    </div>
+                    <div class="meta-cell">
+                      <small>Mode</small>
+                      <strong>{{ row.paymentMode || '-' }}</strong>
+                    </div>
+                    <div class="meta-cell">
+                      <small>Paid On</small>
+                      <strong>{{ formatDate(row.paymentDate) }}</strong>
+                    </div>
+                    <div class="meta-cell">
+                      <small>Status</small>
+                      @if (row.memberPendingAmount > 0) {
+                        <strong class="pending-tag">Pending {{ formatCurrency(row.memberPendingAmount) }}</strong>
+                      } @else {
+                        <strong class="paid-tag">Settled</strong>
+                      }
+                    </div>
+                  </div>
+                </article>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      @if (!isLoading && !errorMessage) {
+        <div class="tx-footer">
+          <p>Showing {{ items.length }} of {{ totalCount }} transactions</p>
+          <div class="tx-pager">
+            <button type="button" (click)="previousPage()" [disabled]="(query.pageNumber ?? 1) <= 1 || isLoading">Prev</button>
+            <span>{{ query.pageNumber ?? 1 }} / {{ totalPages }}</span>
+            <button type="button" (click)="nextPage()" [disabled]="(query.pageNumber ?? 1) >= totalPages || isLoading">Next</button>
+          </div>
+        </div>
+      }
+    </section>
+  </main>
 
   @if (isAdvancedFiltersOpen) {
     <div class="drawer-backdrop" (click)="closeAdvancedFilters()"></div>
@@ -168,4 +166,3 @@
     </aside>
   }
 </div>
-
