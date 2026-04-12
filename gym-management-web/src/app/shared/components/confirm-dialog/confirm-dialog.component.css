@@ -1,0 +1,91 @@
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  background: rgba(12, 20, 34, 0.4);
+}
+
+.confirm-dialog {
+  position: fixed;
+  z-index: 1601;
+  width: min(92vw, 430px);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid #d8e1ef;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 24px 52px rgba(8, 18, 36, 0.24);
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.confirm-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.confirm-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.confirm-body {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.confirm-body p {
+  margin: 0;
+  color: #405674;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.ghost,
+.primary {
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+}
+
+.ghost {
+  border: 1px solid #d2dceb;
+  background: #fff;
+  color: #2c4464;
+}
+
+.primary {
+  border: 0;
+  background: #2852c8;
+  color: #fff;
+}
+
+.primary.warning {
+  background: #b54708;
+}
+
+.ghost:disabled,
+.primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+@media (max-width: 680px) {
+  .confirm-dialog {
+    width: min(94vw, 430px);
+    padding: 0.8rem;
+  }
+}

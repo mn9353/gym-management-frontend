@@ -1,0 +1,21 @@
+@if (open) {
+  <div class="confirm-backdrop" (click)="!busy && cancel.emit()"></div>
+  <section class="confirm-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <header class="confirm-head">
+      <h3>{{ title }}</h3>
+    </header>
+
+    <div class="confirm-body">
+      @for (line of messageLines; track line) {
+        <p>{{ line }}</p>
+      }
+    </div>
+
+    <footer class="confirm-actions">
+      <button type="button" class="ghost" (click)="cancel.emit()" [disabled]="busy">{{ cancelText }}</button>
+      <button type="button" class="primary" [class.warning]="tone === 'warning'" (click)="confirm.emit()" [disabled]="busy">
+        {{ busy ? 'Please wait...' : confirmText }}
+      </button>
+    </footer>
+  </section>
+}

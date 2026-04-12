@@ -5,10 +5,16 @@ import { inject } from '@vercel/analytics';
 import { injectSpeedInsights } from '@vercel/speed-insights';
 
 
+import { inject } from '@vercel/analytics';
 
 bootstrapApplication(AppComponent, appConfig)
   .then(() => {
     inject();
     injectSpeedInsights();
   })
+  .then(() => {
+    inject();
+  })
   .catch((err) => console.error(err));
+
+

@@ -1,0 +1,9 @@
+<section class="notify-stack" aria-live="polite" aria-atomic="true">
+  @for (item of notifications.notifications(); track item.id) {
+    <article class="notify-item" [class]="'notify-item ' + item.type">
+      <p>{{ item.message }}</p>
+      <button type="button" (click)="notifications.dismiss(item.id)" aria-label="Dismiss notification">×</button>
+    </article>
+  }
+</section>
+
