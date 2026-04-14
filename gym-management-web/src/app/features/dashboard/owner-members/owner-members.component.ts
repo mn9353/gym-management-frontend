@@ -377,16 +377,20 @@ export class OwnerMembersComponent implements OnInit {
   }
 
   getPlanMonthsLabel(planStartDate: string, planEndDate: string): string {
-    const start = new Date(planStartDate);
-    const end = new Date(planEndDate);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+    const start = this.parseDateOnlyToUtcDate(planStartDate);
+    const end = this.parseDateOnlyToUtcDate(planEndDate);
+    if (!start || !end || end.getTime() < start.getTime()) {
       return 'Plan -';
     }
 
-    const months =
-      (end.getFullYear() - start.getFullYear()) * 12 +
-      (end.getMonth() - start.getMonth()) +
-      1;
+    const exactMonths = this.getExactMonthDuration(start, end);
+    if (exactMonths !== null) {
+      return `Plan ${exactMonths} month${exactMonths > 1 ? 's' : ''}`;
+    }
+
+    // Fallback for irregular legacy ranges: use rounded 30-day month approximation.
+    const inclusiveDays = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+    const months = Math.max(1, Math.round(inclusiveDays / 30));
     return `Plan ${Math.max(1, months)} month${months > 1 ? 's' : ''}`;
   }
 
@@ -846,5 +850,44 @@ export class OwnerMembersComponent implements OnInit {
         this.isSavingRenewal = false;
       }
     });
+  }
+
+  private parseDateOnlyToUtcDate(value: string): Date | null {
+    const parts = (value || '').split('-').map((p) => Number(p));
+    if (parts.length !== 3 || parts.some((part) => !Number.isFinite(part))) {
+      return null;
+    }
+    const [year, month, day] = parts;
+    if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) {
+      return null;
+    }
+    return new Date(Date.UTC(year, month - 1, day));
+  }
+
+  private getExactMonthDuration(start: Date, end: Date): number | null {
+    for (let months = 1; months <= 24; months++) {
+      const computedEnd = this.addDaysUtc(this.addMonthsUtcClamped(start, months), -1);
+      if (computedEnd.getTime() === end.getTime()) {
+        return months;
+      }
+    }
+    return null;
+  }
+
+  private addMonthsUtcClamped(base: Date, months: number): Date {
+    const year = base.getUTCFullYear();
+    const monthIndex = base.getUTCMonth();
+    const day = base.getUTCDate();
+
+    const targetMonthIndex = monthIndex + months;
+    const targetYear = year + Math.floor(targetMonthIndex / 12);
+    const normalizedTargetMonth = ((targetMonthIndex % 12) + 12) % 12;
+    const lastDayOfTargetMonth = new Date(Date.UTC(targetYear, normalizedTargetMonth + 1, 0)).getUTCDate();
+    const clampedDay = Math.min(day, lastDayOfTargetMonth);
+    return new Date(Date.UTC(targetYear, normalizedTargetMonth, clampedDay));
+  }
+
+  private addDaysUtc(base: Date, days: number): Date {
+    return new Date(base.getTime() + days * 86400000);
   }
 }
