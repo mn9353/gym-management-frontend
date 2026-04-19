@@ -9,6 +9,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent)
   },
   {
+    path: 'attendance/check-in',
+    loadComponent: () => import('./features/attendance/member-check-in/member-check-in.component').then((m) => m.MemberCheckInComponent)
+  },
+  {
     path: 'admin',
     canActivate: [authGuard, roleGuard],
     data: { roles: ['ADMIN'] },
@@ -106,6 +110,11 @@ export const routes: Routes = [
           import('./features/dashboard/owner-irregular-members/owner-irregular-members.component').then((m) => m.OwnerIrregularMembersComponent)
       },
       {
+        path: 'attendance',
+        loadComponent: () =>
+          import('./features/dashboard/owner-attendance/owner-attendance.component').then((m) => m.OwnerAttendanceComponent)
+      },
+      {
         path: 'members/:status',
         redirectTo: 'members',
         pathMatch: 'full'
@@ -141,6 +150,11 @@ export const routes: Routes = [
         path: 'enquiries',
         loadComponent: () =>
           import('./features/dashboard/enquiries/enquiries.component').then((m) => m.EnquiriesComponent)
+      },
+      {
+        path: 'attendance',
+        loadComponent: () =>
+          import('./features/dashboard/owner-attendance/owner-attendance.component').then((m) => m.OwnerAttendanceComponent)
       },
       {
         path: 'users/inactive',

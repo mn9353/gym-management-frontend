@@ -125,6 +125,10 @@ export class OwnerMembersComponent implements OnInit {
     paymentStatus: ''
   };
 
+  viewType: 'default' | 'pending' | 'new-joins' | 'expiring' = 'default';
+  totalPendingAmount = 0;
+  totalFilteredCount = 0;
+
   constructor(
     private readonly memberService: MemberService,
     private readonly notificationService: NotificationService,
@@ -319,6 +323,12 @@ export class OwnerMembersComponent implements OnInit {
         this.totalPages = response.totalPages;
         this.query.pageNumber = response.pageNumber;
         this.query.pageSize = response.pageSize;
+
+        // Calculate view-specific summaries
+        if (this.viewType === 'pending') {
+          this.totalPendingAmount = this.members.reduce((acc, m) => acc + this.getRemainingAmount(m), 0);
+        }
+        this.totalFilteredCount = response.totalCount;
         if (this.selectAllMatchingFilters) {
           this.selectedMemberIds.clear();
         }
@@ -927,7 +937,8 @@ export class OwnerMembersComponent implements OnInit {
         this.paymentDraft.amountPaidNow = null;
         this.paymentDraft.remarks = '';
         this.paymentDraft.paymentDate = this.todayIsoDate();
-        this.notificationService.success(`Payment recorded: ${this.formatAmount(response.payment.amount)}. Pending: ${this.formatAmount(response.pendingAmount)}.`);
+        const paymentMsg = response.payment ? `Payment recorded: ${this.formatAmount(response.payment.amount)}.` : 'Payment amount updated.';
+        this.notificationService.success(`${paymentMsg} Pending: ${this.formatAmount(response.pendingAmount)}.`);
         this.isSavingPayment = false;
         this.paymentSubmitAttempted = false;
         this.onConfirmDialogClose();
@@ -988,6 +999,9 @@ export class OwnerMembersComponent implements OnInit {
 
   private applyInitialQueryParams(): void {
     const routePath = this.route.snapshot.routeConfig?.path ?? '';
+    const params = this.route.snapshot.queryParamMap;
+
+    // First handle route-based defaults
     switch (routePath) {
       case 'users/active':
         this.currentView = 'active';
@@ -1022,16 +1036,34 @@ export class OwnerMembersComponent implements OnInit {
         this.pageTitle = 'Pending Members';
         this.pageSubtitle = 'Members with pending or partial payment.';
         this.query.paymentStatus = 'PENDING,PARTIAL';
+        this.viewType = 'pending';
         break;
       default:
         this.currentView = 'default';
         break;
     }
 
-    const params = this.route.snapshot.queryParamMap;
-    const segment = params.get('segment');
-    if (segment === 'all' || segment === 'active' || segment === 'expiring' || segment === 'inactive') {
-      this.selectedSegment = segment;
+    // Then override/merge with Query Params (Unified Logic)
+    const segmentParam = params.get('segment');
+    if (segmentParam === 'all' || segmentParam === 'active' || segmentParam === 'expiring' || segmentParam === 'inactive') {
+      this.selectedSegment = segmentParam;
+      // If segment is specified via query param, ensure the view is appropriate
+      if (segmentParam === 'expiring') {
+        this.pageTitle = 'Expiring Members';
+        this.pageSubtitle = 'Viewing members nearing their plan end dates.';
+      }
+    }
+
+    const viewParam = params.get('view');
+    if (viewParam === 'pending') {
+      this.viewType = 'pending';
+      this.pageTitle = 'Collection Tracker';
+      this.pageSubtitle = 'Showing members with outstanding balances to collect.';
+    }
+
+    const statusParam = params.get('paymentStatus');
+    if (statusParam) {
+      this.query.paymentStatus = statusParam;
     }
 
     const endingMonth = params.get('endingMonth');
@@ -1056,10 +1088,6 @@ export class OwnerMembersComponent implements OnInit {
       this.draftJoinedDateMode = 'range';
     }
 
-    const paymentStatus = params.get('paymentStatus');
-    if (paymentStatus) {
-      this.query.paymentStatus = paymentStatus;
-    }
   }
 
   private resolveReminderStage(): 'AUTO' | 'EXPIRING' | 'INACTIVE' {
@@ -1125,5 +1153,27 @@ export class OwnerMembersComponent implements OnInit {
 
   private addDaysUtc(base: Date, days: number): Date {
     return new Date(base.getTime() + days * 86400000);
+  }
+
+  resetFiltersAndReturn(): void {
+    this.query = {
+      pageNumber: 1,
+      pageSize: 10,
+      sortBy: 'planEndDate',
+      sortDirection: 'asc',
+      includeAmount: true,
+      upcomingDays: 7,
+      searchTerm: '',
+      phone: '',
+      email: '',
+      paymentStatus: ''
+    };
+    this.viewType = 'default';
+    this.selectedSegment = 'all';
+    this.pageTitle = 'Gym Members';
+    this.pageSubtitle = 'Manage and track all members from here.';
+    this.router.navigate(['/owner/members'], { queryParams: {} });
+    this.fetchMembers();
+    this.fetchSegmentCounts();
   }
 }

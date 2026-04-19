@@ -55,6 +55,7 @@ export interface CreateMemberDto {
   trainerAssigned?: string | null;
   leadSource?: string | null;
   notes?: string | null;
+  profileImageUrl?: string | null;
 }
 
 export interface RenewMemberDto {
@@ -98,6 +99,7 @@ export interface UpdateMemberDto {
   fitnessGoal?: string | null;
   trainerAssigned?: string | null;
   notes?: string | null;
+  profileImageUrl?: string | null;
 }
 
 export interface MemberSearchDto {
@@ -178,7 +180,7 @@ export interface MemberPaymentUpdateDto {
   pendingAmount: number;
   paymentStatus: string;
   lastPaymentDate?: string | null;
-  payment: PaymentTransactionDto;
+  payment?: PaymentTransactionDto | null;
 }
 
 export interface OwnerPaymentUpdateDto {

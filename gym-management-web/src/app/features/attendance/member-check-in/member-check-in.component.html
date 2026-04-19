@@ -1,0 +1,87 @@
+<div class="checkin-page">
+  <div class="glass-bg"></div>
+  
+  <main class="content">
+    <header class="header">
+      <div class="logo">
+        <span class="material-symbols-outlined">fitness_center</span>
+      </div>
+      <h1>Member Check-in</h1>
+      <p>Welcome! Mark your attendance for today.</p>
+    </header>
+
+    @if (!result && !errorMessage) {
+      <div class="form-container">
+        <form (ngSubmit)="onSubmit()" #checkInForm="ngForm">
+          <div class="input-group">
+            <label for="identifier">Member ID or Phone Number</label>
+            <div class="input-wrapper">
+              <span class="material-symbols-outlined icon">person</span>
+              <input 
+                type="text" 
+                id="identifier" 
+                name="identifier" 
+                [(ngModel)]="identifier" 
+                required 
+                placeholder="Enter your registered ID or Phone"
+                autocomplete="off"
+                [disabled]="isLoading"
+              >
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" [disabled]="!identifier || isLoading">
+            @if (isLoading) {
+              <div class="spinner"></div>
+              <span>CHECKING IN...</span>
+            } @else {
+              <span>MARK ATTENDANCE</span>
+            }
+          </button>
+        </form>
+      </div>
+    } @else if (result) {
+      <div class="result-container" [class.success]="result.success" [class.error]="!result.success">
+        <div class="icon-circle">
+          <span class="material-symbols-outlined">
+            {{ result.success ? 'check_circle' : 'error' }}
+          </span>
+        </div>
+        
+        <h2>{{ result.success ? 'Success!' : 'Oops!' }}</h2>
+        <p class="message">{{ result.message }}</p>
+
+        @if (result.success && result.memberName) {
+          <div class="member-profile">
+            <div class="avatar">
+              @if (result.profileImageUrl) {
+                <img [src]="result.profileImageUrl" alt="Profile">
+              } @else {
+                <div class="placeholder">{{ result.memberName.substring(0,1).toUpperCase() }}</div>
+              }
+            </div>
+            <div class="info">
+              <span class="name">{{ result.memberName }}</span>
+              <span class="time">Verified at {{ result.checkinAt | date: 'hh:mm a' }}</span>
+            </div>
+          </div>
+        }
+
+        <button class="btn-back" (click)="reset()">BACK TO CHECK-IN</button>
+      </div>
+    } @else if (errorMessage) {
+      <div class="result-container error">
+        <div class="icon-circle">
+          <span class="material-symbols-outlined">warning</span>
+        </div>
+        <h2>Connection Error</h2>
+        <p class="message">{{ errorMessage }}</p>
+        <button class="btn-back" (click)="reset()">TRY AGAIN</button>
+      </div>
+    }
+
+    <footer class="footer">
+      <p>&copy; 2026 Admin Dashboard SaaS. All rights reserved.</p>
+    </footer>
+  </main>
+</div>

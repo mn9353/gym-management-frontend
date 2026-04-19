@@ -4,7 +4,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { DashboardService } from '../../../core/services/dashboard.service';
-import { DashboardOverview, IrregularMember, MonthlyMemberFlow, MonthlyRevenueTrend, RecentMember, WeeklyMemberGrowth } from '../../../core/models/dashboard.models';
+import { DashboardOverview, IrregularMember, MonthlyMemberFlow, MonthlyRevenueTrend, PaginatedIrregularMembers, RecentMember, WeeklyMemberGrowth } from '../../../core/models/dashboard.models';
 import { TopbarComponent } from '../../../shared/components/topbar/topbar.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Chart, registerables } from 'chart.js';
@@ -295,10 +295,10 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
           return of([]);
         })
       ),
-      irregular: this.dashboardService.getIrregularMembers(4, 200).pipe(
+      irregular: this.dashboardService.getIrregularMembers(1, 10, 4).pipe(
         catchError(() => {
           this.partialLoadWarning = true;
-          return of([]);
+          return of({ items: [], totalCount: 0, pageNumber: 1, pageSize: 10 });
         })
       )
     }).pipe(takeUntilDestroyed(this.destroyRef))
@@ -315,7 +315,11 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
         this.weeklyGrowth = result.weekly;
         this.recentMembers = result.recent;
         this.expiringSoon = result.expiring;
-        this.irregularMembers = result.irregular;
+        
+        // Defensive mapping to support both old flat-array and new paginated responses
+        this.irregularMembers = Array.isArray(result.irregular) 
+          ? result.irregular 
+          : (result.irregular as any)?.items || [];
         this.expiringOffset = this.expiringSoon.length;
         this.hasMoreExpiring =
           result.expiring.length === this.expiringPageSize
@@ -623,35 +627,35 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
 
   openMembersBySegment(segment: 'all' | 'active' | 'expiring' | 'inactive'): void {
     if (segment === 'active') {
-      this.router.navigate(['/owner/users/active']);
+      this.router.navigate(['/owner/members'], { queryParams: { segment: 'active' } });
       return;
     }
     if (segment === 'expiring') {
-      this.router.navigate(['/owner/users/upcoming-renewals']);
+      this.router.navigate(['/owner/members'], { queryParams: { segment: 'expiring' } });
       return;
     }
     if (segment === 'inactive') {
-      this.router.navigate(['/owner/users/inactive']);
+      this.router.navigate(['/owner/members'], { queryParams: { segment: 'inactive' } });
       return;
     }
-    this.router.navigate(['/owner/members']);
+    this.router.navigate(['/owner/members'], { queryParams: { segment: 'all' } });
   }
 
   openNewJoins(): void {
-    this.router.navigate(['/owner/users/new-joins'], {
+    this.router.navigate(['/owner/members'], {
       queryParams: { segment: 'all', joinedMonth: 'current' }
     });
   }
 
   openPlansEndingThisMonth(): void {
-    this.router.navigate(['/owner/users/plans-ending'], {
+    this.router.navigate(['/owner/members'], {
       queryParams: { segment: 'all', endingMonth: 'current' }
     });
   }
 
   openPendingAmountMembers(): void {
-    this.router.navigate(['/owner/users/pending-members'], {
-      queryParams: { segment: 'all', paymentStatus: 'PENDING,PARTIAL' }
+    this.router.navigate(['/owner/members'], {
+      queryParams: { segment: 'all', paymentStatus: 'PENDING,PARTIAL', view: 'pending' }
     });
   }
 

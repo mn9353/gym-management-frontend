@@ -1,0 +1,111 @@
+<div class="page">
+  <app-topbar title="QR Attendance" subtitle="Manage your gym's digital check-ins" />
+
+  <section class="attendance-container">
+    <div class="qr-section">
+      <div class="card premium-card qr-card">
+        <div class="card-header">
+          <span class="material-symbols-outlined icon">qr_code_2</span>
+          <h3>Gym QR Code</h3>
+        </div>
+        
+        <div class="qr-display">
+          @if (qrCodeDataUrl) {
+            <img [src]="qrCodeDataUrl" alt="Gym Attendance QR Code" class="qr-image">
+          } @else {
+            <div class="qr-placeholder">
+              <div class="loading-spinner"></div>
+            </div>
+          }
+        </div>
+
+        <div class="qr-instructions">
+          <p>Display this QR code at your gym entrance. Members can scan it with their smartphones to mark their daily attendance.</p>
+        </div>
+
+        <button class="btn btn-primary print-btn" (click)="printQR()" [disabled]="!qrCodeDataUrl">
+          <span class="material-symbols-outlined">print</span>
+          PRINT QR CODE
+        </button>
+      </div>
+
+      <div class="card info-card">
+        <div class="card-header">
+          <span class="material-symbols-outlined icon">info</span>
+          <h3>How it works</h3>
+        </div>
+        <ul class="steps">
+          <li>
+            <span class="step-num">1</span>
+            <div class="step-text">
+              <strong>Print & Display</strong>
+              <p>Print the QR code and place it prominently near your gym's entrance.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">2</span>
+            <div class="step-text">
+              <strong>Member Scan</strong>
+              <p>Members scan the code using any QR scanner or their camera app.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">3</span>
+            <div class="step-text">
+              <strong>Digital Check-in</strong>
+              <p>They enter their ID/Phone on their device to instantly record attendance.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="history-section">
+      <div class="card recent-checkins">
+        <div class="card-header space-between">
+          <div class="title-group">
+            <span class="material-symbols-outlined icon">history</span>
+            <h3>Today's Attendance</h3>
+          </div>
+          <span class="count-badge">{{ checkins.length }} Members</span>
+        </div>
+
+        <div class="checkin-list">
+          @if (isLoading) {
+            <div class="list-state">
+              <div class="loading-spinner small"></div>
+              <p>Loading check-ins...</p>
+            </div>
+          } @else if (checkins.length === 0) {
+            <div class="list-state empty">
+              <span class="material-symbols-outlined">person_off</span>
+              <p>No check-ins yet for today.</p>
+            </div>
+          } @else {
+            @for (item of checkins; track item.id) {
+              <div class="checkin-item">
+                <div class="member-avatar">
+                  @if (item.profileImageUrl) {
+                    <img [src]="item.profileImageUrl" [alt]="item.memberName">
+                  } @else {
+                    <div class="avatar-placeholder">{{ item.memberName.substring(0, 1).toUpperCase() }}</div>
+                  }
+                </div>
+                <div class="item-details">
+                  <div class="name-row">
+                    <strong>{{ item.memberName }}</strong>
+                    <span class="time">{{ item.checkinAt | date: 'hh:mm a' }}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="phone">{{ item.memberPhone || 'No Phone' }}</span>
+                    <span class="source-tag">{{ item.source }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

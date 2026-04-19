@@ -61,6 +61,23 @@
         </div>
       }
 
+      @if (viewType === 'pending' && !isLoading && members.length > 0) {
+        <div class="view-summary-card pending-view-summary">
+          <div class="summary-icon">
+            <span class="material-symbols-outlined">account_balance_wallet</span>
+          </div>
+          <div class="summary-content">
+            <div class="summary-label">Total Outstanding Balance (Current List)</div>
+            <div class="summary-value">{{ formatAmount(totalPendingAmount) }}</div>
+            <div class="summary-footer">From {{ totalFilteredCount }} members with pending or partial payments.</div>
+          </div>
+          <button class="clear-view-btn" (click)="resetFiltersAndReturn()">
+            <span class="material-symbols-outlined">close</span>
+            Clear Filter
+          </button>
+        </div>
+      }
+
       <div class="members-list-region">
         @if (errorMessage) {
           <p class="state error">{{ errorMessage }}</p>
@@ -86,7 +103,7 @@
               </article>
             } @else {
               @for (member of members; track member.id) {
-                <article class="member-card">
+                <article class="member-card" [class.is-pending-view]="viewType === 'pending'">
                   <div class="member-top">
                     <div class="avatar-wrap">
                       <div class="avatar">
@@ -116,10 +133,12 @@
 
                       <div class="plan-and-amount">
                         <span class="plan-chip">{{ getPlanMonthsLabel(member.planStartDate, member.planEndDate) }}</span>
-                        <span class="amount-inline">
+                        <span class="amount-inline" [class.has-pending]="hasOutstandingPayment(member)">
                           Paid {{ formatAmount(member.amountPaid) }}
                           @if (hasOutstandingPayment(member)) {
-                            <small class="pending-inline">({{ formatAmount(getRemainingAmount(member)) }} pending)</small>
+                            <span class="pending-highlight">
+                              Pending {{ formatAmount(getRemainingAmount(member)) }}
+                            </span>
                           }
                         </span>
                       </div>

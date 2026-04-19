@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, Subject } from 'rxjs';
+import { Router } from '@angular/router';
 import { PaymentListItem, PaymentListQuery } from '../../../core/models/payment.models';
 import { PaymentService } from '../../../core/services/payment.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { extractApiErrorMessage } from '../../../core/utils/api-error.util';
 import { TopbarComponent } from '../../../shared/components/topbar/topbar.component';
 
@@ -53,9 +55,19 @@ export class OwnerTransactionsComponent implements OnInit {
 
   private readonly searchChanged$ = new Subject<void>();
 
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(
+    private readonly paymentService: PaymentService,
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {}
 
   ngOnInit(): void {
+    const user = this.authService.getCurrentUser();
+    if (user?.gymSubscriptionPlan?.toLowerCase() === 'basic') {
+      this.router.navigate(['/owner/dashboard']);
+      return;
+    }
+
     this.searchChanged$.pipe(debounceTime(350)).subscribe(() => {
       this.query.pageNumber = 1;
       this.fetchTransactions();

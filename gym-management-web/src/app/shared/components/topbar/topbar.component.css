@@ -90,16 +90,26 @@
 
 .user-chip {
   align-items: center;
-  background: linear-gradient(140deg, var(--brand), #1a9f89);
-  border: 0;
-  border-radius: 999px;
-  color: #f5fffe;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--text-base);
   cursor: pointer;
-  display: inline-flex;
-  font-weight: 700;
+  display: flex;
+  font-size: 0.82rem;
+  font-weight: 800;
   height: 40px;
   justify-content: center;
+  padding: 0;
+  transition: all 0.2s;
   width: 40px;
+  overflow: hidden;
+}
+
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .side-menu {

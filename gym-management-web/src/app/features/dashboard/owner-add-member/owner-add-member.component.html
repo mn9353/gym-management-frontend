@@ -1,177 +1,242 @@
 <div class="dashboard-page">
   <app-topbar [title]="pageTitle" [subtitle]="pageSubtitle" />
 
-  <section class="panel">
-    <h3>Add Member</h3>
-    <p class="context-hint">{{ contextHint }}</p>
+  <main class="dashboard-content">
+    <section class="add-panel">
+      <header class="panel-header">
+        <h3>Register New Member</h3>
+        <p class="context-hint">{{ contextHint }}</p>
+      </header>
 
-    @if (duplicateMember) {
-      <div class="state warning">
-        <strong>Existing member found:</strong> {{ duplicateMember.fullName }} ({{ duplicateMember.phone || 'no phone' }})<br />
-        Current plan: {{ duplicateMember.planStartDate | date: 'dd MMM yyyy' }} to {{ duplicateMember.planEndDate | date: 'dd MMM yyyy' }}
-        <div class="warning-actions">
+      @if (duplicateMember) {
+        <div class="state warning">
+          <span class="material-symbols-outlined">warning</span>
+          <div class="warning-body">
+            <strong>Matching member found:</strong> {{ duplicateMember.fullName }} ({{ duplicateMember.phone }})<br />
+            Plan: {{ duplicateMember.planStartDate | date: 'dd MMM yyyy' }} to {{ duplicateMember.planEndDate | date: 'dd MMM yyyy' }}
+          </div>
           <button type="button" class="renew-btn" (click)="renewExistingMember()" [disabled]="isSubmitting">
-            {{ isSubmitting ? 'Processing...' : 'Renew Existing Member' }}
+            Renew This Member
           </button>
         </div>
-      </div>
-    }
+      }
 
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <div class="grid">
-        <label class="profile-photo">
-          Profile Photo
-          <div class="photo-actions">
-            <label class="photo-btn">
-              Choose image
-              <input type="file" accept="image/*" (change)="onProfileImageSelected($event)" hidden />
-            </label>
-            <label class="photo-btn">
-              Take photo
-              <input type="file" accept="image/*" capture="environment" (change)="onProfileImageSelected($event)" hidden />
-            </label>
-            @if (profileImagePreviewUrl) {
-              <button type="button" class="photo-clear" (click)="clearProfileImage()">Remove</button>
-            }
-          </div>
-          @if (profileImagePreviewUrl) {
-            <div class="photo-preview">
-              <img [src]="profileImagePreviewUrl" alt="Profile preview" />
-              <small>{{ profileImageName || 'Selected image' }}</small>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <!-- Section 1: Personal Profile & Photo -->
+        <div class="form-section">
+          <header>
+            <span class="material-symbols-outlined">person</span>
+            <h4>Personal Information</h4>
+          </header>
+
+          <div class="profile-layout">
+            <div class="avatar-column">
+              <div class="avatar-preview">
+                @if (profileImagePreviewUrl) {
+                  <img [src]="profileImagePreviewUrl" [alt]="profileImageName" />
+                } @else {
+                  <div class="avatar-placeholder">
+                    <span class="material-symbols-outlined">add_a_photo</span>
+                  </div>
+                }
+                
+                <div class="photo-actions-overlay">
+                  <button type="button" class="action-btn" (click)="openCamera()" title="Take Photo">
+                    <span class="material-symbols-outlined">photo_camera</span>
+                  </button>
+                  <label class="action-btn" title="Upload Photo">
+                    <input type="file" (change)="onProfileImageSelected($event)" accept="image/*" hidden />
+                    <span class="material-symbols-outlined">upload_file</span>
+                  </label>
+                </div>
+
+                @if (profileImagePreviewUrl) {
+                  <button type="button" class="clear-photo" (click)="clearProfileImage()">
+                    <span class="material-symbols-outlined">close</span>
+                  </button>
+                }
+              </div>
             </div>
-          } @else {
-            <small class="hint">Image is local preview only for now and is not uploaded yet.</small>
-          }
-        </label>
 
-        <label>
-          <span class="label-text">Full Name <span class="required">*</span></span>
-          <input type="text" formControlName="fullName" />
-          @if (showRequired('fullName')) {
-            <small class="field-error">Full name is required.</small>
-          }
-        </label>
+            <!-- Camera Viewfinder Modal -->
+            @if (isCameraOpen) {
+              <div class="camera-modal">
+                <div class="camera-container">
+                  <header>
+                    <h5>Take Profile Photo</h5>
+                    <button type="button" class="close-btn" (click)="closeCamera()">
+                      <span class="material-symbols-outlined">close</span>
+                    </button>
+                  </header>
+                  
+                  <div class="video-wrapper">
+                    @if (cameraStream) {
+                      <video #camVideo [srcObject]="cameraStream" autoplay playsinline></video>
+                      <button type="button" class="capture-btn" (click)="captureFromCamera(camVideo)">
+                        <div class="shutter-inner"></div>
+                      </button>
+                    } @else if (cameraError) {
+                      <div class="camera-error">
+                        <span class="material-symbols-outlined">videocam_off</span>
+                        <p>{{ cameraError }}</p>
+                      </div>
+                    } @else {
+                      <div class="camera-loading">
+                        <div class="spinner"></div>
+                        <p>Initializing camera...</p>
+                      </div>
+                    }
+                  </div>
+                  
+                  <footer class="camera-footer">
+                    <button type="button" class="cancel-btn" (click)="closeCamera()">Cancel</button>
+                  </footer>
+                </div>
+              </div>
+            }
 
-        <label>
-          <span class="label-text">Phone <span class="required">*</span></span>
-          <input
-            type="tel"
-            formControlName="phone"
-            inputmode="numeric"
-            maxlength="13"
-            placeholder="+919876543210"
-            (input)="onPhoneInput($event)"
-          />
-          @if (showRequired('phone')) {
-            <small class="field-error">Phone is required.</small>
-          }
-          @if (showPhoneFormatError()) {
-            <small class="field-error">Phone must be in +91XXXXXXXXXX format.</small>
-          }
-        </label>
+            <div class="form-grid">
+              <label>
+                <span class="field-label">Full Name <strong class="required">*</strong></span>
+                <input type="text" formControlName="fullName" placeholder="Member's full name" />
+                @if (showRequired('fullName')) {
+                  <small class="field-error">Name is required.</small>
+                }
+              </label>
 
-        <label>
-          Email
-          <input type="email" formControlName="email" placeholder="member@example.com" />
-          @if (showEmailFormatError()) {
-            <small class="field-error">Enter a valid email format (example: name&#64;example.com).</small>
-          }
-        </label>
+              <label>
+                <span class="field-label">Phone <strong class="required">*</strong></span>
+                <input type="text" formControlName="phone" (input)="onPhoneInput($event)" placeholder="+91 XXXXXXXXXX" />
+                @if (showRequired('phone')) {
+                  <small class="field-error">Phone is required.</small>
+                }
+                @if (showPhoneFormatError()) {
+                  <small class="field-error">Invalid Indian phone format.</small>
+                }
+              </label>
 
-        <label>
-          Training Type
-          <select formControlName="trainingType">
-            <option value="GENERAL">GENERAL</option>
-            <option value="PERSONAL">PERSONAL</option>
-          </select>
-        </label>
+              <label>
+                <span class="field-label">Email Address</span>
+                <input type="email" formControlName="email" placeholder="email@example.com" />
+                @if (showEmailFormatError()) {
+                  <small class="field-error">Invalid email format.</small>
+                }
+              </label>
 
-        <label class="trainer-slot" [class.trainer-hidden]="!shouldShowTrainerField">
-          Assigned Trainer <span class="required">*</span>
-          @if (isTrainerContext) {
-            <input type="text" formControlName="trainerAssigned" readonly />
-          } @else {
-            <select formControlName="trainerAssigned">
-              <option value="">Select trainer</option>
-              @for (trainer of trainers; track trainer) {
-                <option [value]="trainer">{{ trainer }}</option>
+              <label>
+                <span class="field-label">Target Weight (kg)</span>
+                <input type="number" formControlName="targetWeight" placeholder="e.g. 75" />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Training & Plan -->
+        <div class="form-section">
+          <header>
+            <span class="material-symbols-outlined">fitness_center</span>
+            <h4>Training & Plan Details</h4>
+          </header>
+
+          <div class="form-grid">
+            <label>
+              <span class="field-label">Training Type</span>
+              <select formControlName="trainingType">
+                <option value="GENERAL">General Training</option>
+                <option value="PERSONAL">Personal Training</option>
+              </select>
+            </label>
+
+            <label [class.hidden]="!shouldShowTrainerField">
+              <span class="field-label">Assigned Trainer <strong class="required">*</strong></span>
+              @if (!isTrainerContext) {
+                <select formControlName="trainerAssigned">
+                  <option value="">Select a trainer</option>
+                  @for (name of trainers; track name) {
+                    <option [value]="name">{{ name }}</option>
+                  }
+                </select>
+              } @else {
+                <input type="text" formControlName="trainerAssigned" readonly />
               }
-            </select>
-          }
-          @if (!isTrainerContext && loadingTrainers) {
-            <small class="hint">Loading trainers...</small>
-          }
-          @if (showTrainerRequiredError()) {
-            <small class="field-error">Trainer is required for PERSONAL training.</small>
-          }
-        </label>
+              @if (showTrainerRequiredError()) {
+                <small class="field-error">Trainer is required for PT.</small>
+              }
+            </label>
 
-        <label>
-          Lead Source
-          <input type="text" formControlName="leadSource" placeholder="Walk-in / Referral / Social Media (optional)" />
-        </label>
+            <label>
+              <span class="field-label">Join/Start Date <strong class="required">*</strong></span>
+              <input type="date" formControlName="joinDate" />
+              @if (showRequired('joinDate')) {
+                <small class="field-error">Start date is required.</small>
+              }
+            </label>
 
-        <label>
-          Target Weight (kg)
-          <input type="number" min="0" step="0.1" formControlName="targetWeight" placeholder="Optional" />
-        </label>
+            <label>
+              <span class="field-label">Plan Duration (Months) <strong class="required">*</strong></span>
+              <input type="number" formControlName="planDurationMonths" />
+              <div class="field-hints">
+                <small class="field-hint">Term: {{ computedMembershipTypeLabel }}</small>
+                <small class="field-hint">Ends: {{ computedPlanEndDateLabel }}</small>
+              </div>
+              @if (showRequired('planDurationMonths')) {
+                <small class="field-error">Duration is required.</small>
+              }
+            </label>
+          </div>
+        </div>
 
-        <label>
-          <span class="label-text">Start / Join Date <span class="required">*</span></span>
-          <input type="date" formControlName="joinDate" />
-          @if (showRequired('joinDate')) {
-            <small class="field-error">Start / Join date is required.</small>
-          }
-        </label>
+        <!-- Section 3: Financial Details -->
+        <div class="form-section">
+          <header>
+            <span class="material-symbols-outlined">payments</span>
+            <h4>Financial & Payment Info</h4>
+          </header>
 
-        <label>
-          <span class="label-text">Plan Duration (months) <span class="required">*</span></span>
-          <input type="number" min="1" max="24" formControlName="planDurationMonths" />
-          @if (showRequired('planDurationMonths')) {
-            <small class="field-error">Plan duration is required.</small>
-          }
-          @if (showRangeError('planDurationMonths')) {
-            <small class="field-error">Plan duration must be between 1 and 24 months.</small>
-          }
-        </label>
+          <div class="form-grid">
+            <label>
+              <span class="field-label">Amount To Pay <strong class="required">*</strong></span>
+              <input type="number" formControlName="amountToPay" placeholder="Total billable" />
+              @if (showRequired('amountToPay')) {
+                <small class="field-error">Required.</small>
+              }
+            </label>
 
-        <label>
-          <span class="label-text">Amount To Pay <span class="required">*</span></span>
-          <input type="number" min="0" formControlName="amountToPay" />
-          @if (showRequired('amountToPay')) {
-            <small class="field-error">Amount to pay is required.</small>
-          }
-        </label>
+            <label>
+              <span class="field-label">Amount Paid Now</span>
+              <input type="number" formControlName="amountPaid" placeholder="Initial payment" />
+            </label>
 
-        <label>
-          Amount Paid
-          <input type="number" formControlName="amountPaid" />
-        </label>
+            <label [class.hidden]="(form.controls.amountPaid.value ?? 0) <= 0">
+              <span class="field-label">Payment Mode <strong class="required">*</strong></span>
+              <select formControlName="paymentMode">
+                <option value="UPI">UPI</option>
+                <option value="CASH">CASH</option>
+                <option value="CARD">CARD</option>
+              </select>
+              @if (showPaymentModeRequired()) {
+                <small class="field-error">Required.</small>
+              }
+            </label>
 
-        <label>
-          Payment Mode
-          <select formControlName="paymentMode">
-            <option value="UPI">UPI</option>
-            <option value="CASH">CASH</option>
-            <option value="CARD">CARD</option>
-          </select>
-          @if (showPaymentModeRequired()) {
-            <small class="field-error">Payment mode is required when amount paid is greater than 0.</small>
-          }
-        </label>
+            <label>
+              <span class="field-label">Lead Source</span>
+              <input type="text" formControlName="leadSource" placeholder="Referral, Social Media, etc." />
+            </label>
+          </div>
+        </div>
 
-        <label class="computed">
-          Computed Plan End Date
-          <input type="text" [value]="computedPlanEndDateLabel" readonly />
-        </label>
-
-      </div>
-
-      <button type="submit" class="submit-btn" [disabled]="isSubmitting">
-        {{ isSubmitting ? 'Saving...' : 'Add Member' }}
-      </button>
-    </form>
-  </section>
+        <div class="footer-actions">
+          <button type="submit" class="primary-btn" [disabled]="isSubmitting">
+            @if (!isSubmitting) {
+              <span class="material-symbols-outlined">add_task</span>
+            }
+            {{ isSubmitting ? 'Adding Member...' : 'Register Member' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </main>
 </div>
 
 <app-confirm-dialog

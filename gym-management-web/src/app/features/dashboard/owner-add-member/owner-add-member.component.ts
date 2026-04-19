@@ -40,6 +40,10 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
     confirmText: 'Confirm',
     tone: 'primary' as 'primary' | 'warning'
   };
+  
+  isCameraOpen = false;
+  cameraStream: MediaStream | null = null;
+  cameraError: string | null = null;
 
   readonly form;
 
@@ -78,10 +82,13 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
     this.revokePreviewUrl();
   }
 
+  private profileImageBase64: string | null = null;
+
   onProfileImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) {
+      this.clearProfileImage();
       return;
     }
 
@@ -90,15 +97,66 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Preview
     this.revokePreviewUrl();
     this.profileImagePreviewUrl = URL.createObjectURL(file);
     this.profileImageName = file.name;
+
+    // Convert to Base64 for storage
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.profileImageBase64 = e.target?.result as string;
+    };
+    reader.onerror = () => {
+      this.notificationService.error('Unable to process the selected image.');
+      this.clearProfileImage();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async openCamera(): Promise<void> {
+    this.isCameraOpen = true;
+    this.cameraError = null;
+    
+    try {
+      this.cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+    } catch (err) {
+      this.cameraError = 'Could not access camera. Please check permissions.';
+      this.notificationService.error('Camera access denied or not available.');
+    }
+  }
+
+  captureFromCamera(video: HTMLVideoElement): void {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0);
+      this.profileImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+      this.profileImagePreviewUrl = this.profileImageBase64;
+      this.profileImageName = 'camera_capture.jpg';
+      this.closeCamera();
+    }
+  }
+
+  closeCamera(): void {
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach(track => track.stop());
+      this.cameraStream = null;
+    }
+    this.isCameraOpen = false;
   }
 
   clearProfileImage(): void {
     this.revokePreviewUrl();
     this.profileImagePreviewUrl = null;
     this.profileImageName = '';
+    this.profileImageBase64 = null;
   }
 
   onPhoneInput(event: Event): void {
@@ -172,7 +230,8 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
       trainingType,
       trainerAssigned: trainerAssigned || null,
       leadSource: leadSource || null,
-      targetWeight
+      targetWeight,
+      profileImageUrl: this.profileImageBase64
     };
 
     this.openConfirmDialog(

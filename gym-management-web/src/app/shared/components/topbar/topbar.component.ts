@@ -42,8 +42,12 @@ export class TopbarComponent {
     return this.authService.getCurrentUser()?.fullName ?? 'User';
   }
 
+  get userProfileImageUrl(): string | null {
+    return this.authService.getCurrentUser()?.profileImageUrl ?? null;
+  }
+
   get userInitials(): string {
-    const parts = this.userName
+    const parts = (this.authService.getCurrentUser()?.fullName ?? 'User')
       .split(' ')
       .map((part) => part.trim())
       .filter((part) => part.length > 0);
@@ -105,7 +109,8 @@ export class TopbarComponent {
         { label: 'Dashboard', path: '/trainer/dashboard', exact: true },
         { label: 'Members', path: '/trainer/members', exact: true },
         { label: 'Add Member', path: '/trainer/members/add', exact: true },
-        { label: 'Enquiries', path: '/trainer/enquiries', exact: true }
+        { label: 'Enquiries', path: '/trainer/enquiries', exact: true },
+        { label: 'Attendance', path: '/trainer/attendance', exact: true }
       ];
     }
 
@@ -119,7 +124,8 @@ export class TopbarComponent {
       { label: 'Add Member', path: '/owner/members/add', exact: true },
       ...(this.isBasicPlan ? [] : [{ label: 'Transactions', path: '/owner/transactions', exact: true }]),
       { label: 'Team', path: '/owner/team', exact: true },
-      { label: 'Enquiries', path: '/owner/enquiries', exact: true }
+      { label: 'Enquiries', path: '/owner/enquiries', exact: true },
+      { label: 'Attendance', path: '/owner/attendance', exact: true }
     ];
   }
 

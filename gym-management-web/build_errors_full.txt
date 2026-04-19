@@ -1,0 +1,270 @@
+﻿[33mΓ¥»[39m Building...
+[32mΓ£ö[39m Building...
+Application bundle generation failed. [6.615 seconds]
+
+node.exe : 
+[1m[33m[33mΓû▓ [43;33m
+[[43;30mWARNING[43;33m]
+[0m [1mTS-998113: 
+TopbarComponent is not 
+used within the template 
+of OwnerAddMemberComponent
+[0m [1m[35m[plugin 
+angular-compiler][0m
+At 
+C:\nvm4w\nodejs\ng.ps1:16 
+char:5
++     & 
+"$basedir/node$exe"  "$bas
+edir/node_modules/@angular
+/cli/bin/ng ...
++     ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (  
+  [1m[33m[33mΓ...r-co   
+ mpiler][0m:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.ts:
+17:47:
+[37m      17 Γöé ...le, 
+ReactiveFormsModule, [32m
+TopbarComponent[37m, 
+ConfirmDialogComponent],
+         Γò╡              
+               
+[32m~~~~~~~~~~~~~~~[0m
+
+
+[33mΓû▓ [43;33m[[43;30m
+WARNING[43;33m][0m 
+[1mTS-998113: 
+ConfirmDialogComponent is 
+not used within the 
+template of OwnerAddMember
+Component[0m 
+[1m[35m[plugin 
+angular-compiler][0m
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.ts:
+17:64:
+[37m      17 Γöé ...le, 
+ReactiveFormsModule, 
+TopbarComponent, [32mConf
+irmDialogComponent[37m],
+         Γò╡              
+                          
+      [32m~~~~~~~~~~~~~~~
+~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[
+[41;97mERROR[41;31m][0m 
+[1mNG5002: Unexpected 
+closing tag "div". It may 
+happen when the tag has 
+already been closed by 
+another tag. For more 
+info see https://www.w3.or
+g/TR/html5/syntax.html#clo
+sing-elements-that-have-im
+plied-end-tags[0m 
+[1m[35m[plugin 
+angular-compiler][0m
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.htm
+l:133:8:
+[37m      133 Γöé        
+ [32m</div>[37m
+          Γò╡         
+[32m~~~~~~[0m
+
+  Error occurs in the 
+template of component 
+OwnerAddMemberComponent.
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.ts:
+18:15:
+[37m      18 Γöé   
+templateUrl: [32m'./owner
+-add-member.component.html
+'[37m,
+         Γò╡              
+  [32m~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mER
+ROR[41;31m][0m 
+[1mNG5002: Unexpected 
+closing tag "form". It 
+may happen when the tag 
+has already been closed 
+by another tag. For more 
+info see https://www.w3.or
+g/TR/html5/syntax.html#clo
+sing-elements-that-have-im
+plied-end-tags[0m 
+[1m[35m[plugin 
+angular-compiler][0m
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.htm
+l:238:6:
+[37m      238 Γöé       
+[32m</form>[37m
+          Γò╡       
+[32m~~~~~~~[0m
+
+  Error occurs in the 
+template of component 
+OwnerAddMemberComponent.
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.ts:
+18:15:
+[37m      18 Γöé   
+templateUrl: [32m'./owner
+-add-member.component.html
+'[37m,
+         Γò╡              
+  [32m~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mER
+ROR[41;31m][0m 
+[1mNG5002: Unexpected 
+closing tag "section". It 
+may happen when the tag 
+has already been closed 
+by another tag. For more 
+info see https://www.w3.or
+g/TR/html5/syntax.html#clo
+sing-elements-that-have-im
+plied-end-tags[0m 
+[1m[35m[plugin 
+angular-compiler][0m
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.htm
+l:239:4:
+[37m      239 Γöé     
+[32m</section>[37m
+          Γò╡     
+[32m~~~~~~~~~~[0m
+
+  Error occurs in the 
+template of component 
+OwnerAddMemberComponent.
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.ts:
+18:15:
+[37m      18 Γöé   
+templateUrl: [32m'./owner
+-add-member.component.html
+'[37m,
+         Γò╡              
+  [32m~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mER
+ROR[41;31m][0m 
+[1mNG5002: Unexpected 
+closing tag "main". It 
+may happen when the tag 
+has already been closed 
+by another tag. For more 
+info see https://www.w3.or
+g/TR/html5/syntax.html#clo
+sing-elements-that-have-im
+plied-end-tags[0m 
+[1m[35m[plugin 
+angular-compiler][0m
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.htm
+l:240:2:
+[37m      240 Γöé   
+[32m</main>[37m
+          Γò╡   
+[32m~~~~~~~[0m
+
+  Error occurs in the 
+template of component 
+OwnerAddMemberComponent.
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.ts:
+18:15:
+[37m      18 Γöé   
+templateUrl: [32m'./owner
+-add-member.component.html
+'[37m,
+         Γò╡              
+  [32m~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mER
+ROR[41;31m][0m 
+[1mNG5002: Unexpected 
+closing tag "div". It may 
+happen when the tag has 
+already been closed by 
+another tag. For more 
+info see https://www.w3.or
+g/TR/html5/syntax.html#clo
+sing-elements-that-have-im
+plied-end-tags[0m 
+[1m[35m[plugin 
+angular-compiler][0m
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.htm
+l:241:0:
+[37m      241 Γöé 
+[32m</div>[37m
+          Γò╡ 
+[32m~~~~~~[0m
+
+  Error occurs in the 
+template of component 
+OwnerAddMemberComponent.
+
+    src/app/features/dashb
+oard/owner-add-member/owne
+r-add-member.component.ts:
+18:15:
+[37m      18 Γöé   
+templateUrl: [32m'./owner
+-add-member.component.html
+'[37m,
+         Γò╡              
+  [32m~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~[0m
+
+[39m[22m

@@ -1,25 +1,88 @@
-<div class="page">
-  <app-topbar title="Irregular Members" subtitle="Members absent for 4+ days" />
+<div class="dashboard-page">
+  <app-topbar title="Missing Members" subtitle="Keeping track of consistent gym attendance" />
 
-  <section class="panel">
-    @if (isLoading) {
-      <p class="state">Loading irregular members...</p>
-    } @else if (errorMessage) {
-      <p class="state error">{{ errorMessage }}</p>
-    } @else if (members.length === 0) {
-      <p class="state">No irregular members right now.</p>
-    } @else {
-      <div class="cards">
-        @for (member of members; track member.id) {
-          <article class="card">
-            <h4>{{ member.fullName }}</h4>
-            <p><strong>Absent:</strong> {{ member.daysAbsent }} day(s)</p>
-            <p><strong>Last check-in:</strong> {{ member.lastCheckinDate ? (member.lastCheckinDate | date: 'dd MMM yyyy') : 'No attendance yet' }}</p>
-            <p><strong>Plan end:</strong> {{ member.planEndDate | date: 'dd MMM yyyy' }}</p>
-            <span class="badge">{{ member.status }}</span>
-          </article>
+  <main class="dashboard-content">
+    <div class="list-container">
+      <header class="list-header">
+        <div class="header-main">
+          <h3>Recent Absences</h3>
+          <p>Showing {{ totalCount }} members who haven't checked in for 4+ days</p>
+        </div>
+      </header>
+
+      @if (isLoading && members.length === 0) {
+        <div class="state-view">
+          <div class="spinner"></div>
+          <p>Syncing attendance data...</p>
+        </div>
+      } @else if (errorMessage && members.length === 0) {
+        <div class="state-view error">
+          <span class="material-symbols-outlined">error</span>
+          <p>{{ errorMessage }}</p>
+          <button (click)="loadMembers()">Retry</button>
+        </div>
+      } @else if (members.length === 0) {
+        <div class="state-view empty">
+          <span class="material-symbols-outlined">check_circle</span>
+          <p>Perfect attendance! No irregular members found.</p>
+        </div>
+      } @else {
+        <div class="members-list">
+          @for (member of members; track member.id) {
+            <div class="member-item">
+              <div class="member-profile">
+                @if (member.profileImageUrl) {
+                  <img [src]="member.profileImageUrl" [alt]="member.fullName" class="member-avatar" />
+                } @else {
+                  <div class="member-avatar-fallback">{{ member.fullName.charAt(0) }}</div>
+                }
+                <div class="member-info">
+                  <span class="member-name">{{ member.fullName }}</span>
+                  <span class="member-phone">{{ member.phone || 'No phone' }}</span>
+                </div>
+              </div>
+
+              <div class="member-absent-metric">
+                <span class="absent-value">{{ member.daysAbsent }}</span>
+                <span class="absent-label">days away</span>
+              </div>
+
+              <div class="member-last-checkin">
+                <span class="meta-label">Last seen</span>
+                <span class="meta-value">
+                  {{ member.lastCheckinDate ? (member.lastCheckinDate | date: 'dd MMM y') : 'Never' }}
+                </span>
+              </div>
+
+              <div class="member-plan">
+                <span class="meta-label">Plan ends</span>
+                <span class="meta-value">{{ member.planEndDate | date: 'dd MMM y' }}</span>
+              </div>
+
+              <div class="member-actions">
+                <button class="action-btn whatsapp" (click)="contactWhatsApp(member)" title="Message on WhatsApp">
+                  <span class="material-symbols-outlined">chat</span>
+                </button>
+                <button class="action-btn call" (click)="contactCall(member)" title="Call Member">
+                  <span class="material-symbols-outlined">call</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (hasMoreItems) {
+          <div class="pagination-footer">
+            <button class="load-more-btn" (click)="loadMore()" [disabled]="isLoadingMore">
+              {{ isLoadingMore ? 'Loading...' : 'Show More' }}
+              @if (!isLoadingMore) {
+                <span class="material-symbols-outlined">expand_more</span>
+              }
+            </button>
+            <p class="count-hint">Showing {{ members.length }} of {{ totalCount }} members</p>
+          </div>
         }
-      </div>
-    }
-  </section>
+      }
+    </div>
+  </main>
 </div>

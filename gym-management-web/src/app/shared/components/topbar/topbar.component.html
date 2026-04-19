@@ -24,8 +24,12 @@
         {{ isDarkTheme ? 'dark_mode' : 'light_mode' }}
       </span>
     </button>
-    <button type="button" class="user-chip" (click)="toggleUserMenu()" aria-label="Open user menu">
-      {{ userInitials }}
+    <button type="button" class="user-chip" (click)="toggleUserMenu()" [attr.aria-label]="'Open user menu for ' + userName">
+      @if (userProfileImageUrl) {
+        <img [src]="userProfileImageUrl" [alt]="userName" class="user-avatar-img" />
+      } @else {
+        {{ userInitials }}
+      }
     </button>
   </div>
 </header>

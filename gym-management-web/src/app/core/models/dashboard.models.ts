@@ -61,4 +61,12 @@ export interface IrregularMember {
   daysAbsent: number;
   planEndDate: string;
   status: string;
+  phone?: string | null;
+  profileImageUrl?: string | null;
+}
+export interface PaginatedIrregularMembers {
+  items: IrregularMember[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
 }
