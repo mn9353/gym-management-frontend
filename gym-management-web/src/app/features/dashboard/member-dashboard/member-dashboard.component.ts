@@ -7,6 +7,7 @@ import { forkJoin } from 'rxjs';
 import { TopbarComponent } from '../../../shared/components/topbar/topbar.component';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import jsQR from 'jsqr';
 import { MemberPortalService } from '../../../core/services/member-portal.service';
 import {
   MemberAttendanceSummary,
@@ -36,6 +37,8 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
   private chartNeedsRender = false;
   private mediaStream: MediaStream | null = null;
   private scanTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly scanCanvas = document.createElement('canvas');
+  private readonly scanCtx = this.scanCanvas.getContext('2d', { willReadFrequently: true });
 
   @ViewChild('weightChartCanvas') weightChartCanvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('missedTrendCanvas') missedTrendCanvas?: ElementRef<HTMLCanvasElement>;
@@ -61,7 +64,8 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
   isSubmittingMetric = false;
   isSubmittingCheckin = false;
   showScanner = false;
-  scanSupported = false;
+  // Camera scanning is always supported — jsQR works in all browsers
+  readonly scanSupported = true;
 
   readonly metricForm;
   readonly profileForm;
@@ -102,7 +106,7 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
     } else {
       this.loadDashboard();
     }
-    this.scanSupported = typeof (window as { BarcodeDetector?: unknown }).BarcodeDetector !== 'undefined';
+    this.scanSupported; // always true — jsQR works everywhere
     this.destroyRef.onDestroy(() => this.cleanupScanner());
     this.destroyRef.onDestroy(() => this.destroyCharts());
     this.themeService.theme$
@@ -316,7 +320,7 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
   }
 
   async startScanner(): Promise<void> {
-    if (!this.scanSupported || this.showScanner) {
+    if (this.showScanner) {
       return;
     }
 
@@ -363,28 +367,40 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
 
   private startDetectLoop(video: HTMLVideoElement): void {
     const BarcodeDetectorCtor = (window as { BarcodeDetector?: new (args?: { formats?: string[] }) => { detect: (input: ImageBitmapSource) => Promise<Array<{ rawValue?: string }>> } }).BarcodeDetector;
-    if (!BarcodeDetectorCtor) {
-      return;
+
+    if (BarcodeDetectorCtor) {
+      // Use native BarcodeDetector (Android Chrome, some desktop Chromium builds)
+      const detector = new BarcodeDetectorCtor({ formats: ['qr_code'] });
+      this.scanTimer = setInterval(async () => {
+        if (!video.videoWidth || !video.videoHeight) return;
+        try {
+          const result = await detector.detect(video);
+          const qrValue = result?.[0]?.rawValue?.trim();
+          if (qrValue) {
+            this.qrInput = qrValue;
+            this.stopScanner();
+            this.submitQrCheckin();
+          }
+        } catch { /* no-op */ }
+      }, 700);
+    } else {
+      // Universal fallback: jsQR via canvas frame capture (works on all browsers)
+      this.scanTimer = setInterval(() => {
+        if (!video.videoWidth || !video.videoHeight) return;
+        try {
+          this.scanCanvas.width = video.videoWidth;
+          this.scanCanvas.height = video.videoHeight;
+          this.scanCtx!.drawImage(video, 0, 0);
+          const imageData = this.scanCtx!.getImageData(0, 0, this.scanCanvas.width, this.scanCanvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+          if (code?.data) {
+            this.qrInput = code.data;
+            this.stopScanner();
+            this.submitQrCheckin();
+          }
+        } catch { /* no-op */ }
+      }, 500);
     }
-
-    const detector = new BarcodeDetectorCtor({ formats: ['qr_code'] });
-    this.scanTimer = setInterval(async () => {
-      if (!video.videoWidth || !video.videoHeight) {
-        return;
-      }
-
-      try {
-        const result = await detector.detect(video);
-        const qrValue = result?.[0]?.rawValue?.trim();
-        if (qrValue) {
-          this.qrInput = qrValue;
-          this.stopScanner();
-          this.submitQrCheckin();
-        }
-      } catch {
-        // no-op
-      }
-    }, 700);
   }
 
   private cleanupScanner(): void {
