@@ -23,8 +23,20 @@ export class MemberCheckInComponent implements OnInit {
 
   ngOnInit(): void {
     this.gymId = this.route.snapshot.queryParamMap.get('gymId');
+    const token = this.route.snapshot.queryParamMap.get('token');
+
     if (!this.gymId) {
       this.errorMessage = 'Invalid QR Code. Please ask the gym owner for the correct one.';
+      return;
+    }
+
+    // Validate daily token — QR codes change every day
+    if (token) {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      if (token !== today) {
+        this.errorMessage = 'This QR code has expired. Please ask the gym trainer to show today\'s QR code.';
+        return;
+      }
     }
   }
 

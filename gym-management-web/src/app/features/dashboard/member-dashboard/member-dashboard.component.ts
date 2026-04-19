@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { TopbarComponent } from '../../../shared/components/topbar/topbar.component';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MemberPortalService } from '../../../core/services/member-portal.service';
 import {
   MemberAttendanceSummary,
@@ -65,11 +66,17 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
   readonly metricForm;
   readonly profileForm;
 
+  get isBasicPlan(): boolean {
+    const plan = this.authService.getCurrentUser()?.gymSubscriptionPlan ?? '';
+    return plan.toLowerCase() === 'basic';
+  }
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly memberPortalService: MemberPortalService,
     private readonly notificationService: NotificationService,
-    private readonly themeService: ThemeService
+    private readonly themeService: ThemeService,
+    private readonly authService: AuthService
   ) {
     this.metricForm = this.fb.nonNullable.group({
       metricDate: [new Date().toISOString().slice(0, 10), Validators.required],
@@ -90,7 +97,11 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
   }
 
   ngOnInit(): void {
-    this.loadDashboard();
+    if (this.isBasicPlan) {
+      this.loadAttendanceForBasic();
+    } else {
+      this.loadDashboard();
+    }
     this.scanSupported = typeof (window as { BarcodeDetector?: unknown }).BarcodeDetector !== 'undefined';
     this.destroyRef.onDestroy(() => this.cleanupScanner());
     this.destroyRef.onDestroy(() => this.destroyCharts());
@@ -137,6 +148,22 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
         },
         error: () => {
           this.notificationService.error('Unable to load member dashboard.');
+          this.isLoading = false;
+        }
+      });
+  }
+
+  loadAttendanceForBasic(): void {
+    this.isLoading = true;
+    this.memberPortalService.getAttendance(3, 45)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (attendance) => {
+          this.attendance = attendance;
+          this.isLoading = false;
+        },
+        error: () => {
+          this.notificationService.error('Unable to load attendance.');
           this.isLoading = false;
         }
       });
@@ -206,21 +233,46 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
     if (this.isSubmittingCheckin) {
       return;
     }
-    const qr = (this.qrInput || '').trim();
-    if (!qr) {
+    const rawQr = (this.qrInput || '').trim();
+    if (!rawQr) {
       this.notificationService.warning('Please scan or enter the gym QR value.');
       return;
     }
 
+    // Parse owner/trainer QR: URL format is /attendance/check-in?gymId=xxx&token=YYYY-MM-DD
+    let qrValue = rawQr;
+    try {
+      const url = new URL(rawQr);
+      const gymId = url.searchParams.get('gymId');
+      const token = url.searchParams.get('token');
+
+      if (gymId) {
+        // Validate token is today's date (YYYY-MM-DD)
+        const today = new Date().toISOString().split('T')[0];
+        if (token && token !== today) {
+          this.notificationService.error('This QR code has expired. Please ask the gym to refresh it.');
+          return;
+        }
+        qrValue = gymId; // Send just the gymId to the API
+      }
+    } catch {
+      // Not a URL — use raw value as-is (legacy / manual entry)
+    }
+
     this.isSubmittingCheckin = true;
-    this.memberPortalService.checkinByQr({ qrValue: qr })
+    this.memberPortalService.checkinByQr({ qrValue })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
           this.latestCheckin = result;
-          this.showWorkoutPrompt = true;
-          this.notificationService.success(result.alreadyCheckedIn ? 'Attendance already marked for today.' : 'Attendance marked successfully.');
-          this.refreshDashboardData();
+          this.qrInput = ''; // Clear input after successful scan
+          this.showWorkoutPrompt = !this.isBasicPlan; // Only prompt for workout on full plan
+          this.notificationService.success(result.alreadyCheckedIn ? 'Attendance already marked for today.' : 'Attendance marked successfully!');
+          if (this.isBasicPlan) {
+            this.loadAttendanceForBasic();
+          } else {
+            this.refreshDashboardData();
+          }
           this.isSubmittingCheckin = false;
         },
         error: (err) => {
