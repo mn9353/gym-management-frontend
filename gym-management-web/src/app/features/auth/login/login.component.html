@@ -11,17 +11,17 @@
 
   <section class="panel">
     <h2>Sign in</h2>
-    <p>Use admin or owner credentials.</p>
+    <p>Use email or phone with your password.</p>
 
     <form [formGroup]="form" (ngSubmit)="submit()">
       <label>
-        Email
-        <input type="email" formControlName="email" placeholder="owner@gym.com" />
+        Email or Phone
+        <input type="text" formControlName="identifier" placeholder="owner@gym.com or +919876543210" />
       </label>
 
       <label>
         Password
-        <input type="password" formControlName="password" placeholder="••••••••" />
+        <input type="password" formControlName="password" placeholder="********" />
       </label>
 
       @if (errorMessage) {
@@ -31,6 +31,64 @@
       <button type="submit" [disabled]="isSubmitting">
         {{ isSubmitting ? 'Signing in...' : 'Sign in' }}
       </button>
+
+      <button type="button" class="link-btn" (click)="openResetModal()">Forgot password?</button>
     </form>
   </section>
 </div>
+
+@if (isResetModalOpen) {
+  <div class="modal-backdrop" (click)="closeResetModal()"></div>
+  <section class="reset-modal" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <h3>Reset Password</h3>
+      <button type="button" class="close-btn" (click)="closeResetModal()">Close</button>
+    </div>
+
+    <form [formGroup]="resetForm" class="modal-form">
+      <label>
+        Email or Phone
+        <input type="text" formControlName="identifier" placeholder="owner@gym.com or +919876543210" />
+      </label>
+
+      @if (resetStage !== 'request') {
+        <label>
+          6-digit Code
+          <input type="text" formControlName="code" maxlength="6" placeholder="123456" />
+        </label>
+      }
+
+      @if (resetStage === 'change') {
+        <label>
+          New Password
+          <input type="password" formControlName="newPassword" placeholder="New strong password" />
+          <small class="hint">8-100 chars, at least one uppercase, lowercase, number, and special character.</small>
+        </label>
+      }
+
+      @if (resetMessage) {
+        <div class="info">{{ resetMessage }}</div>
+      }
+
+      <div class="row-actions">
+        @if (resetStage === 'request') {
+          <button type="button" class="secondary" [disabled]="isSubmitting" (click)="sendResetCode()">
+            {{ isSubmitting ? 'Sending...' : 'Send Code' }}
+          </button>
+        }
+
+        @if (resetStage === 'verify') {
+          <button type="button" class="secondary" [disabled]="isSubmitting" (click)="verifyResetCode()">
+            {{ isSubmitting ? 'Verifying...' : 'Verify Code' }}
+          </button>
+        }
+
+        @if (resetStage === 'change') {
+          <button type="button" [disabled]="isSubmitting" (click)="resetPassword()">
+            {{ isSubmitting ? 'Updating...' : 'Set New Password' }}
+          </button>
+        }
+      </div>
+    </form>
+  </section>
+}

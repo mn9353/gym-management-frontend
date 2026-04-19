@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, Subject } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   MemberListItem,
   MemberListQuery,
@@ -118,10 +119,13 @@ export class OwnerMembersComponent implements OnInit {
 
   constructor(
     private readonly memberService: MemberService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
+    this.applyInitialQueryParams();
     this.searchChanged$.pipe(debounceTime(350)).subscribe(() => {
       this.query.pageNumber = 1;
       this.fetchMembers();
@@ -282,6 +286,10 @@ export class OwnerMembersComponent implements OnInit {
 
     this.selectedSegment = segment;
     this.query.pageNumber = 1;
+    this.query.planEndDateFrom = '';
+    this.query.planEndDateTo = '';
+    this.expiryDateMode = 'any';
+    this.syncMembersQueryParams();
     this.fetchMembers();
   }
 
@@ -850,6 +858,49 @@ export class OwnerMembersComponent implements OnInit {
         this.isSavingRenewal = false;
       }
     });
+  }
+
+  private applyInitialQueryParams(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const segment = params.get('segment');
+    if (segment === 'all' || segment === 'active' || segment === 'expiring' || segment === 'inactive') {
+      this.selectedSegment = segment;
+    }
+
+    const endingMonth = params.get('endingMonth');
+    if (endingMonth === 'current') {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      this.query.planEndDateFrom = this.toIsoDate(monthStart);
+      this.query.planEndDateTo = this.toIsoDate(monthEnd);
+      this.expiryDateMode = 'range';
+      this.draftExpiryDateMode = 'range';
+    }
+
+    const joinedMonth = params.get('joinedMonth');
+    if (joinedMonth === 'current') {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      this.query.joinDateFrom = this.toIsoDate(monthStart);
+      this.query.joinDateTo = this.toIsoDate(monthEnd);
+      this.joinedDateMode = 'range';
+      this.draftJoinedDateMode = 'range';
+    }
+  }
+
+  private syncMembersQueryParams(): void {
+    const queryParams: Record<string, string> = { segment: this.selectedSegment };
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      replaceUrl: true
+    });
+  }
+
+  private toIsoDate(value: Date): string {
+    return value.toISOString().split('T')[0];
   }
 
   private parseDateOnlyToUtcDate(value: string): Date | null {

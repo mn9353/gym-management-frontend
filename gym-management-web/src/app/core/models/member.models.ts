@@ -11,6 +11,7 @@ export interface MemberDto {
   planEndDate: string;
   lastPaymentDate?: string | null;
   membershipType?: string | null;
+  trainingType?: string | null;
   amountPaid?: number | null;
   amountToPay?: number | null;
   paymentStatus: string;
@@ -19,10 +20,13 @@ export interface MemberDto {
   emergencyContact?: string | null;
   height?: number | null;
   weight?: number | null;
+  targetWeight?: number | null;
   fitnessGoal?: string | null;
   trainerAssigned?: string | null;
   leadSource?: string | null;
   profileImageUrl?: string | null;
+  welcomeEmailSent?: boolean | null;
+  welcomeEmailMessage?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,6 +42,7 @@ export interface CreateMemberDto {
   planEndDate?: string;
   planDurationMonths?: number;
   membershipType?: string | null;
+  trainingType?: 'GENERAL' | 'PERSONAL' | 'HYBRID' | null;
   amountPaid?: number | null;
   amountToPay?: number | null;
   paymentStatus?: string;
@@ -45,6 +50,7 @@ export interface CreateMemberDto {
   emergencyContact?: string | null;
   height?: number | null;
   weight?: number | null;
+  targetWeight?: number | null;
   fitnessGoal?: string | null;
   trainerAssigned?: string | null;
   leadSource?: string | null;
@@ -80,6 +86,7 @@ export interface UpdateMemberDto {
   dateOfBirth?: string | null;
   planEndDate?: string;
   membershipType?: string | null;
+  trainingType?: 'GENERAL' | 'PERSONAL' | 'HYBRID' | null;
   amountPaid?: number | null;
   amountToPay?: number | null;
   paymentStatus?: string;
@@ -87,6 +94,7 @@ export interface UpdateMemberDto {
   emergencyContact?: string | null;
   height?: number | null;
   weight?: number | null;
+  targetWeight?: number | null;
   fitnessGoal?: string | null;
   trainerAssigned?: string | null;
   notes?: string | null;

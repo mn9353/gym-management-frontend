@@ -1,5 +1,5 @@
 <div class="dashboard-page">
-  <app-topbar title="Owner Dashboard" subtitle="Track members, renewals, and growth from one screen." />
+  <app-topbar title="Trainer Dashboard" subtitle="Track members, renewals, and growth from one screen." />
 
   @if (isLoading) {
     <section class="card-grid">
@@ -14,28 +14,6 @@
 
     <section class="panel-grid two-col">
       <article class="panel skeleton-panel">
-        <div class="panel-head">
-          <div>
-            <span class="skeleton skeleton-line skeleton-title"></span>
-            <span class="skeleton skeleton-line skeleton-subtitle"></span>
-          </div>
-          <div class="chip-group">
-            <span class="skeleton skeleton-chip"></span>
-            <span class="skeleton skeleton-chip"></span>
-            <span class="skeleton skeleton-chip"></span>
-          </div>
-        </div>
-        <div class="skeleton-chart">
-          <span class="skeleton skeleton-bar" style="height: 35%"></span>
-          <span class="skeleton skeleton-bar" style="height: 65%"></span>
-          <span class="skeleton skeleton-bar" style="height: 48%"></span>
-          <span class="skeleton skeleton-bar" style="height: 80%"></span>
-          <span class="skeleton skeleton-bar" style="height: 58%"></span>
-          <span class="skeleton skeleton-bar" style="height: 72%"></span>
-        </div>
-      </article>
-
-      <article class="panel skeleton-panel">
         <span class="skeleton skeleton-line skeleton-title"></span>
         <div class="weekly-skeleton">
           @for (item of rowSkeletons; track item) {
@@ -47,6 +25,24 @@
           }
         </div>
         <span class="skeleton skeleton-box"></span>
+      </article>
+
+      <article class="panel skeleton-panel">
+        <div class="panel-head">
+          <span class="skeleton skeleton-line skeleton-title"></span>
+          <span class="skeleton skeleton-chip"></span>
+        </div>
+        <div class="expiring-skeleton">
+          @for (item of rowSkeletons; track item) {
+            <div class="expiring-item-skeleton">
+              <span class="skeleton skeleton-avatar"></span>
+              <div>
+                <span class="skeleton skeleton-line w-140"></span>
+                <span class="skeleton skeleton-line w-100"></span>
+              </div>
+            </div>
+          }
+        </div>
       </article>
     </section>
 
@@ -71,36 +67,18 @@
       </article>
 
       <article class="panel skeleton-panel">
-        <div class="panel-head">
-          <span class="skeleton skeleton-line skeleton-title"></span>
-          <span class="skeleton skeleton-chip"></span>
-        </div>
-        <div class="expiring-skeleton">
+        <span class="skeleton skeleton-line skeleton-title"></span>
+        <div class="recent-skeleton">
           @for (item of rowSkeletons; track item) {
-            <div class="expiring-item-skeleton">
-              <span class="skeleton skeleton-avatar"></span>
-              <div>
-                <span class="skeleton skeleton-line w-140"></span>
-                <span class="skeleton skeleton-line w-100"></span>
-              </div>
+            <div class="recent-row-skeleton">
+              <span class="skeleton skeleton-line w-180"></span>
+              <span class="skeleton skeleton-line w-120"></span>
+              <span class="skeleton skeleton-line w-100"></span>
+              <span class="skeleton skeleton-line w-110"></span>
             </div>
           }
         </div>
       </article>
-    </section>
-
-    <section class="panel skeleton-panel">
-      <span class="skeleton skeleton-line skeleton-title"></span>
-      <div class="recent-skeleton">
-        @for (item of rowSkeletons; track item) {
-          <div class="recent-row-skeleton">
-            <span class="skeleton skeleton-line w-180"></span>
-            <span class="skeleton skeleton-line w-120"></span>
-            <span class="skeleton skeleton-line w-100"></span>
-            <span class="skeleton skeleton-line w-110"></span>
-          </div>
-        }
-      </div>
     </section>
   } @else if (errorMessage) {
     <p class="state error">{{ errorMessage }}</p>
@@ -117,7 +95,7 @@
           </div>
           <span class="delta-chip" [class.positive]="activeDelta >= 0" [class.negative]="activeDelta < 0">
             <span class="material-symbols-outlined">{{ activeDelta >= 0 ? 'trending_up' : 'trending_down' }}</span>
-            {{ formatChange(activeDelta) }}
+            {{ activeDelta > 0 ? '+' : '' }}{{ activeDelta }}
           </span>
         </div>
         <div class="meta">
@@ -133,42 +111,13 @@
           </div>
           <span class="delta-chip" [class.positive]="joinsDelta >= 0" [class.negative]="joinsDelta < 0">
             <span class="material-symbols-outlined">{{ joinsDelta >= 0 ? 'trending_up' : 'trending_down' }}</span>
-            {{ formatChange(joinsDelta) }}
+            {{ joinsDelta > 0 ? '+' : '' }}{{ joinsDelta }}
           </span>
         </div>
         <div class="meta">
           <h3>New Joins</h3>
           <p>{{ overview.stats.newJoinsThisMonth }}</p>
           <small>vs {{ overview.stats.newJoinsLastMonth }} last month</small>
-        </div>
-      </article>
-
-      <article class="card stat">
-        <div class="card-top">
-          <div class="icon icon-revenue">
-            <span class="material-symbols-outlined">currency_rupee</span>
-          </div>
-          <span class="delta-chip" [class.positive]="revenueDeltaPercent >= 0" [class.negative]="revenueDeltaPercent < 0">
-            <span class="material-symbols-outlined">{{ revenueDeltaPercent >= 0 ? 'trending_up' : 'trending_down' }}</span>
-            {{ formatPercent(revenueDeltaPercent) }}
-          </span>
-        </div>
-        <div class="meta">
-          <h3>Monthly Revenue</h3>
-          <p>{{ formatCurrency(overview.stats.revenueThisMonth) }}</p>
-        </div>
-      </article>
-
-      <article class="card stat alert-warning">
-        <div class="card-top">
-          <div class="icon icon-warning">
-            <span class="material-symbols-outlined">receipt_long</span>
-          </div>
-        </div>
-        <div class="meta">
-          <h3>Pending Amount</h3>
-          <p>{{ formatCurrency(overview.stats.pendingAmountTotal) }}</p>
-          <small>Collectable from members</small>
         </div>
       </article>
 
@@ -197,31 +146,22 @@
           <small>{{ overview.stats.inactiveThisMonth }} already inactive</small>
         </div>
       </article>
+
+      <article class="card stat alert-warning clickable-card" (click)="openMembersBySegment('inactive')">
+        <div class="card-top">
+          <div class="icon icon-warning">
+            <span class="material-symbols-outlined">insights</span>
+          </div>
+        </div>
+        <div class="meta">
+          <h3>Inactive This Month</h3>
+          <p>{{ overview.stats.inactiveThisMonth }}</p>
+          <small>Needs follow-up</small>
+        </div>
+      </article>
     </section>
 
     <section class="panel-grid two-col">
-      <article class="panel">
-        <div class="panel-head">
-          <div>
-            <h3>Monthly Revenue Trend</h3>
-            <p>Performance tracking</p>
-          </div>
-          <div class="chip-group">
-            @for (months of monthOptions; track months) {
-              <button class="chip" [class.active]="revenueMonths === months" (click)="onRevenueRangeChange(months)">
-                {{ months }}M
-              </button>
-            }
-          </div>
-        </div>
-        <div class="chart-wrap chart-shell" [class.is-loading]="isRevenueChartLoading">
-          <canvas #revenueChartCanvas></canvas>
-          @if (isRevenueChartLoading) {
-            <div class="chart-loader" aria-label="Updating revenue chart"></div>
-          }
-        </div>
-      </article>
-
       <article class="panel">
         <div class="panel-head">
           <h3>Weekly Growth</h3>
@@ -261,36 +201,6 @@
         <p class="progress-note">{{ weeklyProgressNote }}</p>
         <div class="insight">{{ weeklyInsight }}</div>
       </article>
-    </section>
-
-    <section class="panel-grid two-col">
-      <article class="panel">
-        <div class="panel-head">
-          <h3>Monthly Member Flow</h3>
-          <div class="chip-group dashboard-flow-filters">
-            <div class="flow-filter-group">
-              @for (months of monthOptions; track months) {
-                <button class="chip" [class.active]="flowMonths === months" (click)="onFlowRangeChange(months)">
-                  {{ months }}M
-                </button>
-              }
-            </div>
-            <div class="flow-filter-group">
-              @for (opt of flowViewOptions; track opt) {
-                <button class="chip soft" [class.active]="flowView === opt" (click)="onFlowViewChange(opt)">
-                  {{ opt === 'BOTH' ? 'Both' : (opt === 'NEW' ? 'Joins' : 'Inactive') }}
-                </button>
-              }
-            </div>
-          </div>
-        </div>
-        <div class="chart-wrap chart-shell" [class.is-loading]="isFlowChartLoading">
-          <canvas #flowChartCanvas></canvas>
-          @if (isFlowChartLoading) {
-            <div class="chart-loader" aria-label="Updating flow chart"></div>
-          }
-        </div>
-      </article>
 
       <article class="panel">
         <div class="panel-head">
@@ -325,43 +235,72 @@
       </article>
     </section>
 
-    <section class="panel">
-      <div class="panel-head">
-        <h3>Recent Joins</h3>
-      </div>
-      <div class="recent-list">
-        <div class="recent-head">
-          <span>Member</span>
-          <span>Plan</span>
-          <span>Amount</span>
-          <span>Expiry</span>
-        </div>
-        @if (recentMembers.length === 0) {
-          <p class="empty-note">No recent joins yet.</p>
-        } @else {
-          @for (member of recentMembers; track member.id) {
-            <div class="recent-row">
-              <div class="member-cell">
-                <div class="member-avatar">
-                  @if (member.profileImageUrl) {
-                    <img [src]="member.profileImageUrl" [alt]="member.fullName" />
-                  } @else {
-                    <span>{{ getAvatarText(member.fullName) }}</span>
-                  }
-                </div>
-                <div class="member-meta">
-                  <strong>{{ member.fullName }}</strong>
-                  <p>Joined {{ member.joinDate | date: 'dd MMM yyyy' }}</p>
-                  <!-- <small>{{ getPlanMonthsLabel(member.planStartDate, member.planEndDate) }}</small> -->
-                </div>
-              </div>
-              <span class="desktop-only-cell">{{ getPlanMonthsLabel(member.planStartDate, member.planEndDate) }}</span>
-              <span class="amount-cell">{{ formatCurrency(member.amountPaid || 0) }}</span>
-              <span class="expiry-cell">{{ member.planEndDate | date: 'dd MMM yyyy' }}</span>
+    <section class="panel-grid two-col">
+      <article class="panel">
+        <div class="panel-head">
+          <h3>Monthly Member Flow</h3>
+          <div class="chip-group dashboard-flow-filters">
+            <div class="flow-filter-group">
+              @for (months of monthOptions; track months) {
+                <button class="chip" [class.active]="flowMonths === months" (click)="onFlowRangeChange(months)">
+                  {{ months }}M
+                </button>
+              }
             </div>
+            <div class="flow-filter-group">
+              @for (opt of flowViewOptions; track opt) {
+                <button class="chip soft" [class.active]="flowView === opt" (click)="onFlowViewChange(opt)">
+                  {{ opt === 'BOTH' ? 'Both' : (opt === 'NEW' ? 'Joins' : 'Inactive') }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="chart-wrap chart-shell" [class.is-loading]="isFlowChartLoading">
+          <canvas #flowChartCanvas></canvas>
+          @if (isFlowChartLoading) {
+            <div class="chart-loader" aria-label="Updating flow chart"></div>
           }
-        }
-      </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h3>Recent Joins</h3>
+        </div>
+        <div class="recent-list">
+          <div class="recent-head">
+            <span>Member</span>
+            <span>Plan</span>
+            <span>Status</span>
+            <span>Expiry</span>
+          </div>
+          @if (recentMembers.length === 0) {
+            <p class="empty-note">No recent joins yet.</p>
+          } @else {
+            @for (member of recentMembers; track member.id) {
+              <div class="recent-row">
+                <div class="member-cell">
+                  <div class="member-avatar">
+                    @if (member.profileImageUrl) {
+                      <img [src]="member.profileImageUrl" [alt]="member.fullName" />
+                    } @else {
+                      <span>{{ getAvatarText(member.fullName) }}</span>
+                    }
+                  </div>
+                  <div class="member-meta">
+                    <strong>{{ member.fullName }}</strong>
+                    <p>Joined {{ member.joinDate | date: 'dd MMM yyyy' }}</p>
+                  </div>
+                </div>
+                <span class="desktop-only-cell">{{ getPlanMonthsLabel(member.planStartDate, member.planEndDate) }}</span>
+                <span class="amount-cell">{{ member.status }}</span>
+                <span class="expiry-cell">{{ member.planEndDate | date: 'dd MMM yyyy' }}</span>
+              </div>
+            }
+          }
+        </div>
+      </article>
     </section>
   }
 </div>

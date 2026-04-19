@@ -1,0 +1,232 @@
+<div class="dashboard-page">
+  <app-topbar title="Member Dashboard" subtitle="Track progress, attendance, and workouts." />
+
+  @if (isLoading) {
+    <section class="panel"><p>Loading your dashboard...</p></section>
+  } @else if (summary) {
+    @if (shouldShowExpiryBanner) {
+      <section class="expiry-banner">
+        <div>
+          <strong>Your plan is ending soon</strong>
+          <p>Plan ends in {{ summary.daysUntilPlanEnd }} day(s). Renew early to avoid interruption.</p>
+        </div>
+        <a class="cta-btn" [href]="'mailto:' + (summary.gymEmail || 'support@gymmanager9353.com')">Renew / Contact Gym</a>
+      </section>
+    }
+
+    <section class="card-grid">
+      <article class="card">
+        <h4>Current Weight</h4>
+        <p>{{ summary.weight ?? '-' }} kg</p>
+      </article>
+      <article class="card">
+        <h4>Target Weight</h4>
+        <p>{{ summary.targetWeight ?? '-' }} kg</p>
+      </article>
+      <article class="card">
+        <h4>Current Streak</h4>
+        <p>{{ summary.currentStreakDays }} days</p>
+      </article>
+      <article class="card">
+        <h4>Best Streak</h4>
+        <p>{{ summary.bestStreakDays }} days</p>
+      </article>
+      <article class="card">
+        <h4>Attendance This Month</h4>
+        <p>{{ summary.attendanceThisMonth }}</p>
+      </article>
+      <article class="card">
+        <h4>Missed Days (30d)</h4>
+        <p>{{ summary.missedDaysLast30Days }}</p>
+      </article>
+      <article class="card">
+        <h4>Rest Days (30d)</h4>
+        <p>{{ summary.restDaysLast30Days }}</p>
+      </article>
+    </section>
+
+    <section class="panel goal-panel">
+      <h3>Goal Progress</h3>
+      <div class="goal-wrap">
+        <div class="goal-ring" [style.--progress.%]="goalProgressPercent">
+          <span>{{ goalProgressPercent }}%</span>
+        </div>
+        <div class="goal-text">
+          <p>Current: <strong>{{ summary.weight ?? '-' }} kg</strong></p>
+          <p>Target: <strong>{{ summary.targetWeight ?? '-' }} kg</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Weight Progress</h3>
+      <div class="chart-wrap">
+        <canvas #weightChartCanvas></canvas>
+      </div>
+    </section>
+
+    <section class="panel grid-2">
+      <article>
+        <h3>Missed-Days Trend</h3>
+        <div class="chart-wrap small">
+          <canvas #missedTrendCanvas></canvas>
+        </div>
+      </article>
+      <article>
+        <h3>Muscle Group Distribution</h3>
+        <div class="chart-wrap small">
+          <canvas #muscleDistributionCanvas></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h3>Edit Profile</h3>
+      <form [formGroup]="profileForm" (ngSubmit)="submitProfile()" class="metric-form">
+        <label>
+          Full Name
+          <input type="text" formControlName="fullName" maxlength="100" />
+        </label>
+        <label>
+          Email
+          <input type="email" formControlName="email" />
+        </label>
+        <label>
+          Phone
+          <input type="text" formControlName="phone" placeholder="+919876543210" />
+        </label>
+        <label>
+          Gender
+          <select formControlName="gender">
+            <option value="">Select</option>
+            <option value="MALE">Male</option>
+            <option value="FEMALE">Female</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </label>
+        <label>
+          Date of Birth
+          <input type="date" formControlName="dateOfBirth" />
+        </label>
+        <label>
+          Emergency Contact
+          <input type="text" formControlName="emergencyContact" placeholder="+919876543210" />
+        </label>
+        <label class="wide">
+          Fitness Goal
+          <input type="text" formControlName="fitnessGoal" maxlength="255" />
+        </label>
+        <button type="submit" [disabled]="isSubmittingMetric">
+          {{ isSubmittingMetric ? 'Saving...' : 'Save Profile' }}
+        </button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h3>Update Metrics</h3>
+      <form [formGroup]="metricForm" (ngSubmit)="submitMetrics()" class="metric-form">
+        <label>
+          Date
+          <input type="date" formControlName="metricDate" />
+        </label>
+        <label>
+          Weight (kg)
+          <input type="number" step="0.1" min="0" formControlName="weightKg" />
+        </label>
+        <label>
+          Height (cm)
+          <input type="number" step="0.1" min="0" formControlName="heightCm" />
+        </label>
+        <label>
+          Target Weight (kg)
+          <input type="number" step="0.1" min="0" formControlName="targetWeightKg" />
+        </label>
+        <label class="wide">
+          Notes
+          <input type="text" maxlength="500" formControlName="notes" />
+        </label>
+        <button type="submit" [disabled]="isSubmittingMetric">
+          {{ isSubmittingMetric ? 'Saving...' : 'Save Metrics' }}
+        </button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h3>Mark Rest Day (Max 2 Continuous)</h3>
+      <div class="rest-day-form">
+        <input type="date" [(ngModel)]="restDayDate" [ngModelOptions]="{ standalone: true }" />
+        <input type="text" [(ngModel)]="restDayNotes" [ngModelOptions]="{ standalone: true }" placeholder="Optional note" maxlength="300" />
+        <button type="button" (click)="submitRestDay()" [disabled]="isSubmittingRestDay">
+          {{ isSubmittingRestDay ? 'Saving...' : 'Save Rest Day' }}
+        </button>
+      </div>
+      @if (restDays.length > 0) {
+        <div class="rest-day-list">
+          @for (day of restDays; track day.id) {
+            <span>{{ day.restDate | date:'dd MMM yyyy' }}</span>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h3>Attendance Check-in</h3>
+        <button type="button" class="camera-btn" (click)="startScanner()" [disabled]="!scanSupported">
+          <span class="material-symbols-outlined">photo_camera</span>
+          Scan QR
+        </button>
+      </div>
+      <div class="checkin-row">
+        <input type="text" [(ngModel)]="qrInput" [ngModelOptions]="{ standalone: true }" placeholder="Paste scanned QR value (GymId or GYM:GymId)" />
+        <button type="button" (click)="submitQrCheckin()" [disabled]="isSubmittingCheckin">
+          {{ isSubmittingCheckin ? 'Checking in...' : 'Mark Attendance' }}
+        </button>
+      </div>
+      @if (showScanner) {
+        <div class="scanner-panel">
+          <video #scanVideo playsinline muted></video>
+          <button type="button" class="ghost-btn" (click)="stopScanner()">Stop Scanner</button>
+        </div>
+      }
+    </section>
+
+    @if (showWorkoutPrompt && latestCheckin) {
+      <section class="panel workout-panel">
+        <h3>What are you training today?</h3>
+        <div class="chips">
+          @for (group of muscleGroups; track group) {
+            <button
+              type="button"
+              class="chip"
+              [class.active]="selectedMuscleGroups.has(group)"
+              (click)="toggleMuscleGroup(group)"
+            >
+              {{ group }}
+            </button>
+          }
+        </div>
+        <button type="button" (click)="submitWorkoutLog()">Save Workout Focus</button>
+      </section>
+    }
+
+    <section class="panel">
+      <h3>Recent Attendance</h3>
+      @if (!attendance || attendance.recent.length === 0) {
+        <p>No attendance records yet.</p>
+      } @else {
+        <div class="attendance-list">
+          @for (item of attendance.recent; track item.checkinId) {
+            <article class="attendance-item">
+              <div>
+                <strong>{{ item.checkinDate | date:'dd MMM yyyy' }}</strong>
+                <p>{{ item.checkinAt | date:'hh:mm a' }} - {{ item.source }}</p>
+              </div>
+              <small>{{ item.muscleGroups.join(', ') || 'No workout focus added' }}</small>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

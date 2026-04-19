@@ -3,6 +3,7 @@ import { Component, ElementRef, HostListener, Input } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 type MenuItem = {
   label: string;
@@ -26,7 +27,8 @@ export class TopbarComponent {
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,
-    private readonly elementRef: ElementRef<HTMLElement>
+    private readonly elementRef: ElementRef<HTMLElement>,
+    private readonly themeService: ThemeService
   ) {
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
@@ -90,12 +92,35 @@ export class TopbarComponent {
       return [{ label: 'Dashboard', path: '/admin/dashboard', exact: true }];
     }
 
+    if (this.userRole === 'TRAINER') {
+      return [
+        { label: 'Dashboard', path: '/trainer/dashboard', exact: true },
+        { label: 'Members', path: '/trainer/members', exact: true },
+        { label: 'Add Member', path: '/trainer/members/add', exact: true },
+        { label: 'Enquiries', path: '/trainer/enquiries', exact: true }
+      ];
+    }
+
+    if (this.userRole === 'MEMBER') {
+      return [{ label: 'Dashboard', path: '/member/dashboard', exact: true }];
+    }
+
     return [
       { label: 'Dashboard', path: '/owner/dashboard', exact: true },
       { label: 'Members', path: '/owner/members', exact: true },
       { label: 'Add Member', path: '/owner/members/add', exact: true },
-      { label: 'Transactions', path: '/owner/transactions', exact: true }
+      { label: 'Transactions', path: '/owner/transactions', exact: true },
+      { label: 'Team', path: '/owner/team', exact: true },
+      { label: 'Enquiries', path: '/owner/enquiries', exact: true }
     ];
+  }
+
+  get isDarkTheme(): boolean {
+    return this.themeService.isDark();
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 
   toggleMenu(): void {

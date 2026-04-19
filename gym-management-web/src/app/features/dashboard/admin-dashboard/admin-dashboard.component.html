@@ -1,7 +1,7 @@
 <div class="dashboard-page">
   <app-topbar
     title="Admin Dashboard"
-    subtitle="Manage gyms, owners, and platform-level visibility."
+    subtitle="Manage gyms, owners, trainers, and staff."
   />
 
   @if (isLoading) {
@@ -12,45 +12,6 @@
           <span class="skeleton skeleton-line tall"></span>
         </article>
       }
-    </section>
-
-    <section class="panel-grid skeleton-block">
-      <article class="panel">
-        <span class="skeleton skeleton-line medium"></span>
-        <div class="table-wrap">
-          <table>
-            <tbody>
-              @for (row of tableSkeletons; track row) {
-                <tr>
-                  <td><span class="skeleton skeleton-line"></span></td>
-                  <td><span class="skeleton skeleton-line"></span></td>
-                  <td><span class="skeleton skeleton-line"></span></td>
-                  <td><span class="skeleton skeleton-line"></span></td>
-                  <td><span class="skeleton skeleton-line"></span></td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </article>
-
-      <article class="panel">
-        <span class="skeleton skeleton-line medium"></span>
-        <div class="table-wrap">
-          <table>
-            <tbody>
-              @for (row of tableSkeletons; track row) {
-                <tr>
-                  <td><span class="skeleton skeleton-line"></span></td>
-                  <td><span class="skeleton skeleton-line"></span></td>
-                  <td><span class="skeleton skeleton-line"></span></td>
-                  <td><span class="skeleton skeleton-line"></span></td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </article>
     </section>
   } @else if (errorMessage) {
     <p class="state error">{{ errorMessage }}</p>
@@ -65,16 +26,277 @@
         <p>{{ activeGyms }}</p>
       </article>
       <article class="card">
-        <h3>Total Users</h3>
-        <p>{{ visibleUsers.length }}</p>
-      </article>
-      <article class="card">
         <h3>Owners</h3>
         <p>{{ totalOwners }}</p>
       </article>
+      <article class="card">
+        <h3>Trainers + Staff</h3>
+        <p>{{ trainersAndStaffCount }}</p>
+      </article>
+      <article class="card">
+        <h3>Gyms At Owner Cap</h3>
+        <p>{{ gymsAtOwnerCapacity }}</p>
+      </article>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-title-row">
+        <h3>Admin Creation Center</h3>
+        <small>Owner cap: each gym can have at most 2 owners.</small>
+      </div>
+
+      <div class="tab-row" role="tablist" aria-label="Admin create tabs">
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeCreateTab === 'gymOwners'"
+          (click)="activeCreateTab = 'gymOwners'"
+        >
+          Add Gym + Owners
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeCreateTab === 'staffTrainer'"
+          (click)="activeCreateTab = 'staffTrainer'"
+        >
+          Add Trainer / Staff
+        </button>
+      </div>
+
+      @if (activeCreateTab === 'gymOwners') {
+        <section class="sub-panel">
+          <h4>New Gym with Owner Accounts</h4>
+          <div class="form-grid">
+            <label>
+              Gym Name *
+              <input [(ngModel)]="createGymForm.gymName" name="gymName" type="text" />
+            </label>
+            <label>
+              Display Owner Name *
+              <input [(ngModel)]="createGymForm.ownerName" name="gymOwnerName" type="text" />
+            </label>
+            <label>
+              Gym Email
+              <input [(ngModel)]="createGymForm.email" name="gymEmail" type="email" maxlength="100" />
+            </label>
+            <label>
+              Phone
+              <input
+                [(ngModel)]="createGymForm.phone"
+                name="gymPhone"
+                type="text"
+                maxlength="13"
+                placeholder="+919876543210"
+                (input)="createGymForm.phone = normalizeIndianPhoneInput(createGymForm.phone)"
+              />
+            </label>
+            <label>
+              City
+              <input [(ngModel)]="createGymForm.city" name="gymCity" type="text" />
+            </label>
+            <label>
+              State
+              <input [(ngModel)]="createGymForm.state" name="gymState" type="text" />
+            </label>
+            <label class="wide-input">
+              Address
+              <input [(ngModel)]="createGymForm.address" name="gymAddress" type="text" />
+            </label>
+            <label>
+              Plan
+              <select [(ngModel)]="createGymForm.subscriptionPlan" name="gymPlan">
+                <option value="basic">basic</option>
+                <option value="standard">standard</option>
+                <option value="premium">premium</option>
+              </select>
+            </label>
+          </div>
+
+          <h4>Primary Owner (Required)</h4>
+          <div class="form-grid">
+            <label>
+              Full Name *
+              <input [(ngModel)]="primaryOwnerForm.fullName" name="primaryOwnerName" type="text" />
+            </label>
+            <label>
+              Email *
+              <input [(ngModel)]="primaryOwnerForm.email" name="primaryOwnerEmail" type="email" maxlength="100" />
+            </label>
+            <label>
+              Phone
+              <input
+                [(ngModel)]="primaryOwnerForm.phone"
+                name="primaryOwnerPhone"
+                type="text"
+                maxlength="13"
+                placeholder="+919876543210"
+                (input)="primaryOwnerForm.phone = normalizeIndianPhoneInput(primaryOwnerForm.phone)"
+              />
+            </label>
+          </div>
+          <p class="section-hint">A secure temporary password will be auto-generated and emailed to the owner.</p>
+
+          <label class="checkbox-label inline">
+            <input [(ngModel)]="enableSecondOwner" name="enableSecondOwner" type="checkbox" />
+            Add second owner account (optional)
+          </label>
+
+          @if (enableSecondOwner) {
+            <h4>Second Owner (Optional)</h4>
+            <div class="form-grid">
+              <label>
+                Full Name *
+                <input [(ngModel)]="secondaryOwnerForm.fullName" name="secondaryOwnerName" type="text" />
+              </label>
+              <label>
+                Email *
+                <input [(ngModel)]="secondaryOwnerForm.email" name="secondaryOwnerEmail" type="email" maxlength="100" />
+              </label>
+              <label>
+                Phone
+                <input
+                  [(ngModel)]="secondaryOwnerForm.phone"
+                  name="secondaryOwnerPhone"
+                  type="text"
+                  maxlength="13"
+                  placeholder="+919876543210"
+                  (input)="secondaryOwnerForm.phone = normalizeIndianPhoneInput(secondaryOwnerForm.phone)"
+                />
+              </label>
+            </div>
+            <p class="section-hint">A secure temporary password will be auto-generated and emailed to this owner.</p>
+          }
+
+          <div class="form-actions">
+            <button class="primary-btn" type="button" [disabled]="creatingGymWithOwners" (click)="onCreateGymWithOwners()">
+              {{ creatingGymWithOwners ? 'Creating...' : 'Create Gym + Owner(s)' }}
+            </button>
+          </div>
+        </section>
+
+        <section class="sub-panel">
+          <h4>Add Owner for Existing Gym</h4>
+          <small>This follows the same max-owner rule (max 2 owners per gym).</small>
+          <div class="form-grid">
+            <label>
+              Gym *
+              <select [(ngModel)]="addOwnerForExistingGymForm.gymId" name="existingGymOwnerGym">
+                @for (gym of gyms; track gym.id) {
+                  <option [value]="gym.id">{{ gym.gymName }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              Full Name *
+              <input [(ngModel)]="addOwnerForExistingGymForm.fullName" name="existingOwnerName" type="text" />
+            </label>
+            <label>
+              Email *
+              <input [(ngModel)]="addOwnerForExistingGymForm.email" name="existingOwnerEmail" type="email" maxlength="100" />
+            </label>
+            <label>
+              Phone
+              <input
+                [(ngModel)]="addOwnerForExistingGymForm.phone"
+                name="existingOwnerPhone"
+                type="text"
+                maxlength="13"
+                placeholder="+919876543210"
+                (input)="addOwnerForExistingGymForm.phone = normalizeIndianPhoneInput(addOwnerForExistingGymForm.phone)"
+              />
+            </label>
+          </div>
+          <p class="section-hint">A secure temporary password will be auto-generated and emailed to the owner.</p>
+          <div class="form-actions">
+            <button class="primary-btn" type="button" [disabled]="creatingOwnerForGym" (click)="onAddOwnerForExistingGym()">
+              {{ creatingOwnerForGym ? 'Adding...' : 'Add Owner' }}
+            </button>
+          </div>
+        </section>
+      } @else {
+        <section class="sub-panel">
+          <h4>Add Trainer / Staff to Existing Gym</h4>
+          <div class="form-grid">
+            <label>
+              Gym *
+              <select [(ngModel)]="createStaffTrainerForm.gymId" name="staffTrainerGymId">
+                @for (gym of gyms; track gym.id) {
+                  <option [value]="gym.id">{{ gym.gymName }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              Role *
+              <select [(ngModel)]="createStaffTrainerForm.role" name="staffTrainerRole">
+                @for (role of staffTrainerRoleOptions; track role) {
+                  <option [value]="role">{{ role }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              Full Name *
+              <input [(ngModel)]="createStaffTrainerForm.fullName" name="staffTrainerName" type="text" />
+            </label>
+
+            <label>
+              Email *
+              <input [(ngModel)]="createStaffTrainerForm.email" name="staffTrainerEmail" type="email" maxlength="100" />
+            </label>
+
+            <label>
+              Phone
+              <input
+                [(ngModel)]="createStaffTrainerForm.phone"
+                name="staffTrainerPhone"
+                type="text"
+                maxlength="13"
+                placeholder="+919876543210"
+                (input)="createStaffTrainerForm.phone = normalizeIndianPhoneInput(createStaffTrainerForm.phone)"
+              />
+            </label>
+          </div>
+          <p class="section-hint">A secure temporary password will be auto-generated and emailed to the user.</p>
+
+          <div class="form-actions">
+            <button class="primary-btn" type="button" [disabled]="creatingStaffTrainer" (click)="onCreateStaffTrainer()">
+              {{ creatingStaffTrainer ? 'Creating...' : 'Create User' }}
+            </button>
+          </div>
+        </section>
+      }
     </section>
 
     <section class="panel-grid">
+      <article class="panel utility-panel">
+        <div class="panel-title-row">
+          <h3>Future-Ready Admin Tools</h3>
+          <div class="action-group">
+            <button class="ghost-btn" type="button" (click)="exportGymsCsv()">Export Gyms CSV</button>
+            <button class="ghost-btn" type="button" (click)="exportVisibleUsersCsv()">Export Users CSV</button>
+          </div>
+        </div>
+
+        @if (ownerCapacityAlerts.length === 0) {
+          <p class="state">No owner-capacity alerts right now.</p>
+        } @else {
+          <div class="alert-grid">
+            @for (alert of ownerCapacityAlerts; track alert.gym.id) {
+              <article class="alert-item" [class.warn]="alert.type === 'FULL'">
+                <h4>{{ alert.gym.gymName }}</h4>
+                @if (alert.type === 'FULL') {
+                  <p>Owner capacity reached: {{ alert.ownerCount }}/2</p>
+                } @else {
+                  <p>No owner mapped yet. Recommended: assign at least 1 owner.</p>
+                }
+              </article>
+            }
+          </div>
+        }
+      </article>
+
       <article class="panel">
         <h3>Gym List</h3>
         <div class="table-wrap">
@@ -85,9 +307,16 @@
                 <th>Owner</th>
                 <th>City</th>
                 <th>Plan</th>
+                <th>Owners</th>
                 <th>Users</th>
+                <th>Active</th>
+                <th>Inactive</th>
                 <th>Members</th>
+                <th>Revenue (This Month)</th>
+                <th>Revenue (Last Month)</th>
+                <th>Revenue (Total)</th>
                 <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -97,9 +326,27 @@
                   <td data-label="Owner">{{ gym.ownerName }}</td>
                   <td data-label="City">{{ gym.city || '-' }}</td>
                   <td data-label="Plan">{{ gym.subscriptionPlan }}</td>
+                  <td data-label="Owners">
+                    <span class="owner-capacity" [class.full]="getOwnerCountForGym(gym.id) >= 2">{{ getOwnerCapacityLabel(gym.id) }}</span>
+                  </td>
                   <td data-label="Users">{{ gym.usersCount || 0 }}</td>
+                  <td data-label="Active">{{ gym.activeUsersCount || 0 }}</td>
+                  <td data-label="Inactive">{{ gym.inactiveUsersCount || 0 }}</td>
                   <td data-label="Members">{{ gym.membersCount || 0 }}</td>
+                  <td data-label="Revenue (This Month)">&#8377;{{ gym.revenueThisMonth | number:'1.0-0' }}</td>
+                  <td data-label="Revenue (Last Month)">&#8377;{{ gym.revenueLastMonth | number:'1.0-0' }}</td>
+                  <td data-label="Revenue (Total)">&#8377;{{ gym.revenueTotal | number:'1.0-0' }}</td>
                   <td data-label="Status">{{ gym.isActive ? 'Active' : 'Inactive' }}</td>
+                  <td data-label="Action">
+                    <button
+                      class="danger-btn"
+                      type="button"
+                      [disabled]="deletingGymId === gym.id"
+                      (click)="openDeleteGymDialog(gym)"
+                    >
+                      {{ deletingGymId === gym.id ? 'Deleting...' : 'Delete' }}
+                    </button>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -108,7 +355,42 @@
       </article>
 
       <article class="panel">
-        <h3>Users</h3>
+        <div class="panel-title-row user-header">
+          <h3>Users</h3>
+          <div class="user-filters">
+            <label class="gym-filter">
+              <span>Gym</span>
+              <select [(ngModel)]="selectedGymFilter" name="selectedGymFilter">
+                <option value="">All gyms</option>
+                @for (gym of gyms; track gym.id) {
+                  <option [value]="gym.id">{{ gym.gymName }}</option>
+                }
+              </select>
+            </label>
+            <label class="gym-filter">
+              <span>Role</span>
+              <select [(ngModel)]="userRoleFilter" name="userRoleFilter">
+                <option value="ALL">All roles</option>
+                <option value="OWNER">Owner</option>
+                <option value="TRAINER">Trainer</option>
+                <option value="STAFF">Staff</option>
+                <option value="MEMBER">Member</option>
+              </select>
+            </label>
+            <label class="gym-filter">
+              <span>Status</span>
+              <select [(ngModel)]="userStatusFilter" name="userStatusFilter">
+                <option value="ALL">All</option>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+              </select>
+            </label>
+            <label class="gym-filter search-filter">
+              <span>Search</span>
+              <input [(ngModel)]="userSearchTerm" name="userSearchTerm" type="text" placeholder="Name, email, phone" />
+            </label>
+          </div>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -117,6 +399,8 @@
                 <th>Email</th>
                 <th>Role</th>
                 <th>Gym Id</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -126,6 +410,20 @@
                   <td data-label="Email">{{ user.email }}</td>
                   <td data-label="Role">{{ user.role }}</td>
                   <td data-label="Gym Id">{{ user.gymId || '-' }}</td>
+                  <td data-label="Status">{{ user.isActive ? 'Active' : 'Inactive' }}</td>
+                  <td data-label="Action">
+                    <div class="action-group">
+                      <button class="edit-btn" type="button" (click)="startEditUser(user)">Edit</button>
+                      <button
+                        class="danger-btn"
+                        type="button"
+                        [disabled]="deletingUserId === user.id"
+                        (click)="openDeleteUserDialog(user)"
+                      >
+                        {{ deletingUserId === user.id ? 'Deleting...' : 'Delete' }}
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -135,3 +433,81 @@
     </section>
   }
 </div>
+
+@if (deleteDialog) {
+  <div class="modal-backdrop" (click)="closeDeleteDialog()"></div>
+  <section class="modal-panel confirm-panel" role="dialog" aria-modal="true" aria-label="Confirm delete">
+    <div class="modal-header">
+      <h3>Confirm Delete</h3>
+    </div>
+    <p class="confirm-title">
+      @if (deleteDialog.kind === 'gym') {
+        Delete gym <strong>{{ deleteDialog.name }}</strong>?
+      } @else {
+        Delete user <strong>{{ deleteDialog.name }}</strong>?
+      }
+    </p>
+    <p class="confirm-text">
+      @if (deleteDialog.kind === 'gym') {
+        This will remove all related data for this gym.
+      } @else {
+        Role: <strong>{{ deleteDialog.role }}</strong>. This action cannot be undone.
+      }
+    </p>
+    <div class="form-actions">
+      <button type="button" class="ghost-btn" [disabled]="isDeleteInProgress" (click)="closeDeleteDialog()">Cancel</button>
+      <button type="button" class="danger-btn" [disabled]="isDeleteInProgress" (click)="confirmDelete()">
+        {{ isDeleteInProgress ? 'Deleting...' : 'Delete' }}
+      </button>
+    </div>
+  </section>
+}
+
+@if (editingUserId) {
+  <div class="modal-backdrop" (click)="cancelEditUser()"></div>
+  <section class="modal-panel" role="dialog" aria-modal="true" aria-label="Edit user">
+    <div class="modal-header">
+      <h3>Edit User</h3>
+      <button type="button" class="ghost-btn" (click)="cancelEditUser()">Close</button>
+    </div>
+    <div class="form-grid">
+      <label>
+        Full Name
+        <input [(ngModel)]="editUserForm.fullName" name="editFullName" type="text" />
+      </label>
+      <label>
+        Email
+        <input [(ngModel)]="editUserForm.email" name="editEmail" type="email" maxlength="100" />
+      </label>
+      <label>
+        Phone
+        <input
+          [(ngModel)]="editUserForm.phone"
+          name="editPhone"
+          type="text"
+          maxlength="13"
+          placeholder="+919876543210"
+          (input)="editUserForm.phone = normalizeIndianPhoneInput(editUserForm.phone)"
+        />
+      </label>
+      <label>
+        Role
+        <select [(ngModel)]="editUserForm.role" name="editRole">
+          @for (role of editRoleOptions; track role) {
+            <option [value]="role">{{ role }}</option>
+          }
+        </select>
+      </label>
+      <label class="checkbox-label">
+        <input [(ngModel)]="editUserForm.isActive" name="editIsActive" type="checkbox" />
+        Active User
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="ghost-btn" (click)="cancelEditUser()">Cancel</button>
+      <button type="button" class="primary-btn" [disabled]="updatingUser" (click)="onUpdateUser()">
+        {{ updatingUser ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </section>
+}

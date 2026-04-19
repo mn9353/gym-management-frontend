@@ -1,12 +1,15 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { TopbarComponent } from '../../../shared/components/topbar/topbar.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MemberService } from '../../../core/services/member.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { CreateMemberDto, ExistingMemberSummary, RenewMemberDto } from '../../../core/models/member.models';
+import { AuthService } from '../../../core/services/auth.service';
+import { AdminService } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-owner-add-member',
@@ -15,14 +18,18 @@ import { CreateMemberDto, ExistingMemberSummary, RenewMemberDto } from '../../..
   templateUrl: './owner-add-member.component.html',
   styleUrl: './owner-add-member.component.css'
 })
-export class OwnerAddMemberComponent implements OnDestroy {
+export class OwnerAddMemberComponent implements OnInit, OnDestroy {
+  private readonly strictEmailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+  private readonly phoneRegex = /^\+91\d{10}$/;
+  private readonly destroy$ = new Subject<void>();
+
   isSubmitting = false;
   submitAttempted = false;
-  successMessage = '';
-  errorMessage = '';
   profileImagePreviewUrl: string | null = null;
   profileImageName = '';
   duplicateMember: ExistingMemberSummary | null = null;
+  trainers: string[] = [];
+  loadingTrainers = false;
   pendingAction: 'create' | 'renew' | null = null;
   pendingCreatePayload: CreateMemberDto | null = null;
   pendingRenewPayload: { memberId: string; payload: RenewMemberDto } | null = null;
@@ -39,12 +46,18 @@ export class OwnerAddMemberComponent implements OnDestroy {
   constructor(
     private readonly fb: FormBuilder,
     private readonly memberService: MemberService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly authService: AuthService,
+    private readonly adminService: AdminService
   ) {
     this.form = this.fb.nonNullable.group({
       fullName: ['', [Validators.required, Validators.maxLength(100)]],
-      phone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
-      email: ['', [Validators.email, Validators.maxLength(100)]],
+      phone: ['+91', [Validators.required, Validators.pattern(this.phoneRegex)]],
+      email: ['', [Validators.pattern(this.strictEmailRegex), Validators.maxLength(100)]],
+      trainingType: ['GENERAL' as 'GENERAL' | 'PERSONAL'],
+      trainerAssigned: [''],
+      leadSource: [''],
+      targetWeight: [null as number | null, [Validators.min(0)]],
       joinDate: ['', Validators.required],
       planDurationMonths: [1, [Validators.required, Validators.min(1), Validators.max(24)]],
       amountToPay: [null as number | null, [Validators.required, Validators.min(0)]],
@@ -53,7 +66,15 @@ export class OwnerAddMemberComponent implements OnDestroy {
     });
   }
 
+  ngOnInit(): void {
+    this.setupTrainingTypeBehavior();
+    this.applyContextDefaults();
+    this.loadTrainersForOwnerContext();
+  }
+
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.revokePreviewUrl();
   }
 
@@ -65,14 +86,13 @@ export class OwnerAddMemberComponent implements OnDestroy {
     }
 
     if (!file.type.startsWith('image/')) {
-      this.errorMessage = 'Please select a valid image file.';
+      this.notificationService.warning('Please select a valid image file.');
       return;
     }
 
     this.revokePreviewUrl();
     this.profileImagePreviewUrl = URL.createObjectURL(file);
     this.profileImageName = file.name;
-    this.errorMessage = '';
   }
 
   clearProfileImage(): void {
@@ -83,11 +103,9 @@ export class OwnerAddMemberComponent implements OnDestroy {
 
   onPhoneInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const digitsOnly = (input.value || '').replace(/\D/g, '').slice(0, 10);
-    if (digitsOnly !== input.value) {
-      input.value = digitsOnly;
-    }
-    this.form.controls.phone.setValue(digitsOnly, { emitEvent: false });
+    const normalized = this.normalizeIndianPhoneInput(input.value);
+    input.value = normalized;
+    this.form.controls.phone.setValue(normalized, { emitEvent: false });
   }
 
   submit(): void {
@@ -97,51 +115,52 @@ export class OwnerAddMemberComponent implements OnDestroy {
       return;
     }
 
-    this.successMessage = '';
-    this.errorMessage = '';
     this.duplicateMember = null;
 
     const value = this.form.getRawValue();
-    const phoneDigits = (value.phone || '').replace(/\D/g, '');
-    if (!phoneDigits) {
-      this.errorMessage = 'Phone is required.';
-      this.notificationService.warning(this.errorMessage);
+    const phone = this.normalizeIndianPhoneInput(value.phone);
+    if (!this.phoneRegex.test(phone)) {
+      this.notificationService.warning('Phone must be in +91XXXXXXXXXX format.');
       return;
     }
-    if (phoneDigits.length !== 10) {
-      this.errorMessage = 'Phone must be exactly 10 digits.';
-      this.notificationService.warning(this.errorMessage);
-      return;
-    }
+
     const amountToPay = Number(value.amountToPay ?? 0);
     const amountPaid = Number(value.amountPaid ?? 0);
     if (!Number.isFinite(amountToPay) || amountToPay <= 0) {
-      this.errorMessage = 'Amount to pay is required and must be greater than 0.';
-      this.notificationService.warning(this.errorMessage);
+      this.notificationService.warning('Amount to pay is required and must be greater than 0.');
       return;
     }
     if (!Number.isFinite(amountPaid) || amountPaid < 0) {
-      this.errorMessage = 'Amount paid cannot be negative.';
-      this.notificationService.warning(this.errorMessage);
+      this.notificationService.warning('Amount paid cannot be negative.');
       return;
     }
     if (amountPaid > amountToPay) {
-      this.errorMessage = 'Amount paid cannot be more than amount to pay.';
-      this.notificationService.warning(this.errorMessage);
+      this.notificationService.warning('Amount paid cannot be more than amount to pay.');
       return;
     }
+
+    const trainingType = value.trainingType === 'PERSONAL' ? 'PERSONAL' : 'GENERAL';
+    const trainerAssigned = this.resolveTrainerAssigned(trainingType, value.trainerAssigned);
+    if (trainingType === 'PERSONAL' && !trainerAssigned) {
+      this.notificationService.warning('Please choose a trainer for PERSONAL training.');
+      return;
+    }
+
     const paymentMode = (value.paymentMode || '').trim().toUpperCase();
     if (amountPaid > 0 && !paymentMode) {
-      this.errorMessage = 'Payment mode is required when amount paid is greater than 0.';
-      this.notificationService.warning(this.errorMessage);
+      this.notificationService.warning('Payment mode is required when amount paid is greater than 0.');
       return;
     }
 
     const paymentStatus = this.resolvePaymentStatus(amountPaid, amountToPay);
+    const leadSource = (value.leadSource || '').trim();
+    const parsedTargetWeight = Number(value.targetWeight);
+    const targetWeight = Number.isFinite(parsedTargetWeight) && parsedTargetWeight > 0 ? parsedTargetWeight : null;
+
     this.pendingAction = 'create';
     this.pendingCreatePayload = {
       fullName: value.fullName.trim(),
-      phone: `+91${phoneDigits}`,
+      phone,
       email: value.email?.trim().toLowerCase() || null,
       joinDate: value.joinDate,
       planStartDate: value.joinDate,
@@ -149,11 +168,18 @@ export class OwnerAddMemberComponent implements OnDestroy {
       amountToPay,
       paymentStatus,
       amountPaid,
-      paymentMode: amountPaid > 0 ? (paymentMode as 'CASH' | 'UPI' | 'CARD') : null
+      paymentMode: amountPaid > 0 ? (paymentMode as 'CASH' | 'UPI' | 'CARD') : null,
+      trainingType,
+      trainerAssigned: trainerAssigned || null,
+      leadSource: leadSource || null,
+      targetWeight
     };
+
     this.openConfirmDialog(
       'Confirm Add Member',
       [
+        `Training type: ${trainingType}`,
+        ...(trainerAssigned ? [`Assigned trainer: ${trainerAssigned}`] : []),
         `Amount to pay: ${this.formatAmount(amountToPay)}`,
         `Amount paid now: ${this.formatAmount(amountPaid)}`,
         ...(amountPaid > 0 ? [`Payment mode: ${paymentMode}`] : []),
@@ -173,8 +199,7 @@ export class OwnerAddMemberComponent implements OnDestroy {
     const planStartDate = this.form.controls.joinDate.value;
     const planDurationMonths = Number(this.form.controls.planDurationMonths.value);
     if (!planStartDate || !Number.isFinite(planDurationMonths) || planDurationMonths < 1) {
-      this.errorMessage = 'Plan start date and duration are required for renewal.';
-      this.notificationService.warning(this.errorMessage);
+      this.notificationService.warning('Plan start date and duration are required for renewal.');
       return;
     }
 
@@ -182,24 +207,21 @@ export class OwnerAddMemberComponent implements OnDestroy {
     const amountToPay = Number(value.amountToPay ?? 0);
     const amountPaid = Number(value.amountPaid ?? 0);
     if (!Number.isFinite(amountToPay) || amountToPay <= 0) {
-      this.errorMessage = 'Amount to pay is required and must be greater than 0.';
-      this.notificationService.warning(this.errorMessage);
+      this.notificationService.warning('Amount to pay is required and must be greater than 0.');
       return;
     }
     if (!Number.isFinite(amountPaid) || amountPaid < 0) {
-      this.errorMessage = 'Amount paid cannot be negative.';
-      this.notificationService.warning(this.errorMessage);
+      this.notificationService.warning('Amount paid cannot be negative.');
       return;
     }
     if (amountPaid > amountToPay) {
-      this.errorMessage = 'Amount paid cannot be more than amount to pay.';
-      this.notificationService.warning(this.errorMessage);
+      this.notificationService.warning('Amount paid cannot be more than amount to pay.');
       return;
     }
+
     const paymentMode = (value.paymentMode || '').trim().toUpperCase();
     if (amountPaid > 0 && !paymentMode) {
-      this.errorMessage = 'Payment mode is required when amount paid is greater than 0.';
-      this.notificationService.warning(this.errorMessage);
+      this.notificationService.warning('Payment mode is required when amount paid is greater than 0.');
       return;
     }
 
@@ -217,6 +239,7 @@ export class OwnerAddMemberComponent implements OnDestroy {
         paymentDate: new Date().toISOString().split('T')[0]
       }
     };
+
     this.openConfirmDialog(
       'Confirm Renewal',
       [
@@ -295,6 +318,10 @@ export class OwnerAddMemberComponent implements OnDestroy {
     return `${months} months`;
   }
 
+  get shouldShowTrainerField(): boolean {
+    return this.form.controls.trainingType.value === 'PERSONAL';
+  }
+
   showRequired(controlName: 'fullName' | 'phone' | 'joinDate' | 'planDurationMonths' | 'amountToPay'): boolean {
     const control = this.form.controls[controlName];
     return (this.submitAttempted || control.touched) && control.hasError('required');
@@ -313,7 +340,87 @@ export class OwnerAddMemberComponent implements OnDestroy {
 
   showPhoneFormatError(): boolean {
     const control = this.form.controls.phone;
-    return (this.submitAttempted || control.touched) && control.hasError('pattern');
+    return (this.submitAttempted || control.touched) && !!control.value && control.hasError('pattern');
+  }
+
+  showEmailFormatError(): boolean {
+    const control = this.form.controls.email;
+    return (this.submitAttempted || control.touched) && !!control.value && control.hasError('pattern');
+  }
+
+  showTrainerRequiredError(): boolean {
+    const control = this.form.controls.trainerAssigned;
+    return (
+      this.shouldShowTrainerField &&
+      !this.isTrainerContext &&
+      (this.submitAttempted || control.touched) &&
+      !control.value?.trim()
+    );
+  }
+
+  get pageTitle(): string {
+    return this.isTrainerContext ? 'Add Member (Trainer)' : 'Add Member';
+  }
+
+  get pageSubtitle(): string {
+    return this.isTrainerContext
+      ? 'Create a new member in your gym. Trainer assignment is auto-filled for PERSONAL training.'
+      : 'Create a new member for your gym with training and plan details.';
+  }
+
+  get contextHint(): string {
+    const gymName = this.currentUser?.gymName || 'your gym';
+    return `This member will be created under ${gymName} based on your logged-in account.`;
+  }
+
+  get isTrainerContext(): boolean {
+    return this.currentUser?.role === 'TRAINER';
+  }
+
+  private get currentUser() {
+    return this.authService.getCurrentUser();
+  }
+
+  private setupTrainingTypeBehavior(): void {
+    this.form.controls.trainingType.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((value) => {
+        if (value === 'PERSONAL') {
+          if (this.isTrainerContext) {
+            this.form.controls.trainerAssigned.setValue(this.currentUser?.fullName || '', { emitEvent: false });
+            this.form.controls.trainerAssigned.disable({ emitEvent: false });
+          } else {
+            this.form.controls.trainerAssigned.enable({ emitEvent: false });
+          }
+          return;
+        }
+
+        this.form.controls.trainerAssigned.setValue('', { emitEvent: false });
+        this.form.controls.trainerAssigned.enable({ emitEvent: false });
+      });
+  }
+
+  private loadTrainersForOwnerContext(): void {
+    if (this.isTrainerContext) {
+      return;
+    }
+
+    this.loadingTrainers = true;
+    this.adminService.getUsers()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (users) => {
+          this.trainers = users
+            .filter((u) => u.role === 'TRAINER' && u.isActive)
+            .map((u) => u.fullName)
+            .sort((a, b) => a.localeCompare(b));
+          this.loadingTrainers = false;
+        },
+        error: () => {
+          this.loadingTrainers = false;
+          this.notificationService.warning('Unable to load trainer list right now.');
+        }
+      });
   }
 
   private revokePreviewUrl(): void {
@@ -340,19 +447,14 @@ export class OwnerAddMemberComponent implements OnDestroy {
   private executeCreate(payload: CreateMemberDto): void {
     this.isSubmitting = true;
     this.memberService.createMember(payload).subscribe({
-      next: () => {
-        this.successMessage = 'Member added successfully.';
-        this.notificationService.success(this.successMessage);
-        this.form.reset({
-          fullName: '',
-          phone: '',
-          email: '',
-          joinDate: '',
-          planDurationMonths: 1,
-          amountToPay: null,
-          amountPaid: 0,
-          paymentMode: 'UPI'
-        });
+      next: (createdMember) => {
+        this.notificationService.success('Member added successfully.');
+        if (createdMember.welcomeEmailSent === false) {
+          this.notificationService.warning(
+            `Member created, but welcome email failed: ${createdMember.welcomeEmailMessage || 'Unknown error'}`
+          );
+        }
+        this.resetFormForContext();
         this.clearProfileImage();
         this.submitAttempted = false;
         this.isSubmitting = false;
@@ -361,11 +463,9 @@ export class OwnerAddMemberComponent implements OnDestroy {
       error: (error: HttpErrorResponse) => {
         if (error.status === 409 && error.error?.existingMember) {
           this.duplicateMember = error.error.existingMember as ExistingMemberSummary;
-          this.errorMessage = error.error?.message ?? 'Member already exists. You can renew this member instead.';
-          this.notificationService.warning(this.errorMessage);
+          this.notificationService.warning(error.error?.message ?? 'Member already exists. You can renew this member instead.');
         } else {
-          this.errorMessage = 'Unable to add member.';
-          this.notificationService.error(this.errorMessage);
+          this.notificationService.error('Unable to add member.');
         }
         this.isSubmitting = false;
         this.onConfirmDialogClose();
@@ -375,31 +475,18 @@ export class OwnerAddMemberComponent implements OnDestroy {
 
   private executeRenew(memberId: string, payload: RenewMemberDto): void {
     this.isSubmitting = true;
-    this.successMessage = '';
-    this.errorMessage = '';
     this.memberService.renewMember(memberId, payload).subscribe({
       next: () => {
-        this.successMessage = `Renewal completed for ${this.duplicateMember?.fullName}.`;
-        this.notificationService.success(this.successMessage);
+        this.notificationService.success(`Renewal completed for ${this.duplicateMember?.fullName}.`);
         this.duplicateMember = null;
-        this.form.reset({
-          fullName: '',
-          phone: '',
-          email: '',
-          joinDate: '',
-          planDurationMonths: 1,
-          amountToPay: null,
-          amountPaid: 0,
-          paymentMode: 'UPI'
-        });
+        this.resetFormForContext();
         this.clearProfileImage();
         this.submitAttempted = false;
         this.isSubmitting = false;
         this.onConfirmDialogClose();
       },
       error: () => {
-        this.errorMessage = 'Unable to renew member.';
-        this.notificationService.error(this.errorMessage);
+        this.notificationService.error('Unable to renew member.');
         this.isSubmitting = false;
         this.onConfirmDialogClose();
       }
@@ -422,5 +509,50 @@ export class OwnerAddMemberComponent implements OnDestroy {
       currency: 'INR',
       maximumFractionDigits: 0
     });
+  }
+
+  private resolveTrainerAssigned(trainingType: 'GENERAL' | 'PERSONAL', selectedTrainer: string): string | null {
+    if (trainingType !== 'PERSONAL') {
+      return null;
+    }
+    if (this.isTrainerContext) {
+      return this.currentUser?.fullName || null;
+    }
+    const trainer = (selectedTrainer || '').trim();
+    return trainer || null;
+  }
+
+  private applyContextDefaults(): void {
+    if (this.isTrainerContext) {
+      this.form.controls.leadSource.setValue('Trainer Desk', { emitEvent: false });
+    }
+  }
+
+  private resetFormForContext(): void {
+    this.form.reset({
+      fullName: '',
+      phone: '+91',
+      email: '',
+      trainingType: 'GENERAL',
+      trainerAssigned: '',
+      leadSource: this.isTrainerContext ? 'Trainer Desk' : '',
+      targetWeight: null,
+      joinDate: '',
+      planDurationMonths: 1,
+      amountToPay: null,
+      amountPaid: 0,
+      paymentMode: 'UPI'
+    });
+  }
+
+  private normalizeIndianPhoneInput(value: string | null | undefined): string {
+    const raw = (value ?? '').trim();
+    if (!raw) {
+      return '+91';
+    }
+
+    const digits = raw.replace(/\D/g, '');
+    const tenDigits = digits.startsWith('91') ? digits.slice(2, 12) : digits.slice(0, 10);
+    return `+91${tenDigits}`;
   }
 }

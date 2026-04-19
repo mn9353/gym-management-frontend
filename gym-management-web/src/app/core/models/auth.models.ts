@@ -1,4 +1,4 @@
-export type UserRole = 'ADMIN' | 'OWNER' | 'STAFF';
+export type UserRole = 'ADMIN' | 'OWNER' | 'STAFF' | 'TRAINER' | 'MEMBER';
 
 export interface UserProfile {
   id: string;
@@ -14,8 +14,23 @@ export interface UserProfile {
 }
 
 export interface LoginRequest {
-  email: string;
+  identifier: string;
   password: string;
+}
+
+export interface ForgotPasswordRequest {
+  identifier: string;
+}
+
+export interface ResetPasswordRequest {
+  identifier: string;
+  code: string;
+  newPassword: string;
+}
+
+export interface VerifyResetCodeRequest {
+  identifier: string;
+  code: string;
 }
 
 export interface LoginResponse {

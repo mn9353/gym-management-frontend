@@ -1,0 +1,157 @@
+<div class="page">
+  <app-topbar title="Enquiries" subtitle="Capture leads and follow up consistently." />
+
+  <section class="panel create-panel">
+    <h3>Add Enquiry</h3>
+    <div class="grid">
+      <label>
+        Full Name *
+        <input [(ngModel)]="createDraft.fullName" type="text" />
+      </label>
+      <label>
+        Phone *
+        <input [(ngModel)]="createDraft.phone" type="text" maxlength="13" (input)="onPhoneInput($event)" />
+      </label>
+      <label>
+        Email
+        <input [(ngModel)]="createDraft.email" type="email" />
+      </label>
+      <label>
+        Source
+        <input [(ngModel)]="createDraft.source" type="text" placeholder="Walk-in / Instagram / Referral" />
+      </label>
+      <label>
+        Next Follow-up
+        <input [(ngModel)]="createDraft.nextFollowupAt" type="datetime-local" />
+      </label>
+      <label class="wide">
+        Notes
+        <textarea [(ngModel)]="createDraft.notes" rows="2"></textarea>
+      </label>
+    </div>
+    <div class="actions">
+      <button type="button" class="primary" [disabled]="isSaving" (click)="onCreateEnquiry()">
+        {{ isSaving ? 'Saving...' : 'Create Enquiry' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="panel filters">
+    <label>
+      Search
+      <input [(ngModel)]="query.searchTerm" type="text" placeholder="Name / phone / email" />
+    </label>
+    <label>
+      Stage
+      <select [(ngModel)]="query.stage">
+        <option value="">All</option>
+        @for (stage of stageOptions; track stage) {
+          <option [value]="stage">{{ stage }}</option>
+        }
+      </select>
+    </label>
+    <button type="button" class="ghost" (click)="loadEnquiries()">Apply</button>
+  </section>
+
+  @if (errorMessage) {
+    <p class="state error">{{ errorMessage }}</p>
+  }
+
+  <section class="layout">
+    <article class="panel">
+      <h3>Lead List</h3>
+      @if (isLoading) {
+        <p class="state">Loading enquiries...</p>
+      } @else if (enquiries.length === 0) {
+        <p class="state">No enquiries found.</p>
+      } @else {
+        <div class="list">
+          @for (item of enquiries; track trackByEnquiryId($index, item)) {
+            <button type="button" class="list-item" [class.active]="selectedEnquiry?.id === item.id" (click)="selectEnquiry(item.id)">
+              <strong>{{ item.fullName }}</strong>
+              <span>{{ item.phone }}</span>
+              <span>{{ item.stage }}</span>
+              <small>Follow-ups: {{ item.followupCount }}</small>
+            </button>
+          }
+        </div>
+      }
+    </article>
+
+    <article class="panel">
+      <h3>Details & Follow-up</h3>
+      @if (!selectedEnquiry) {
+        <p class="state">Select an enquiry to manage stage and follow-up.</p>
+      } @else {
+        <div class="details">
+          <p><strong>{{ selectedEnquiry.fullName }}</strong></p>
+          <p>{{ selectedEnquiry.phone }} {{ selectedEnquiry.email ? ' | ' + selectedEnquiry.email : '' }}</p>
+          <p>Current Stage: <strong>{{ selectedEnquiry.stage }}</strong></p>
+        </div>
+
+        <div class="grid">
+          <label>
+            Update Stage
+            <select [(ngModel)]="stageDraft.toStage">
+              @for (stage of stageOptions; track stage) {
+                <option [value]="stage">{{ stage }}</option>
+              }
+            </select>
+          </label>
+          <label class="wide">
+            Stage Reason
+            <input [(ngModel)]="stageDraft.reason" type="text" placeholder="Why stage changed" />
+          </label>
+        </div>
+        <div class="actions">
+          <button type="button" class="ghost" [disabled]="isUpdatingStage" (click)="updateStage()">
+            {{ isUpdatingStage ? 'Updating...' : 'Update Stage' }}
+          </button>
+        </div>
+
+        <div class="grid">
+          <label>
+            Follow-up Outcome
+            <input [(ngModel)]="followupDraft.outcome" type="text" placeholder="Called / No answer / Interested" />
+          </label>
+          <label>
+            Next Follow-up
+            <input [(ngModel)]="followupDraft.nextFollowupAt" type="datetime-local" />
+          </label>
+          <label class="wide">
+            Follow-up Notes
+            <textarea [(ngModel)]="followupDraft.notes" rows="2"></textarea>
+          </label>
+        </div>
+        <div class="actions">
+          <button type="button" class="primary" [disabled]="isAddingFollowup" (click)="addFollowup()">
+            {{ isAddingFollowup ? 'Saving...' : 'Add Follow-up' }}
+          </button>
+        </div>
+
+        <h4>Timeline</h4>
+        @if (!selectedEnquiry.timeline.length) {
+          <p class="state">No timeline entries yet.</p>
+        } @else {
+          <div class="timeline">
+            @for (entry of selectedEnquiry.timeline; track entry.at + '-' + entry.type) {
+              <div class="timeline-item">
+                <strong>{{ entry.type }}</strong>
+                <span>{{ entry.at | date: 'dd MMM yyyy, hh:mm a' }}</span>
+                @if (entry.toStage) {
+                  <small>{{ entry.fromStage || '-' }} → {{ entry.toStage }}</small>
+                }
+                @if (entry.outcome) {
+                  <small>Outcome: {{ entry.outcome }}</small>
+                }
+                @if (entry.notes) {
+                  <small>{{ entry.notes }}</small>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    </article>
+  </section>
+</div>

@@ -1,9 +1,20 @@
 <section class="notify-stack" aria-live="polite" aria-atomic="true">
   @for (item of notifications.notifications(); track item.id) {
     <article class="notify-item" [class]="'notify-item ' + item.type">
-      <p>{{ item.message }}</p>
-      <button type="button" (click)="notifications.dismiss(item.id)" aria-label="Dismiss notification">×</button>
+      <div class="notify-icon" aria-hidden="true">
+        @if (item.type === 'success') {<span>✓</span>}
+        @if (item.type === 'warning') {<span>!</span>}
+        @if (item.type === 'error') {<span>×</span>}
+      </div>
+      <div class="notify-body">
+        <p class="notify-title">
+          @if (item.type === 'success') {Success}
+          @if (item.type === 'warning') {Warning}
+          @if (item.type === 'error') {Error}
+        </p>
+        <p>{{ item.message }}</p>
+      </div>
+      <button type="button" (click)="notifications.dismiss(item.id)" aria-label="Dismiss notification">&times;</button>
     </article>
   }
 </section>
-

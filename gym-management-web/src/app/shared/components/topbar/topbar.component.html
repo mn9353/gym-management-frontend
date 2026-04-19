@@ -13,6 +13,17 @@
   </div>
 
   <div class="right-actions">
+    <button
+      type="button"
+      class="theme-trigger"
+      [class.is-dark]="isDarkTheme"
+      [attr.aria-label]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'"
+      (click)="toggleTheme()"
+    >
+      <span class="material-symbols-outlined bubble-icon" aria-hidden="true">
+        {{ isDarkTheme ? 'dark_mode' : 'light_mode' }}
+      </span>
+    </button>
     <button type="button" class="user-chip" (click)="toggleUserMenu()" aria-label="Open user menu">
       {{ userInitials }}
     </button>

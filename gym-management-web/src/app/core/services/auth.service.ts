@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, of, tap } from 'rxjs';
-import { LoginRequest, LoginResponse, RefreshTokenResponse, UserProfile, UserRole } from '../models/auth.models';
+import { ForgotPasswordRequest, LoginRequest, LoginResponse, RefreshTokenResponse, ResetPasswordRequest, UserProfile, UserRole, VerifyResetCodeRequest } from '../models/auth.models';
 import { API_PATHS } from '../constants/api-paths';
 import { buildApiUrl } from '../constants/api-url';
 import { SKIP_GLOBAL_LOADER, LOADING_MESSAGE } from '../interceptors/loading-context';
@@ -21,10 +21,37 @@ export class AuthService {
     const context = new HttpContext().set(SKIP_GLOBAL_LOADER, true);
     return this.http.post<LoginResponse>(buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.login), payload, { context }).pipe(
       tap((res) => {
-        if (res.success && res.user && res.accessToken && res.refreshToken) {
-          this.storeSession(res.user, res.accessToken, res.refreshToken);
+        if (res.success && res.user && res.accessToken) {
+          this.storeSession(res.user, res.accessToken, res.refreshToken ?? '');
         }
       })
+    );
+  }
+
+  forgotPassword(payload: ForgotPasswordRequest): Observable<{ success: boolean; message: string }> {
+    const context = new HttpContext().set(SKIP_GLOBAL_LOADER, true);
+    return this.http.post<{ success: boolean; message: string }>(
+      buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.forgotPassword),
+      payload,
+      { context }
+    );
+  }
+
+  resetPassword(payload: ResetPasswordRequest): Observable<{ success: boolean; message: string }> {
+    const context = new HttpContext().set(SKIP_GLOBAL_LOADER, true);
+    return this.http.post<{ success: boolean; message: string }>(
+      buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.resetPassword),
+      payload,
+      { context }
+    );
+  }
+
+  verifyResetCode(payload: VerifyResetCodeRequest): Observable<{ success: boolean; message: string }> {
+    const context = new HttpContext().set(SKIP_GLOBAL_LOADER, true);
+    return this.http.post<{ success: boolean; message: string }>(
+      buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.verifyResetCode),
+      payload,
+      { context }
     );
   }
 
@@ -54,6 +81,10 @@ export class AuthService {
 
   logout(): Observable<unknown> {
     const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      this.clearSession();
+      return of({ message: 'Logged out' });
+    }
     const context = new HttpContext().set(LOADING_MESSAGE, 'Logging out...');
     return this.http.post(buildApiUrl(API_PATHS.auth.base, API_PATHS.auth.logout), { refreshToken }, { context }).pipe(
       tap(() => this.clearSession())
@@ -98,10 +129,20 @@ export class AuthService {
     return role === 'OWNER' || role === 'STAFF';
   }
 
+  isTrainer(): boolean {
+    return this.getCurrentUser()?.role === 'TRAINER';
+  }
+
   resolveDefaultRoute(): string {
     const role = this.getCurrentUser()?.role;
     if (role === 'ADMIN') {
       return '/admin/dashboard';
+    }
+    if (role === 'TRAINER') {
+      return '/trainer/dashboard';
+    }
+    if (role === 'MEMBER') {
+      return '/member/dashboard';
     }
 
     return '/owner/dashboard';
@@ -121,7 +162,11 @@ export class AuthService {
 
   private storeSession(user: UserProfile, accessToken: string, refreshToken: string): void {
     localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    if (refreshToken) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    } else {
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+    }
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     this.currentUserSubject.next(user);
   }

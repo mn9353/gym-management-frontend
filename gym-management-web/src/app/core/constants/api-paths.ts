@@ -2,6 +2,9 @@ export const API_PATHS = {
   auth: {
     base: '/api/auth',
     login: '/login',
+    forgotPassword: '/forgot-password',
+    verifyResetCode: '/verify-reset-code',
+    resetPassword: '/reset-password',
     refreshToken: '/refresh-token',
     logout: '/logout',
     me: '/me',
@@ -18,7 +21,8 @@ export const API_PATHS = {
     weeklyGrowth: '/weekly-growth'
   },
   gyms: {
-    base: '/api/gyms'
+    base: '/api/gyms',
+    withOwners: '/with-owners'
   },
   users: {
     base: '/api/users',
@@ -42,6 +46,24 @@ export const API_PATHS = {
   payments: {
     base: '/api/payments',
     list: '/list'
+  },
+  enquiries: {
+    base: '/api/enquiries',
+    followups: '/followups',
+    stage: '/stage'
+  },
+  memberPortal: {
+    base: '/api/member-portal',
+    summary: '/summary',
+    profile: '/profile',
+    weightHistory: '/weight-history',
+    metrics: '/metrics',
+    attendance: '/attendance',
+    missedTrend: '/missed-trend',
+    muscleDistribution: '/muscle-distribution',
+    restDays: '/rest-days',
+    checkinScan: '/checkin/scan',
+    checkinWorkout: '/checkin'
   },
   diagnostics: {
     base: '/api/diagnostics',

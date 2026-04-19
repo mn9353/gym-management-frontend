@@ -1,5 +1,6 @@
 .transactions-page {
   height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
   padding-top: var(--topbar-height);
@@ -256,6 +257,7 @@
   width: min(92vw, 460px);
   max-width: 460px;
   height: 100vh;
+  height: 100dvh;
   display: grid;
   gap: 0.8rem;
   overflow-y: auto;
@@ -428,3 +430,5 @@
     grid-template-columns: 1fr;
   }
 }
+
+
