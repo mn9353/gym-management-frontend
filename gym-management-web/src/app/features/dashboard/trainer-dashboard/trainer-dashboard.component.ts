@@ -391,6 +391,16 @@ export class TrainerDashboardComponent implements OnInit, AfterViewChecked {
   }
 
   openMembersBySegment(segment: 'all' | 'active' | 'expiring' | 'inactive'): void {
+    if (segment === 'expiring') {
+      this.router.navigate(['/trainer/users/upcoming-renewals']);
+      return;
+    }
+
+    if (segment === 'inactive') {
+      this.router.navigate(['/trainer/users/inactive']);
+      return;
+    }
+
     this.router.navigate(['/trainer/members'], {
       queryParams: { segment }
     });

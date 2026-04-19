@@ -159,7 +159,7 @@
         </div>
       </article>
 
-      <article class="card stat alert-warning">
+      <article class="card stat alert-warning clickable-card" (click)="openPendingAmountMembers()">
         <div class="card-top">
           <div class="icon icon-warning">
             <span class="material-symbols-outlined">receipt_long</span>
@@ -195,6 +195,19 @@
           <h3>Plans Ending This Month</h3>
           <p>{{ overview.stats.expiringThisMonth }}</p>
           <small>{{ overview.stats.inactiveThisMonth }} already inactive</small>
+        </div>
+      </article>
+
+      <article class="card stat clickable-card" (click)="openIrregularMembers()">
+        <div class="card-top">
+          <div class="icon icon-danger">
+            <span class="material-symbols-outlined">event_busy</span>
+          </div>
+        </div>
+        <div class="meta">
+          <h3>Irregular Members (4+ days)</h3>
+          <p>{{ irregularMembers.length }}</p>
+          <small>Not attended recently</small>
         </div>
       </article>
     </section>

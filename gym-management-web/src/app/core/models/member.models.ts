@@ -240,3 +240,23 @@ export interface MemberGridRequest {
   includeAmount?: boolean;
   upcomingDays?: number;
 }
+
+export interface SendSubscriptionReminderRequest {
+  selectAll: boolean;
+  memberIds: string[];
+  stage: 'AUTO' | 'EXPIRING' | 'INACTIVE';
+  segment: 'all' | 'active' | 'expiring' | 'inactive' | 'upcoming';
+  filters: MemberListQuery;
+}
+
+export interface SubscriptionReminderDispatchResult {
+  stage: string;
+  selectAll: boolean;
+  requestedCount: number;
+  matchedCount: number;
+  sentCount: number;
+  failedCount: number;
+  skippedNoEmailCount: number;
+  skippedAlreadySentCount: number;
+  errorMessages: string[];
+}

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { DashboardOverview, DashboardStats, MonthlyJoinTrend, MonthlyMemberFlow, MonthlyRevenueTrend, RecentMember, WeeklyMemberGrowth } from '../models/dashboard.models';
+import { DashboardOverview, DashboardStats, IrregularMember, MonthlyJoinTrend, MonthlyMemberFlow, MonthlyRevenueTrend, RecentMember, WeeklyMemberGrowth } from '../models/dashboard.models';
 import { API_PATHS } from '../constants/api-paths';
 import { buildApiUrl } from '../constants/api-url';
 
@@ -54,6 +54,16 @@ export class DashboardService {
     const params = this.buildParams(gymId).set('weeks', `${weeks}`);
     return this.http.get<WeeklyMemberGrowth[]>(
       buildApiUrl(API_PATHS.dashboard.base, API_PATHS.dashboard.weeklyGrowth),
+      { params }
+    );
+  }
+
+  getIrregularMembers(minAbsentDays = 4, limit = 100, gymId?: string): Observable<IrregularMember[]> {
+    const params = this.buildParams(gymId)
+      .set('minAbsentDays', `${minAbsentDays}`)
+      .set('limit', `${limit}`);
+    return this.http.get<IrregularMember[]>(
+      buildApiUrl(API_PATHS.dashboard.base, API_PATHS.dashboard.irregularMembers),
       { params }
     );
   }

@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://api.gymmanager9353.com'
+  apiBaseUrl: 'https://gym-management-1ekn.onrender.com'
 };

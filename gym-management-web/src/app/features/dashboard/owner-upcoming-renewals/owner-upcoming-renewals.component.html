@@ -49,29 +49,43 @@
       <button type="button" class="btn ghost" (click)="resetFilters()">Reset</button>
     </div>
 
+    <div class="bulk-actions">
+      <p>{{ selectionSummary }}</p>
+      <div class="bulk-action-buttons">
+        <button type="button" class="btn ghost" (click)="useManualSelection()" [disabled]="!selectAllMatchingFilters">
+          Use selected
+        </button>
+        <button type="button" class="btn ghost" (click)="enableSelectAllMatchingFilters()" [disabled]="selectAllMatchingFilters || totalCount === 0">
+          Select all matching filters
+        </button>
+        <button
+          type="button"
+          class="btn primary"
+          (click)="sendReminderMails()"
+          [disabled]="isSendingReminders || (!selectAllMatchingFilters && selectedMemberIds.size === 0)"
+        >
+          {{ isSendingReminders ? 'Sending...' : 'Send expiry reminder mail' }}
+        </button>
+      </div>
+    </div>
+
     @if (errorMessage) {
       <p class="state error">{{ errorMessage }}</p>
     } @else if (isLoading) {
       <p class="state">Loading upcoming renewals...</p>
     } @else {
-      <div class="desktop-grid desktop-only ag-theme-quartz">
-        <ag-grid-angular
-          [rowData]="members"
-          [columnDefs]="columnDefs"
-          [defaultColDef]="defaultColDef"
-          [suppressCellFocus]="true"
-          [animateRows]="true"
-          (gridReady)="onDesktopGridReady($event)"
-          (filterChanged)="onDesktopFilterChanged($event)"
-          (sortChanged)="onDesktopSortChanged($event)"
-        ></ag-grid-angular>
-      </div>
-
-      <div class="mobile-cards mobile-only" #mobileScroll (scroll)="onPageScroll(mobileScroll)">
-        @for (member of mobileMembers; track member.id) {
+      <div class="cards-grid" #mobileScroll (scroll)="onPageScroll(mobileScroll)">
+        @for (member of displayedMembers; track member.id) {
           <article class="member-card">
             <div class="title-row">
-              <h4>{{ member.fullName }}</h4>
+              <label class="mobile-select">
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(member.id)"
+                  (change)="toggleMobileSelection(member.id, $any($event.target).checked)"
+                />
+                <h4>{{ member.fullName }}</h4>
+              </label>
               <span class="badge">{{ formatGender(member.gender) }}</span>
             </div>
             <p>{{ member.phone || '-' }}</p>

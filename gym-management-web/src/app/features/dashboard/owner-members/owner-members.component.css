@@ -111,6 +111,34 @@
   min-height: 340px;
 }
 
+.bulk-mail-bar {
+  align-items: center;
+  background: color-mix(in srgb, var(--panel) 80%, #eef4ff);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding: 0.65rem 0.75rem;
+}
+
+.bulk-mail-info strong {
+  color: #1f3553;
+  display: block;
+  font-size: 0.85rem;
+}
+
+.bulk-mail-info p {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin: 0.15rem 0 0;
+}
+
+.bulk-mail-actions {
+  display: inline-flex;
+  gap: 0.45rem;
+}
+
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -175,6 +203,11 @@
   align-items: center;
   gap: 0.55rem;
   min-width: 0;
+}
+
+.member-select {
+  align-items: center;
+  display: inline-flex;
 }
 
 .name-row h3 {
@@ -567,6 +600,15 @@
     width: 100%;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .bulk-mail-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bulk-mail-actions {
+    width: 100%;
   }
 
   .tabs {

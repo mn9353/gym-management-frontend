@@ -47,6 +47,30 @@
   margin-bottom: 0.75rem;
 }
 
+.bulk-actions {
+  align-items: center;
+  background: color-mix(in srgb, var(--panel) 80%, #eef6ff);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.bulk-actions p {
+  color: var(--text-dim);
+  margin: 0;
+}
+
+.bulk-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-end;
+}
+
 label {
   color: var(--text-dim);
   display: grid;
@@ -100,17 +124,6 @@ select {
   opacity: 0.5;
 }
 
-.desktop-grid {
-  height: 56vh;
-  width: 100%;
-}
-
-.desktop-grid ag-grid-angular {
-  display: block;
-  height: 100%;
-  width: 100%;
-}
-
 .state {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -132,9 +145,10 @@ select {
   margin-top: 0.9rem;
 }
 
-.mobile-cards {
+.cards-grid {
   display: grid;
   gap: 0.6rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
 .member-card {
@@ -159,6 +173,13 @@ select {
   align-items: center;
   display: flex;
   justify-content: space-between;
+}
+
+.mobile-select {
+  align-items: center;
+  color: inherit;
+  display: inline-flex;
+  gap: 0.45rem;
 }
 
 .badge {
@@ -235,10 +256,20 @@ select {
     justify-content: space-between;
   }
 
-  .mobile-cards {
+  .cards-grid {
     max-height: 68vh;
     overflow-y: auto;
     padding-right: 0.2rem;
+    grid-template-columns: 1fr;
+  }
+
+  .bulk-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .bulk-action-buttons {
+    width: 100%;
   }
 }
 

@@ -2,23 +2,24 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime } from 'rxjs';
-import { AgGridAngular } from 'ag-grid-angular';
 import {
   ColDef,
   ColumnState,
   FilterChangedEvent,
   FilterModel,
   GridReadyEvent,
+  SelectionChangedEvent,
   SortChangedEvent
 } from 'ag-grid-community';
 import { MemberService } from '../../../core/services/member.service';
 import { MemberListItem, MemberListQuery } from '../../../core/models/member.models';
 import { TopbarComponent } from '../../../shared/components/topbar/topbar.component';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-owner-inactive-members',
   standalone: true,
-  imports: [CommonModule, FormsModule, TopbarComponent, AgGridAngular],
+  imports: [CommonModule, FormsModule, TopbarComponent],
   templateUrl: './owner-inactive-members.component.html',
   styleUrl: './owner-inactive-members.component.css'
 })
@@ -34,6 +35,10 @@ export class OwnerInactiveMembersComponent implements OnInit {
   readonly mobileBreakpoint = 860;
   isMobileView = typeof window !== 'undefined' && window.innerWidth <= this.mobileBreakpoint;
   isMobileFilterOpen = false;
+  isSendingReminders = false;
+  readonly rowSelection: 'multiple' = 'multiple';
+  readonly selectedMemberIds = new Set<string>();
+  selectAllMatchingFilters = false;
   private gridApi?: GridReadyEvent['api'];
   private readonly filterChanged$ = new Subject<void>();
 
@@ -74,6 +79,18 @@ export class OwnerInactiveMembersComponent implements OnInit {
   };
 
   readonly baseColumns: ColDef<MemberListItem>[] = [
+    {
+      colId: 'select',
+      headerName: '',
+      width: 54,
+      pinned: 'left',
+      filter: false,
+      sortable: false,
+      resizable: false,
+      checkboxSelection: true,
+      headerCheckboxSelection: true,
+      headerCheckboxSelectionFilteredOnly: true
+    },
     {
       colId: 'name',
       field: 'fullName',
@@ -144,7 +161,14 @@ export class OwnerInactiveMembersComponent implements OnInit {
     ];
   }
 
-  constructor(private readonly memberService: MemberService) {}
+  get displayedMembers(): MemberListItem[] {
+    return this.isMobileView ? this.mobileMembers : this.members;
+  }
+
+  constructor(
+    private readonly memberService: MemberService,
+    private readonly notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.filterChanged$.pipe(debounceTime(350)).subscribe(() => {
@@ -193,6 +217,9 @@ export class OwnerInactiveMembersComponent implements OnInit {
         }
         this.isLoading = false;
         this.isLoadingMoreMobile = false;
+        if (this.selectAllMatchingFilters) {
+          this.clearSelectionVisualsOnly();
+        }
       },
       error: () => {
         this.errorMessage = 'Unable to load inactive users.';
@@ -223,6 +250,7 @@ export class OwnerInactiveMembersComponent implements OnInit {
     };
     this.mobileMembers = [];
     this.hasMoreMobile = true;
+    this.clearSelection();
     this.fetchMembers();
     this.gridApi?.setFilterModel(null);
   }
@@ -233,6 +261,20 @@ export class OwnerInactiveMembersComponent implements OnInit {
 
   onDesktopGridReady(event: GridReadyEvent): void {
     this.gridApi = event.api;
+  }
+
+  onDesktopSelectionChanged(event: SelectionChangedEvent<MemberListItem>): void {
+    if (this.selectAllMatchingFilters) {
+      event.api.deselectAll();
+      return;
+    }
+
+    this.selectedMemberIds.clear();
+    for (const row of event.api.getSelectedRows()) {
+      if (row.id) {
+        this.selectedMemberIds.add(row.id);
+      }
+    }
   }
 
   onDesktopFilterChanged(event: FilterChangedEvent): void {
@@ -260,6 +302,7 @@ export class OwnerInactiveMembersComponent implements OnInit {
     this.filters.pageNumber = 1;
     this.mobileMembers = [];
     this.hasMoreMobile = true;
+    this.clearSelection();
     this.onFilterChanged();
   }
 
@@ -286,6 +329,81 @@ export class OwnerInactiveMembersComponent implements OnInit {
       this.filters.pageNumber = (this.filters.pageNumber ?? 1) - 1;
       this.fetchMembers();
     }
+  }
+
+  isSelected(memberId: string): boolean {
+    return this.selectedMemberIds.has(memberId);
+  }
+
+  toggleMobileSelection(memberId: string, checked: boolean): void {
+    if (this.selectAllMatchingFilters) {
+      this.selectAllMatchingFilters = false;
+    }
+
+    if (checked) {
+      this.selectedMemberIds.add(memberId);
+    } else {
+      this.selectedMemberIds.delete(memberId);
+    }
+  }
+
+  enableSelectAllMatchingFilters(): void {
+    this.selectAllMatchingFilters = true;
+    this.clearSelectionVisualsOnly();
+  }
+
+  useManualSelection(): void {
+    this.selectAllMatchingFilters = false;
+  }
+
+  get selectionSummary(): string {
+    if (this.selectAllMatchingFilters) {
+      return `All ${this.totalCount} filtered members will receive reminder mail.`;
+    }
+
+    const count = this.selectedMemberIds.size;
+    if (count === 0) {
+      return 'Select members manually, or use Select All Matching Filters.';
+    }
+    return `${count} member${count > 1 ? 's' : ''} selected.`;
+  }
+
+  sendReminderMails(): void {
+    if (this.isSendingReminders) {
+      return;
+    }
+
+    if (!this.selectAllMatchingFilters && this.selectedMemberIds.size === 0) {
+      this.notificationService.warning('Select members first, or use Select All Matching Filters.');
+      return;
+    }
+
+    this.isSendingReminders = true;
+    const payload = {
+      selectAll: this.selectAllMatchingFilters,
+      memberIds: this.selectAllMatchingFilters ? [] : Array.from(this.selectedMemberIds),
+      stage: 'INACTIVE' as const,
+      segment: 'inactive' as const,
+      filters: { ...this.filters }
+    };
+
+    this.memberService.sendSubscriptionReminders(payload).subscribe({
+      next: (result) => {
+        this.isSendingReminders = false;
+        const message = `Reminder email sent: ${result.sentCount} success, ${result.failedCount} failed, ${result.skippedNoEmailCount} no-email, ${result.skippedAlreadySentCount} already-sent.`;
+        if (result.failedCount > 0) {
+          this.notificationService.warning(message);
+        } else {
+          this.notificationService.success(message);
+        }
+        this.clearSelection();
+      },
+      error: (err) => {
+        this.isSendingReminders = false;
+        const message = err?.error?.message || 'Unable to send reminder emails.';
+        this.notificationService.error(message);
+      }
+    });
   }
 
   formatGender(gender?: string | null): string {
@@ -383,5 +501,15 @@ export class OwnerInactiveMembersComponent implements OnInit {
 
     this.filters.pageNumber = (this.filters.pageNumber ?? 1) + 1;
     this.fetchMembers(true);
+  }
+
+  private clearSelection(): void {
+    this.selectAllMatchingFilters = false;
+    this.selectedMemberIds.clear();
+    this.clearSelectionVisualsOnly();
+  }
+
+  private clearSelectionVisualsOnly(): void {
+    this.gridApi?.deselectAll();
   }
 }

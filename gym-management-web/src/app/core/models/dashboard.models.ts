@@ -52,3 +52,13 @@ export interface DashboardOverview {
   monthlyTrends: MonthlyJoinTrend[];
   recentMembers: RecentMember[];
 }
+
+export interface IrregularMember {
+  id: string;
+  fullName: string;
+  joinDate: string;
+  lastCheckinDate?: string | null;
+  daysAbsent: number;
+  planEndDate: string;
+  status: string;
+}

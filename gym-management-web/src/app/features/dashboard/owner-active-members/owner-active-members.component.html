@@ -46,21 +46,8 @@
     } @else if (isLoading) {
       <p class="state">Loading active users...</p>
     } @else {
-      <div class="desktop-grid desktop-only ag-theme-quartz">
-        <ag-grid-angular
-          [rowData]="members"
-          [columnDefs]="columnDefs"
-          [defaultColDef]="defaultColDef"
-          [suppressCellFocus]="true"
-          [animateRows]="true"
-          (gridReady)="onDesktopGridReady($event)"
-          (filterChanged)="onDesktopFilterChanged($event)"
-          (sortChanged)="onDesktopSortChanged($event)"
-        ></ag-grid-angular>
-      </div>
-
-      <div class="mobile-cards mobile-only" #mobileScroll (scroll)="onPageScroll(mobileScroll)">
-        @for (member of mobileMembers; track member.id) {
+      <div class="cards-grid" #mobileScroll (scroll)="onPageScroll(mobileScroll)">
+        @for (member of displayedMembers; track member.id) {
           <article class="member-card">
             <div class="title-row">
               <h4>{{ member.fullName }}</h4>

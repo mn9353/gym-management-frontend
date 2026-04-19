@@ -68,17 +68,42 @@ export const routes: Routes = [
       {
         path: 'users/active',
         loadComponent: () =>
-          import('./features/dashboard/owner-active-members/owner-active-members.component').then((m) => m.OwnerActiveMembersComponent)
+          import('./features/dashboard/owner-members/owner-members.component').then((m) => m.OwnerMembersComponent)
       },
       {
         path: 'users/inactive',
         loadComponent: () =>
-          import('./features/dashboard/owner-inactive-members/owner-inactive-members.component').then((m) => m.OwnerInactiveMembersComponent)
+          import('./features/dashboard/owner-members/owner-members.component').then((m) => m.OwnerMembersComponent)
       },
       {
         path: 'users/upcoming-renewals',
         loadComponent: () =>
-          import('./features/dashboard/owner-upcoming-renewals/owner-upcoming-renewals.component').then((m) => m.OwnerUpcomingRenewalsComponent)
+          import('./features/dashboard/owner-members/owner-members.component').then((m) => m.OwnerMembersComponent)
+      },
+      {
+        path: 'users/new-joins',
+        loadComponent: () =>
+          import('./features/dashboard/owner-members/owner-members.component').then((m) => m.OwnerMembersComponent)
+      },
+      {
+        path: 'users/plans-ending',
+        loadComponent: () =>
+          import('./features/dashboard/owner-members/owner-members.component').then((m) => m.OwnerMembersComponent)
+      },
+      {
+        path: 'users/pending-members',
+        loadComponent: () =>
+          import('./features/dashboard/owner-members/owner-members.component').then((m) => m.OwnerMembersComponent)
+      },
+      {
+        path: 'users/pending-amount',
+        redirectTo: 'users/pending-members',
+        pathMatch: 'full'
+      },
+      {
+        path: 'users/irregular',
+        loadComponent: () =>
+          import('./features/dashboard/owner-irregular-members/owner-irregular-members.component').then((m) => m.OwnerIrregularMembersComponent)
       },
       {
         path: 'members/:status',
@@ -116,6 +141,16 @@ export const routes: Routes = [
         path: 'enquiries',
         loadComponent: () =>
           import('./features/dashboard/enquiries/enquiries.component').then((m) => m.EnquiriesComponent)
+      },
+      {
+        path: 'users/inactive',
+        loadComponent: () =>
+          import('./features/dashboard/owner-members/owner-members.component').then((m) => m.OwnerMembersComponent)
+      },
+      {
+        path: 'users/upcoming-renewals',
+        loadComponent: () =>
+          import('./features/dashboard/owner-members/owner-members.component').then((m) => m.OwnerMembersComponent)
       },
       {
         path: '',

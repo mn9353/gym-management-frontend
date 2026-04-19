@@ -28,7 +28,7 @@ Configured in:
 - `gym-management-web/src/environments/environment.production.ts`
 
 Current value points to deployed backend:
-- `https://gym-management-6rvq.onrender.com`
+- `https://gym-management-1ekn.onrender.com`
 
 ## Security Notes
 - No backend DB/JWT secrets are stored in frontend code.

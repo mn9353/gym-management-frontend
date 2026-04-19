@@ -2,7 +2,6 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime } from 'rxjs';
-import { AgGridAngular } from 'ag-grid-angular';
 import {
   ColDef,
   ColumnState,
@@ -18,7 +17,7 @@ import { TopbarComponent } from '../../../shared/components/topbar/topbar.compon
 @Component({
   selector: 'app-owner-active-members',
   standalone: true,
-  imports: [CommonModule, FormsModule, TopbarComponent, AgGridAngular],
+  imports: [CommonModule, FormsModule, TopbarComponent],
   templateUrl: './owner-active-members.component.html',
   styleUrl: './owner-active-members.component.css'
 })
@@ -142,6 +141,10 @@ export class OwnerActiveMembersComponent implements OnInit {
         valueFormatter: (params) => this.formatAmount(params.value)
       }
     ];
+  }
+
+  get displayedMembers(): MemberListItem[] {
+    return this.isMobileView ? this.mobileMembers : this.members;
   }
 
   constructor(private readonly memberService: MemberService) {}

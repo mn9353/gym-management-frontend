@@ -1,0 +1,25 @@
+<div class="page">
+  <app-topbar title="Irregular Members" subtitle="Members absent for 4+ days" />
+
+  <section class="panel">
+    @if (isLoading) {
+      <p class="state">Loading irregular members...</p>
+    } @else if (errorMessage) {
+      <p class="state error">{{ errorMessage }}</p>
+    } @else if (members.length === 0) {
+      <p class="state">No irregular members right now.</p>
+    } @else {
+      <div class="cards">
+        @for (member of members; track member.id) {
+          <article class="card">
+            <h4>{{ member.fullName }}</h4>
+            <p><strong>Absent:</strong> {{ member.daysAbsent }} day(s)</p>
+            <p><strong>Last check-in:</strong> {{ member.lastCheckinDate ? (member.lastCheckinDate | date: 'dd MMM yyyy') : 'No attendance yet' }}</p>
+            <p><strong>Plan end:</strong> {{ member.planEndDate | date: 'dd MMM yyyy' }}</p>
+            <span class="badge">{{ member.status }}</span>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</div>

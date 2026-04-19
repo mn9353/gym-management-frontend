@@ -17,6 +17,8 @@ import {
   OwnerRenewMemberDto,
   MemberSearchDto,
   RenewMemberDto,
+  SendSubscriptionReminderRequest,
+  SubscriptionReminderDispatchResult,
   PagedResponse,
   UpdateMemberDto
 } from '../models/member.models';
@@ -226,6 +228,22 @@ export class MemberService {
     }
     return this.http.post<PagedResponse<MemberListItem>>(
       buildApiUrl(API_PATHS.members.base, API_PATHS.members.upcomingRenewalsGrid),
+      payload,
+      { params }
+    );
+  }
+
+  sendSubscriptionReminders(
+    payload: SendSubscriptionReminderRequest,
+    gymId?: string
+  ): Observable<SubscriptionReminderDispatchResult> {
+    let params = new HttpParams();
+    if (gymId) {
+      params = params.set('gymId', gymId);
+    }
+
+    return this.http.post<SubscriptionReminderDispatchResult>(
+      buildApiUrl(API_PATHS.members.base, API_PATHS.members.subscriptionReminders),
       payload,
       { params }
     );

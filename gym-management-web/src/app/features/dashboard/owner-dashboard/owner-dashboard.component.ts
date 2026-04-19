@@ -4,7 +4,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { DashboardService } from '../../../core/services/dashboard.service';
-import { DashboardOverview, MonthlyMemberFlow, MonthlyRevenueTrend, RecentMember, WeeklyMemberGrowth } from '../../../core/models/dashboard.models';
+import { DashboardOverview, IrregularMember, MonthlyMemberFlow, MonthlyRevenueTrend, RecentMember, WeeklyMemberGrowth } from '../../../core/models/dashboard.models';
 import { TopbarComponent } from '../../../shared/components/topbar/topbar.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Chart, registerables } from 'chart.js';
@@ -79,6 +79,7 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
   weeklyGrowth: WeeklyMemberGrowth[] = [];
   recentMembers: RecentMember[] = [];
   expiringSoon: MemberDto[] = [];
+  irregularMembers: IrregularMember[] = [];
   isExpiringLoadingMore = false;
   hasMoreExpiring = false;
 
@@ -293,6 +294,12 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
           this.partialLoadWarning = true;
           return of([]);
         })
+      ),
+      irregular: this.dashboardService.getIrregularMembers(4, 200).pipe(
+        catchError(() => {
+          this.partialLoadWarning = true;
+          return of([]);
+        })
       )
     }).pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
@@ -308,6 +315,7 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
         this.weeklyGrowth = result.weekly;
         this.recentMembers = result.recent;
         this.expiringSoon = result.expiring;
+        this.irregularMembers = result.irregular;
         this.expiringOffset = this.expiringSoon.length;
         this.hasMoreExpiring =
           result.expiring.length === this.expiringPageSize
@@ -614,20 +622,40 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
   }
 
   openMembersBySegment(segment: 'all' | 'active' | 'expiring' | 'inactive'): void {
-    this.router.navigate(['/owner/members'], {
-      queryParams: { segment }
-    });
+    if (segment === 'active') {
+      this.router.navigate(['/owner/users/active']);
+      return;
+    }
+    if (segment === 'expiring') {
+      this.router.navigate(['/owner/users/upcoming-renewals']);
+      return;
+    }
+    if (segment === 'inactive') {
+      this.router.navigate(['/owner/users/inactive']);
+      return;
+    }
+    this.router.navigate(['/owner/members']);
   }
 
   openNewJoins(): void {
-    this.router.navigate(['/owner/members'], {
+    this.router.navigate(['/owner/users/new-joins'], {
       queryParams: { segment: 'all', joinedMonth: 'current' }
     });
   }
 
   openPlansEndingThisMonth(): void {
-    this.router.navigate(['/owner/members'], {
+    this.router.navigate(['/owner/users/plans-ending'], {
       queryParams: { segment: 'all', endingMonth: 'current' }
     });
+  }
+
+  openPendingAmountMembers(): void {
+    this.router.navigate(['/owner/users/pending-members'], {
+      queryParams: { segment: 'all', paymentStatus: 'PENDING,PARTIAL' }
+    });
+  }
+
+  openIrregularMembers(): void {
+    this.router.navigate(['/owner/users/irregular']);
   }
 }

@@ -100,17 +100,6 @@ select {
   opacity: 0.5;
 }
 
-.desktop-grid {
-  height: 56vh;
-  width: 100%;
-}
-
-.desktop-grid ag-grid-angular {
-  display: block;
-  height: 100%;
-  width: 100%;
-}
-
 .state {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -132,9 +121,10 @@ select {
   margin-top: 0.9rem;
 }
 
-.mobile-cards {
+.cards-grid {
   display: grid;
   gap: 0.6rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
 .member-card {
@@ -235,10 +225,11 @@ select {
     justify-content: space-between;
   }
 
-  .mobile-cards {
+  .cards-grid {
     max-height: 68vh;
     overflow-y: auto;
     padding-right: 0.2rem;
+    grid-template-columns: 1fr;
   }
 }
 

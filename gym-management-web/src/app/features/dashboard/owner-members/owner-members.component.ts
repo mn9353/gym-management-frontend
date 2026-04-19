@@ -15,6 +15,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { extractApiErrorMessage } from '../../../core/utils/api-error.util';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TopbarComponent } from '../../../shared/components/topbar/topbar.component';
+import { AuthService } from '../../../core/services/auth.service';
 
 type MemberSegment = 'all' | 'active' | 'expiring' | 'inactive';
 
@@ -26,12 +27,18 @@ type MemberSegment = 'all' | 'active' | 'expiring' | 'inactive';
   styleUrl: './owner-members.component.css'
 })
 export class OwnerMembersComponent implements OnInit {
+  pageTitle = 'Members';
+  pageSubtitle = 'Track active, expiring, and inactive members in one place.';
+  currentView: 'default' | 'active' | 'upcoming' | 'inactive' | 'new-joins' | 'plans-ending' | 'pending-members' = 'default';
   isLoading = true;
   isCountsLoading = true;
   errorMessage = '';
   members: MemberListItem[] = [];
   totalCount = 0;
   totalPages = 1;
+  isSendingReminders = false;
+  selectAllMatchingFilters = false;
+  selectedMemberIds = new Set<string>();
 
   selectedMember: MemberListItem | null = null;
   isPaymentDrawerOpen = false;
@@ -84,6 +91,7 @@ export class OwnerMembersComponent implements OnInit {
   };
 
   selectedSegment: MemberSegment = 'all';
+  readonly isTrainerView: boolean;
   joinedDateMode: 'any' | 'single' | 'range' = 'any';
   expiryDateMode: 'any' | 'single' | 'range' = 'any';
   isAdvancedFiltersOpen = false;
@@ -121,8 +129,11 @@ export class OwnerMembersComponent implements OnInit {
     private readonly memberService: MemberService,
     private readonly notificationService: NotificationService,
     private readonly route: ActivatedRoute,
-    private readonly router: Router
-  ) {}
+    private readonly router: Router,
+    private readonly authService: AuthService
+  ) {
+    this.isTrainerView = this.authService.isTrainer();
+  }
 
   ngOnInit(): void {
     this.applyInitialQueryParams();
@@ -285,6 +296,7 @@ export class OwnerMembersComponent implements OnInit {
     }
 
     this.selectedSegment = segment;
+    this.clearMemberSelection();
     this.query.pageNumber = 1;
     this.query.planEndDateFrom = '';
     this.query.planEndDateTo = '';
@@ -307,6 +319,9 @@ export class OwnerMembersComponent implements OnInit {
         this.totalPages = response.totalPages;
         this.query.pageNumber = response.pageNumber;
         this.query.pageSize = response.pageSize;
+        if (this.selectAllMatchingFilters) {
+          this.selectedMemberIds.clear();
+        }
         this.isLoading = false;
       },
       error: (error) => {
@@ -334,6 +349,7 @@ export class OwnerMembersComponent implements OnInit {
       return;
     }
     this.query.pageNumber = (this.query.pageNumber ?? 1) + 1;
+    this.clearMemberSelection();
     this.fetchMembers();
   }
 
@@ -342,7 +358,99 @@ export class OwnerMembersComponent implements OnInit {
       return;
     }
     this.query.pageNumber = (this.query.pageNumber ?? 1) - 1;
+    this.clearMemberSelection();
     this.fetchMembers();
+  }
+
+  canSendReminders(): boolean {
+    return this.currentView === 'upcoming'
+      || this.currentView === 'inactive'
+      || this.currentView === 'plans-ending'
+      || this.selectedSegment === 'expiring'
+      || this.selectedSegment === 'inactive';
+  }
+
+  isMemberSelected(memberId: string): boolean {
+    if (this.selectAllMatchingFilters) {
+      return true;
+    }
+    return this.selectedMemberIds.has(memberId);
+  }
+
+  toggleMemberSelection(memberId: string, checked: boolean): void {
+    if (this.selectAllMatchingFilters) {
+      this.selectAllMatchingFilters = false;
+      this.selectedMemberIds.clear();
+    }
+
+    if (checked) {
+      this.selectedMemberIds.add(memberId);
+    } else {
+      this.selectedMemberIds.delete(memberId);
+    }
+  }
+
+  toggleSelectAllMatchingFilters(): void {
+    this.selectAllMatchingFilters = !this.selectAllMatchingFilters;
+    if (this.selectAllMatchingFilters) {
+      this.selectedMemberIds.clear();
+    }
+  }
+
+  clearMemberSelection(): void {
+    this.selectAllMatchingFilters = false;
+    this.selectedMemberIds.clear();
+  }
+
+  get selectionSummaryText(): string {
+    if (!this.canSendReminders()) {
+      return '';
+    }
+
+    if (this.selectAllMatchingFilters) {
+      return `All ${this.totalCount} filtered members are selected.`;
+    }
+
+    const count = this.selectedMemberIds.size;
+    if (count === 0) {
+      return 'Select members to send reminder mail.';
+    }
+    return `${count} member${count > 1 ? 's are' : ' is'} selected.`;
+  }
+
+  sendSelectedReminderMails(): void {
+    if (!this.canSendReminders() || this.isSendingReminders) {
+      return;
+    }
+
+    if (!this.selectAllMatchingFilters && this.selectedMemberIds.size === 0) {
+      this.notificationService.warning('Select at least one member or choose Select All.');
+      return;
+    }
+
+    const stage = this.resolveReminderStage();
+    const payload = {
+      selectAll: this.selectAllMatchingFilters,
+      memberIds: this.selectAllMatchingFilters ? [] : Array.from(this.selectedMemberIds),
+      stage,
+      segment: this.selectedSegment,
+      filters: { ...this.query }
+    };
+
+    this.isSendingReminders = true;
+    this.memberService.sendSubscriptionReminders(payload).subscribe({
+      next: (response) => {
+        this.isSendingReminders = false;
+        this.notificationService.success(
+          `Mail sent: ${response.sentCount} success, ${response.failedCount} failed, ${response.skippedAlreadySentCount} already-sent, ${response.skippedNoEmailCount} no-email.`
+        );
+        this.clearMemberSelection();
+      },
+      error: (error) => {
+        this.isSendingReminders = false;
+        this.notificationService.error(extractApiErrorMessage(error, 'Unable to send reminder mails.'));
+      }
+    });
   }
 
   getAvatarText(fullName: string): string {
@@ -860,7 +968,66 @@ export class OwnerMembersComponent implements OnInit {
     });
   }
 
+  getDisplayPhone(member: MemberListItem): string {
+    if (this.isTrainerView) {
+      return 'Hidden';
+    }
+    return member.phone || '-';
+  }
+
+  getWhatsAppLink(phone?: string | null): string | null {
+    if (!phone || this.isTrainerView) {
+      return null;
+    }
+    const digits = phone.replace(/\D/g, '');
+    if (!digits) {
+      return null;
+    }
+    return `https://wa.me/${digits}`;
+  }
+
   private applyInitialQueryParams(): void {
+    const routePath = this.route.snapshot.routeConfig?.path ?? '';
+    switch (routePath) {
+      case 'users/active':
+        this.currentView = 'active';
+        this.pageTitle = 'Active Members';
+        this.pageSubtitle = 'Members currently active in your gym.';
+        this.selectedSegment = 'active';
+        break;
+      case 'users/upcoming-renewals':
+        this.currentView = 'upcoming';
+        this.pageTitle = 'Upcoming Renewals';
+        this.pageSubtitle = 'Members whose plans are ending soon.';
+        this.selectedSegment = 'expiring';
+        break;
+      case 'users/inactive':
+        this.currentView = 'inactive';
+        this.pageTitle = 'Inactive Members';
+        this.pageSubtitle = 'Members with expired plans.';
+        this.selectedSegment = 'inactive';
+        break;
+      case 'users/new-joins':
+        this.currentView = 'new-joins';
+        this.pageTitle = 'New Joins';
+        this.pageSubtitle = 'Members who joined this month.';
+        break;
+      case 'users/plans-ending':
+        this.currentView = 'plans-ending';
+        this.pageTitle = 'Plans Ending This Month';
+        this.pageSubtitle = 'Includes both expiring soon and already inactive members this month.';
+        break;
+      case 'users/pending-members':
+        this.currentView = 'pending-members';
+        this.pageTitle = 'Pending Members';
+        this.pageSubtitle = 'Members with pending or partial payment.';
+        this.query.paymentStatus = 'PENDING,PARTIAL';
+        break;
+      default:
+        this.currentView = 'default';
+        break;
+    }
+
     const params = this.route.snapshot.queryParamMap;
     const segment = params.get('segment');
     if (segment === 'all' || segment === 'active' || segment === 'expiring' || segment === 'inactive') {
@@ -888,6 +1055,24 @@ export class OwnerMembersComponent implements OnInit {
       this.joinedDateMode = 'range';
       this.draftJoinedDateMode = 'range';
     }
+
+    const paymentStatus = params.get('paymentStatus');
+    if (paymentStatus) {
+      this.query.paymentStatus = paymentStatus;
+    }
+  }
+
+  private resolveReminderStage(): 'AUTO' | 'EXPIRING' | 'INACTIVE' {
+    if (this.currentView === 'plans-ending') {
+      return 'AUTO';
+    }
+    if (this.selectedSegment === 'inactive' || this.currentView === 'inactive') {
+      return 'INACTIVE';
+    }
+    if (this.selectedSegment === 'expiring' || this.currentView === 'upcoming') {
+      return 'EXPIRING';
+    }
+    return 'AUTO';
   }
 
   private syncMembersQueryParams(): void {

@@ -4,6 +4,7 @@ export interface UserProfile {
   id: string;
   gymId?: string | null;
   gymName?: string | null;
+  gymSubscriptionPlan?: string | null;
   fullName: string;
   email: string;
   phone?: string | null;

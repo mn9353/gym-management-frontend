@@ -1,5 +1,5 @@
 <div class="members-page">
-  <app-topbar title="Members" subtitle="Track active, expiring, and inactive members in one place." />
+  <app-topbar [title]="pageTitle" [subtitle]="pageSubtitle" />
 
   <main class="members-shell">
     <section class="members-panel">
@@ -38,6 +38,28 @@
           </button>
         </div>
       </div>
+
+      @if (canSendReminders()) {
+        <div class="bulk-mail-bar">
+          <div class="bulk-mail-info">
+            <strong>Reminder Mail</strong>
+            <p>{{ selectionSummaryText }}</p>
+          </div>
+          <div class="bulk-mail-actions">
+            <button type="button" class="ghost" (click)="toggleSelectAllMatchingFilters()">
+              {{ selectAllMatchingFilters ? 'Use manual selection' : 'Select all filtered members' }}
+            </button>
+            <button
+              type="button"
+              class="primary"
+              [disabled]="isSendingReminders || (!selectAllMatchingFilters && selectedMemberIds.size === 0)"
+              (click)="sendSelectedReminderMails()"
+            >
+              {{ isSendingReminders ? 'Sending...' : 'Send reminder mail' }}
+            </button>
+          </div>
+        </div>
+      }
 
       <div class="members-list-region">
         @if (errorMessage) {
@@ -78,6 +100,15 @@
 
                     <div class="member-main">
                       <div class="name-row">
+                        @if (canSendReminders()) {
+                          <label class="member-select">
+                            <input
+                              type="checkbox"
+                              [checked]="isMemberSelected(member.id)"
+                              (change)="toggleMemberSelection(member.id, $any($event.target).checked)"
+                            />
+                          </label>
+                        }
                         <h3>{{ member.fullName }}</h3>
                         @let badge = getBadge(member);
                         <span class="badge" [class]="badge.className">{{ badge.label }}</span>
@@ -103,7 +134,11 @@
                       <div class="contact-row">
                         <span class="contact-item">
                           <span class="material-symbols-outlined">call</span>
-                          <strong>{{ member.phone || '-' }}</strong>
+                          @if (getWhatsAppLink(member.phone); as waLink) {
+                            <a [href]="waLink" target="_blank" rel="noopener noreferrer"><strong>{{ getDisplayPhone(member) }}</strong></a>
+                          } @else {
+                            <strong>{{ getDisplayPhone(member) }}</strong>
+                          }
                         </span>
                         <span class="contact-item">
                           <span class="material-symbols-outlined">mail</span>
@@ -213,7 +248,7 @@
           </div>
           <div class="member-preview-info">
             <strong>{{ selectedMember.fullName }}</strong>
-            <span>Phone: {{ selectedMember.phone || '-' }}</span>
+            <span>Phone: {{ getDisplayPhone(selectedMember) }}</span>
             <span>Email: {{ selectedMember.email || '-' }}</span>
             <span>Current plan ends: {{ formatDate(selectedMember.planEndDate) }}</span>
           </div>

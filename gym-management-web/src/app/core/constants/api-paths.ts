@@ -18,7 +18,8 @@ export const API_PATHS = {
     revenueTrends: '/revenue-trends',
     memberFlow: '/member-flow',
     recentMembers: '/recent-members',
-    weeklyGrowth: '/weekly-growth'
+    weeklyGrowth: '/weekly-growth',
+    irregularMembers: '/irregular-members'
   },
   gyms: {
     base: '/api/gyms',
@@ -40,6 +41,7 @@ export const API_PATHS = {
     activeGrid: '/active/grid',
     inactiveGrid: '/inactive/grid',
     upcomingRenewalsGrid: '/upcoming-renewals/grid',
+    subscriptionReminders: '/subscription-reminders',
     ownerPaymentUpdate: '/owner/payment-update',
     ownerRenew: '/owner/renew'
   },

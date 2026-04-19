@@ -63,6 +63,14 @@ export class TopbarComponent {
     return this.authService.getCurrentUser()?.role ?? '';
   }
 
+  get gymSubscriptionPlan(): string {
+    return (this.authService.getCurrentUser()?.gymSubscriptionPlan ?? '').toLowerCase();
+  }
+
+  get isBasicPlan(): boolean {
+    return this.gymSubscriptionPlan === 'basic';
+  }
+
   get gymName(): string {
     return this.authService.getCurrentUser()?.gymName || 'Gym Management';
   }
@@ -109,7 +117,7 @@ export class TopbarComponent {
       { label: 'Dashboard', path: '/owner/dashboard', exact: true },
       { label: 'Members', path: '/owner/members', exact: true },
       { label: 'Add Member', path: '/owner/members/add', exact: true },
-      { label: 'Transactions', path: '/owner/transactions', exact: true },
+      ...(this.isBasicPlan ? [] : [{ label: 'Transactions', path: '/owner/transactions', exact: true }]),
       { label: 'Team', path: '/owner/team', exact: true },
       { label: 'Enquiries', path: '/owner/enquiries', exact: true }
     ];
