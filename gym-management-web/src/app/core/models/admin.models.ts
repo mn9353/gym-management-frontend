@@ -66,6 +66,7 @@ export interface AppUserDto {
   fullName: string;
   email: string;
   phone?: string | null;
+  profileImageUrl?: string | null;
   role: 'ADMIN' | 'OWNER' | 'STAFF' | 'TRAINER' | 'MEMBER';
   isActive: boolean;
   welcomeEmailSent?: boolean | null;
@@ -78,6 +79,7 @@ export interface CreateUserDto {
   fullName: string;
   email: string;
   phone?: string | null;
+  profileImageUrl?: string | null;
   role: 'ADMIN' | 'OWNER' | 'STAFF' | 'TRAINER' | 'MEMBER';
 }
 
@@ -85,6 +87,7 @@ export interface UpdateUserDto {
   fullName?: string;
   email?: string;
   phone?: string | null;
+  profileImageUrl?: string | null;
   role?: 'ADMIN' | 'OWNER' | 'STAFF' | 'TRAINER' | 'MEMBER';
   isActive?: boolean;
 }
@@ -93,5 +96,6 @@ export interface OwnerCreateUserDto {
   fullName: string;
   email: string;
   phone?: string | null;
+  profileImageUrl?: string | null;
   role: 'STAFF' | 'TRAINER';
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -14,7 +14,7 @@ import { NotificationService } from '../../../core/services/notification.service
   templateUrl: './owner-team.component.html',
   styleUrl: './owner-team.component.css'
 })
-export class OwnerTeamComponent implements OnInit {
+export class OwnerTeamComponent implements OnInit, OnDestroy {
   private readonly phoneRegex = /^\+91\d{10}$/;
   private readonly emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
@@ -22,6 +22,13 @@ export class OwnerTeamComponent implements OnInit {
   isLoading = true;
   errorMessage = '';
   isSubmitting = false;
+  profileImagePreviewUrl: string | null = null;
+  profileImageName = '';
+  isCameraOpen = false;
+  cameraStream: MediaStream | null = null;
+  cameraError: string | null = null;
+  cameraFacingMode: 'user' | 'environment' = 'user';
+  private profileImageBase64: string | null = null;
 
   readonly form;
 
@@ -40,6 +47,11 @@ export class OwnerTeamComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUsers();
+  }
+
+  ngOnDestroy(): void {
+    this.closeCamera();
+    this.revokePreviewUrl();
   }
 
   submit(): void {
@@ -63,6 +75,7 @@ export class OwnerTeamComponent implements OnInit {
         fullName: value.fullName ?? '',
         email: value.email ?? '',
         phone: value.phone || null,
+        profileImageUrl: this.profileImageBase64,
         role: (value.role as 'STAFF' | 'TRAINER') ?? 'STAFF'
       })
       .pipe(finalize(() => (this.isSubmitting = false)))
@@ -74,6 +87,7 @@ export class OwnerTeamComponent implements OnInit {
             phone: '',
             role: 'STAFF'
           });
+          this.clearProfileImage();
           this.notificationService.success('Team user added successfully. Login credentials were emailed.');
           if (createdUser.welcomeEmailSent === false) {
             this.notificationService.warning(
@@ -93,6 +107,80 @@ export class OwnerTeamComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     input.value = this.normalizeIndianPhoneInput(input.value);
     this.form.controls.phone.setValue(input.value, { emitEvent: false });
+  }
+
+  async onProfileImageSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      this.clearProfileImage();
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.notificationService.warning('Please select a valid image file.');
+      return;
+    }
+
+    this.revokePreviewUrl();
+    this.profileImagePreviewUrl = URL.createObjectURL(file);
+    this.profileImageName = file.name;
+
+    try {
+      this.profileImageBase64 = await this.compressFileToBase64(file);
+    } catch {
+      this.notificationService.error('Unable to process selected image.');
+      this.clearProfileImage();
+    }
+  }
+
+  async openCamera(): Promise<void> {
+    this.isCameraOpen = true;
+    this.cameraError = null;
+    this.cameraFacingMode = 'user';
+    await this.startCameraStream();
+  }
+
+  async toggleCameraFacingMode(): Promise<void> {
+    this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
+    await this.startCameraStream();
+  }
+
+  captureFromCamera(video: HTMLVideoElement): void {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0);
+      this.profileImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+      this.revokePreviewUrl();
+      this.profileImagePreviewUrl = this.profileImageBase64;
+      this.profileImageName = 'trainer_capture.jpg';
+      this.closeCamera();
+    }
+  }
+
+  closeCamera(): void {
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach(track => track.stop());
+      this.cameraStream = null;
+    }
+    this.isCameraOpen = false;
+    this.cameraError = null;
+    this.cameraFacingMode = 'user';
+  }
+
+  clearProfileImage(): void {
+    this.revokePreviewUrl();
+    this.profileImagePreviewUrl = null;
+    this.profileImageName = '';
+    this.profileImageBase64 = null;
+  }
+
+  getAvatarLabel(user: AppUserDto): string {
+    return (user.fullName || '?').trim().charAt(0).toUpperCase() || '?';
   }
 
   private normalizeIndianPhoneInput(value: string | null | undefined): string {
@@ -122,6 +210,65 @@ export class OwnerTeamComponent implements OnInit {
         this.notificationService.error(this.errorMessage);
         this.isLoading = false;
       }
+    });
+  }
+
+  private revokePreviewUrl(): void {
+    if (this.profileImagePreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(this.profileImagePreviewUrl);
+    }
+  }
+
+  private async startCameraStream(): Promise<void> {
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach(track => track.stop());
+      this.cameraStream = null;
+    }
+
+    try {
+      this.cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: this.cameraFacingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+      this.cameraError = null;
+    } catch {
+      this.cameraError = 'Could not access camera. Please check permissions.';
+      this.notificationService.error('Camera access denied or not available.');
+    }
+  }
+
+  private compressFileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => {
+        const maxDimension = 1280;
+        const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+        const targetWidth = Math.max(1, Math.round(image.width * scale));
+        const targetHeight = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Canvas unavailable'));
+          return;
+        }
+        ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        URL.revokeObjectURL(objectUrl);
+        resolve(dataUrl);
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Image decode failed'));
+      };
+      image.src = objectUrl;
     });
   }
 

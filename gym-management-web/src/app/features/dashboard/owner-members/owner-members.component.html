@@ -134,7 +134,9 @@
                       <div class="plan-and-amount">
                         <span class="plan-chip">{{ getPlanMonthsLabel(member.planStartDate, member.planEndDate) }}</span>
                         <span class="amount-inline" [class.has-pending]="hasOutstandingPayment(member)">
-                          Paid {{ formatAmount(member.amountPaid) }}
+                          @if (!isTrainerView) {
+                            Paid {{ formatAmount(member.amountPaid) }}
+                          }
                           @if (hasOutstandingPayment(member)) {
                             <span class="pending-highlight">
                               Pending {{ formatAmount(getRemainingAmount(member)) }}
@@ -168,6 +170,14 @@
                   </div>
 
                   <div class="action-buttons">
+                    @if (isOwnerView) {
+                      <button type="button" class="icon-action-btn edit-btn" (click)="openEditDrawer(member)" aria-label="Edit Member" style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0.4rem;color:var(--brand);cursor:pointer;display:flex;align-items:center;">
+                        <span class="material-symbols-outlined" style="font-size:20px;">edit</span>
+                      </button>
+                      <button type="button" class="icon-action-btn delete-btn" (click)="deleteMember(member)" aria-label="Delete Member" style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0.4rem;color:var(--danger-text);cursor:pointer;display:flex;align-items:center;">
+                        <span class="material-symbols-outlined" style="font-size:20px;">delete</span>
+                      </button>
+                    }
                     @if (hasOutstandingPayment(member)) {
                       <button type="button" class="quick-pay-btn" (click)="openPaymentDrawer(member)">Collect Payment</button>
                     }
@@ -351,6 +361,52 @@
         </button>
       </section>
       }
+    </aside>
+  }
+
+  @if (isEditDrawerOpen && selectedMember) {
+    <div class="drawer-backdrop" (click)="closeEditDrawer()"></div>
+    <aside class="payment-drawer edit-drawer" (click)="$event.stopPropagation()">
+      <div class="drawer-head">
+        <h3>Edit Member</h3>
+        <button type="button" (click)="closeEditDrawer()" [disabled]="isSavingEdit">Close</button>
+      </div>
+
+      <section class="drawer-section">
+        <h4>Personal Details</h4>
+        <div class="drawer-grid">
+          <label class="full">
+            <span>Full Name <strong class="required">*</strong></span>
+            <input type="text" [(ngModel)]="editDraft.fullName" placeholder="Member name" />
+          </label>
+          <label>
+            <span>Phone <strong class="required">*</strong></span>
+            <input type="text" [(ngModel)]="editDraft.phone" maxlength="13" placeholder="+91..." />
+          </label>
+          <label>
+            <span>Email</span>
+            <input type="email" [(ngModel)]="editDraft.email" placeholder="Optional" />
+          </label>
+          <label>
+            <span>Gender</span>
+            <select [(ngModel)]="editDraft.gender">
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </label>
+          <label class="full">
+            <span>Notes</span>
+            <input type="text" [(ngModel)]="editDraft.notes" placeholder="Optional remarks" />
+          </label>
+        </div>
+        <p class="field-hint" style="margin-top:1rem;color:var(--text-dim);font-size:0.85rem;">
+          Note: If you change the email address, a new secure temporary password will be auto-generated and emailed.
+        </p>
+        <button type="button" class="primary" (click)="submitEdit()" [disabled]="isSavingEdit || !editDraft.fullName || !editDraft.phone">
+          {{ isSavingEdit ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </section>
     </aside>
   }
 

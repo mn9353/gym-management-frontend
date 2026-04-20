@@ -175,7 +175,7 @@
   font-size: 0.86rem;
 }
 
-.user-menu button {
+.user-menu button.logout-btn {
   background: color-mix(in srgb, var(--brand) 80%, #0d202f);
   border: 1px solid transparent;
   border-radius: 10px;
@@ -184,6 +184,74 @@
   font-weight: 700;
   margin-top: 0.4rem;
   padding: 0.58rem 0.7rem;
+}
+
+.user-menu button.action-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 0.4rem;
+  padding: 0.58rem 0.7rem;
+  transition: background 0.2s;
+}
+
+.user-menu button.action-btn:hover {
+  background: var(--line);
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-surface {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+  padding: 1.5rem;
+  border-radius: 16px;
+}
+
+.modal-surface h3 {
+  margin: 0 0 1rem;
+  color: var(--text);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.btn-cancel {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--line);
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: var(--line);
+  color: var(--text);
 }
 
 @media (max-width: 700px) {
@@ -212,3 +280,4 @@
     width: 36px;
   }
 }
+

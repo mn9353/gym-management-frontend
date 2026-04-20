@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, of, tap } from 'rxjs';
-import { ForgotPasswordRequest, LoginRequest, LoginResponse, RefreshTokenResponse, ResetPasswordRequest, UserProfile, UserRole, VerifyResetCodeRequest } from '../models/auth.models';
+import { ChangePasswordRequest, ForgotPasswordRequest, LoginRequest, LoginResponse, RefreshTokenResponse, ResetPasswordRequest, UserProfile, UserRole, VerifyResetCodeRequest } from '../models/auth.models';
 import { API_PATHS } from '../constants/api-paths';
 import { buildApiUrl } from '../constants/api-url';
 import { SKIP_GLOBAL_LOADER, LOADING_MESSAGE } from '../interceptors/loading-context';
@@ -68,6 +68,15 @@ export class AuthService {
           }
         })
       );
+  }
+
+  changePassword(payload: ChangePasswordRequest): Observable<{ success: boolean; message: string }> {
+    const context = new HttpContext().set(SKIP_GLOBAL_LOADER, true).set(LOADING_MESSAGE, 'Changing password...');
+    return this.http.post<{ success: boolean; message: string }>(
+      buildApiUrl(API_PATHS.auth.base, 'change-password'),
+      payload,
+      { context }
+    );
   }
 
   fetchCurrentUser(): Observable<UserProfile> {

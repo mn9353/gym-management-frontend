@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, Input } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { filter } from 'rxjs';
+import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { filter, finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { NotificationService } from '../../../core/services/notification.service';
 
 type MenuItem = {
   label: string;
@@ -14,7 +16,7 @@ type MenuItem = {
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, ReactiveFormsModule],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.css'
 })
@@ -23,13 +25,32 @@ export class TopbarComponent {
   @Input() subtitle = '';
   isMenuOpen = false;
   isUserMenuOpen = false;
+  showChangePasswordModal = false;
+  isChangingPassword = false;
+  
+  readonly changePasswordForm;
 
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,
     private readonly elementRef: ElementRef<HTMLElement>,
-    private readonly themeService: ThemeService
+    private readonly themeService: ThemeService,
+    private readonly fb: FormBuilder,
+    private readonly notificationService: NotificationService
   ) {
+    this.changePasswordForm = this.fb.group({
+      oldPassword: ['', Validators.required],
+      newPassword: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(8),
+          Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/)
+        ]
+      ],
+      confirmPassword: ['', Validators.required]
+    }, { validators: this.passwordMatchValidator });
+    
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(() => {
@@ -159,6 +180,7 @@ export class TopbarComponent {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as Node | null;
+
     if (target && !this.elementRef.nativeElement.contains(target)) {
       this.isMenuOpen = false;
       this.isUserMenuOpen = false;
@@ -173,5 +195,48 @@ export class TopbarComponent {
         this.router.navigate(['/login']);
       }
     });
+  }
+
+  private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = control.get('newPassword')?.value;
+    const confirm = control.get('confirmPassword')?.value;
+    if (password && confirm && password !== confirm) {
+      return { mismatch: true };
+    }
+    return null;
+  }
+
+  openChangePassword(): void {
+    this.isUserMenuOpen = false;
+    this.showChangePasswordModal = true;
+    this.changePasswordForm.reset();
+  }
+
+  closeChangePassword(): void {
+    this.showChangePasswordModal = false;
+    this.changePasswordForm.reset();
+  }
+
+  submitChangePassword(): void {
+    if (this.changePasswordForm.invalid) {
+      this.changePasswordForm.markAllAsTouched();
+      return;
+    }
+
+    const val = this.changePasswordForm.getRawValue();
+    this.isChangingPassword = true;
+
+    this.authService.changePassword({ oldPassword: val.oldPassword!, newPassword: val.newPassword! })
+      .pipe(finalize(() => this.isChangingPassword = false))
+      .subscribe({
+        next: (res) => {
+          this.notificationService.success(res.message);
+          this.closeChangePassword();
+        },
+        error: (err) => {
+          const msg = err.error?.message || 'Failed to change password.';
+          this.notificationService.error(msg);
+        }
+      });
   }
 }

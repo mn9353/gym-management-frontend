@@ -57,6 +57,44 @@
     <strong>{{ userName }}</strong>
     <span>{{ userRole }}</span>
     <span>{{ gymName }}</span>
-    <button type="button" (click)="logout()">Logout</button>
+    <button type="button" class="action-btn" (click)="openChangePassword()">Change Password</button>
+    <button type="button" class="logout-btn" (click)="logout()">Logout</button>
+  </div>
+}
+
+@if (showChangePasswordModal) {
+  <div class="modal-backdrop" (click)="closeChangePassword()">
+    <div class="modal-surface panel" (click)="$event.stopPropagation()">
+      <h3>Change Password</h3>
+      <form [formGroup]="changePasswordForm" (ngSubmit)="submitChangePassword()">
+        <label>
+          Old Password
+          <input type="password" formControlName="oldPassword" placeholder="Current password" />
+        </label>
+        
+        <label>
+          New Password
+          <input type="password" formControlName="newPassword" placeholder="New password" />
+          @if (changePasswordForm.get('newPassword')?.touched && changePasswordForm.get('newPassword')?.hasError('pattern')) {
+            <small class="field-error">Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char.</small>
+          }
+        </label>
+        
+        <label>
+          Confirm New Password
+          <input type="password" formControlName="confirmPassword" placeholder="Confirm new password" />
+          @if (changePasswordForm.get('confirmPassword')?.touched && changePasswordForm.hasError('mismatch')) {
+            <small class="field-error">Passwords do not match.</small>
+          }
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" (click)="closeChangePassword()" [disabled]="isChangingPassword">Cancel</button>
+          <button type="submit" [disabled]="changePasswordForm.invalid || isChangingPassword">
+            {{ isChangingPassword ? 'Saving...' : 'Save Password' }}
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 }

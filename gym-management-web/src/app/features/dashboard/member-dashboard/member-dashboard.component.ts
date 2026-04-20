@@ -61,8 +61,6 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
   missedTrend: MemberMissedTrendPoint[] = [];
   muscleDistribution: MemberMuscleDistribution[] = [];
   restDays: MemberRestDay[] = [];
-  restDayDate = new Date().toISOString().slice(0, 10);
-  restDayNotes = '';
   isSubmittingRestDay = false;
 
   calendarMonth = new Date();
@@ -336,24 +334,36 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
       });
   }
 
+  currentFacingMode: 'user' | 'environment' = 'environment';
+
   async startScanner(): Promise<void> {
     if (this.showScanner) {
       return;
     }
 
     try {
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: this.currentFacingMode } });
       this.showScanner = true;
       setTimeout(() => {
         const video = this.scanVideo?.nativeElement;
         if (video && this.mediaStream) {
           video.srcObject = this.mediaStream;
+          video.setAttribute('playsinline', 'true'); // Ensure it works on iOS
           void video.play();
           this.startDetectLoop(video);
         }
       }, 0);
     } catch {
       this.notificationService.error('Camera access was denied. You can paste QR value manually.');
+    }
+  }
+
+  async toggleCamera(): Promise<void> {
+    this.currentFacingMode = this.currentFacingMode === 'environment' ? 'user' : 'environment';
+    if (this.showScanner) {
+      this.cleanupScanner();
+      this.showScanner = false;
+      await this.startScanner();
     }
   }
 
@@ -459,51 +469,45 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
       });
   }
 
-  submitRestDay(): void {
-    if (this.isSubmittingRestDay) {
-      return;
-    }
-    const date = (this.restDayDate || '').trim();
-    if (!date) {
-      this.notificationService.warning('Please choose a rest-day date.');
+  toggleRestDayFromCalendar(day: CalendarDay): void {
+    if (this.isSubmittingRestDay || day.status === 'FUTURE' || day.status === 'UNJOINED' || day.status === 'PRESENT') {
       return;
     }
 
-    this.isSubmittingRestDay = true;
-    this.memberPortalService.addRestDay({
-      restDate: date,
-      notes: this.restDayNotes?.trim() || null
-    }).pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.notificationService.success('Rest day saved.');
-          this.restDayNotes = '';
-          this.refreshDashboardData();
-          this.isSubmittingRestDay = false;
-        },
-        error: (err) => {
-          this.notificationService.error(err?.error?.message || 'Unable to save rest day.');
-          this.isSubmittingRestDay = false;
-        }
-      });
-  }
-
-  deleteRestDay(id: string): void {
-    if (!confirm('Are you sure you want to remove this rest day?')) {
-      return;
+    if (day.status === 'REST') {
+      const restDay = this.restDays.find((r) => r.restDate === day.dateStr);
+      if (restDay) {
+        if (!confirm('Are you sure you want to remove this rest day?')) return;
+        this.memberPortalService.deleteRestDay(restDay.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: () => {
+              this.notificationService.success('Rest day removed.');
+              this.refreshDashboardData();
+            },
+            error: (err) => {
+              this.notificationService.error(err?.error?.message || 'Unable to remove rest day.');
+            }
+          });
+      }
+    } else if (day.status === 'ABSENT') {
+      this.isSubmittingRestDay = true;
+      this.memberPortalService.addRestDay({
+        restDate: day.dateStr,
+        notes: null
+      }).pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.notificationService.success('Rest day saved.');
+            this.refreshDashboardData();
+            this.isSubmittingRestDay = false;
+          },
+          error: (err) => {
+            this.notificationService.error(err?.error?.message || 'Unable to save rest day.');
+            this.isSubmittingRestDay = false;
+          }
+        });
     }
-    
-    this.memberPortalService.deleteRestDay(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.notificationService.success('Rest day removed.');
-          this.refreshDashboardData();
-        },
-        error: (err) => {
-          this.notificationService.error(err?.error?.message || 'Unable to remove rest day.');
-        }
-      });
   }
 
   private patchMetricForm(summary: MemberPortalSummary): void {

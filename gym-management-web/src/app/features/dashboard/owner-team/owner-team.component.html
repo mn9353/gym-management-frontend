@@ -1,79 +1,187 @@
 <div class="dashboard-page">
   <app-topbar />
 
-  <section class="panel">
-    <h3>Add Team User</h3>
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <label>
-        Full Name
-        <input type="text" formControlName="fullName" [class.input-error]="isControlInvalid('fullName')" />
-        @if (isControlInvalid('fullName')) {
-          <small class="field-error">{{ getControlError('fullName') }}</small>
-        }
-      </label>
-      <label>
-        Email
-        <input type="email" formControlName="email" maxlength="100" [class.input-error]="isControlInvalid('email')" />
-        @if (isControlInvalid('email')) {
-          <small class="field-error">{{ getControlError('email') }}</small>
-        }
-      </label>
-      <label>
-        Phone
-        <input type="text" formControlName="phone" maxlength="13" placeholder="+919876543210" (input)="onPhoneInput($event)" [class.input-error]="isControlInvalid('phone')" />
-        <small class="field-hint">Format: +91 followed by exactly 10 digits.</small>
-        @if (isControlInvalid('phone')) {
-          <small class="field-error">{{ getControlError('phone') }}</small>
-        }
-      </label>
-      <label>
-        Role
-        <select formControlName="role" [class.input-error]="isControlInvalid('role')">
-          <option value="STAFF">STAFF</option>
-          <option value="TRAINER">TRAINER</option>
-        </select>
-        @if (isControlInvalid('role')) {
-          <small class="field-error">{{ getControlError('role') }}</small>
-        }
-      </label>
-      <p class="field-hint full-row">A secure temporary password will be auto-generated and emailed to this team user.</p>
-      <button type="submit" [disabled]="isSubmitting">
-        {{ isSubmitting ? 'Adding...' : 'Add Team Member' }}
-      </button>
-    </form>
-  </section>
-
-  @if (errorMessage) {
-    <p class="state error">{{ errorMessage }}</p>
-  }
-
-  <section class="panel">
-    <h3>Team Users</h3>
-    @if (isLoading) {
-      <p class="state">Loading users...</p>
-    } @else {
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (user of users; track user.id) {
-              <tr>
-                <td data-label="Name">{{ user.fullName }}</td>
-                <td data-label="Email">{{ user.email }}</td>
-                <td data-label="Role">{{ user.role }}</td>
-                <td data-label="Status">{{ user.isActive ? 'Active' : 'Inactive' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
+  <div class="team-layout">
+    <aside class="add-team-panel panel">
+      <div class="panel-header">
+        <div class="header-icon">
+          <span class="material-symbols-outlined">person_add</span>
+        </div>
+        <div class="header-content">
+          <h3>Invite Team Member</h3>
+          <p class="subtitle">A secure temporary password will be auto-generated and emailed.</p>
+        </div>
       </div>
-    }
-  </section>
+      
+      <form [formGroup]="form" (ngSubmit)="submit()" class="modern-form">
+        <div class="trainer-photo-block">
+          <div class="trainer-avatar-preview">
+            @if (profileImagePreviewUrl) {
+              <img [src]="profileImagePreviewUrl" [alt]="profileImageName || 'Trainer photo'" />
+            } @else {
+              <span class="material-symbols-outlined">account_circle</span>
+            }
+          </div>
+          <div class="trainer-photo-actions">
+            <button type="button" class="photo-action-btn" (click)="openCamera()">
+              <span class="material-symbols-outlined">photo_camera</span>
+              Take Photo
+            </button>
+            <label class="photo-action-btn">
+              <input type="file" accept="image/*" hidden (change)="onProfileImageSelected($event)" />
+              <span class="material-symbols-outlined">upload_file</span>
+              Upload
+            </label>
+            @if (profileImagePreviewUrl) {
+              <button type="button" class="photo-clear-btn" (click)="clearProfileImage()">Remove</button>
+            }
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Full Name</label>
+          <div class="input-wrapper">
+            <span class="material-symbols-outlined input-icon">badge</span>
+            <input type="text" formControlName="fullName" [class.input-error]="isControlInvalid('fullName')" placeholder="e.g. John Doe" />
+          </div>
+          @if (isControlInvalid('fullName')) {
+            <small class="field-error">{{ getControlError('fullName') }}</small>
+          }
+        </div>
+
+        <div class="input-group">
+          <label>Email Address</label>
+          <div class="input-wrapper">
+            <span class="material-symbols-outlined input-icon">mail</span>
+            <input type="email" formControlName="email" maxlength="100" [class.input-error]="isControlInvalid('email')" placeholder="e.g. john@gym.com" />
+          </div>
+          @if (isControlInvalid('email')) {
+            <small class="field-error">{{ getControlError('email') }}</small>
+          }
+        </div>
+
+        <div class="input-group">
+          <label>Phone Number</label>
+          <div class="input-wrapper">
+            <span class="material-symbols-outlined input-icon">call</span>
+            <input type="text" formControlName="phone" maxlength="13" placeholder="+919876543210" (input)="onPhoneInput($event)" [class.input-error]="isControlInvalid('phone')" />
+          </div>
+          <small class="field-hint">Format: +91 followed by 10 digits.</small>
+          @if (isControlInvalid('phone')) {
+            <small class="field-error">{{ getControlError('phone') }}</small>
+          }
+        </div>
+
+        <div class="input-group">
+          <label>System Role</label>
+          <div class="input-wrapper">
+            <span class="material-symbols-outlined input-icon">shield_person</span>
+            <select formControlName="role" [class.input-error]="isControlInvalid('role')">
+              <option value="STAFF">Staff / Reception</option>
+              <option value="TRAINER">Trainer</option>
+            </select>
+          </div>
+          @if (isControlInvalid('role')) {
+            <small class="field-error">{{ getControlError('role') }}</small>
+          }
+        </div>
+        
+        @if (errorMessage) {
+          <p class="state error">{{ errorMessage }}</p>
+        }
+
+        <button type="submit" class="submit-btn" [disabled]="isSubmitting">
+          <span class="material-symbols-outlined btn-icon">send</span>
+          {{ isSubmitting ? 'Sending Invite...' : 'Send Invitation' }}
+        </button>
+      </form>
+
+      @if (isCameraOpen) {
+        <div class="camera-modal">
+          <div class="camera-container">
+            <header>
+              <h5>Capture Trainer Photo</h5>
+              <button type="button" class="close-btn" (click)="closeCamera()">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </header>
+
+            <div class="video-wrapper">
+              @if (cameraStream) {
+                <video #camVideo [srcObject]="cameraStream" autoplay playsinline></video>
+                <button type="button" class="capture-btn" (click)="captureFromCamera(camVideo)">
+                  <div class="shutter-inner"></div>
+                </button>
+              } @else if (cameraError) {
+                <div class="camera-error">
+                  <span class="material-symbols-outlined">videocam_off</span>
+                  <p>{{ cameraError }}</p>
+                </div>
+              } @else {
+                <div class="camera-loading">
+                  <div class="spinner"></div>
+                  <p>Initializing camera...</p>
+                </div>
+              }
+            </div>
+
+            <footer class="camera-footer">
+              @if (cameraStream) {
+                <button type="button" class="flip-btn" (click)="toggleCameraFacingMode()">
+                  <span class="material-symbols-outlined">flip_camera_ios</span>
+                  {{ cameraFacingMode === 'user' ? 'Use Back Camera' : 'Use Front Camera' }}
+                </button>
+              }
+              <button type="button" class="cancel-btn" (click)="closeCamera()">Cancel</button>
+            </footer>
+          </div>
+        </div>
+      }
+    </aside>
+
+    <section class="team-list-panel panel">
+      <div class="panel-header between">
+        <div class="header-content">
+          <h3>Your Team</h3>
+          <p class="subtitle">Manage the active staff and trainers in your ecosystem.</p>
+        </div>
+        <div class="member-count">
+          <span class="material-symbols-outlined">group</span>
+          <strong>{{ users.length }}</strong> <span>Users</span>
+        </div>
+      </div>
+
+      @if (isLoading) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading your team...</p>
+        </div>
+      } @else {
+        <div class="team-grid">
+          @for (user of users; track user.id) {
+            <div class="team-card">
+              <div class="card-avatar">
+                @if (user.profileImageUrl) {
+                  <img [src]="user.profileImageUrl" [alt]="user.fullName" />
+                } @else {
+                  {{ getAvatarLabel(user) }}
+                }
+              </div>
+              <div class="card-details">
+                <h4>{{ user.fullName }}</h4>
+                <p class="card-email">{{ user.email }}</p>
+              </div>
+              <div class="card-role">
+                <span class="role-badge" [class.trainer]="user.role === 'TRAINER'">{{ user.role }}</span>
+              </div>
+              <div class="card-status">
+                <div class="status-indicator" [class.active]="user.isActive"></div>
+                <span>{{ user.isActive ? 'Active' : 'Disabled' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  </div>
 </div>

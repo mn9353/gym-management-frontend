@@ -47,9 +47,14 @@
               <div class="corner br"></div>
             </div>
             <p class="scan-hint">Align the QR code within the frame</p>
-            <button class="btn-stop" (click)="stopScanner()">
-              <span class="material-symbols-outlined">close</span> Stop Scanner
-            </button>
+            <div class="scanner-btn-group" style="display:flex; gap:0.5rem; justify-content:center; align-items:center;">
+              <button class="btn-toggle-cam" (click)="toggleCamera()" style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0.4rem 0.8rem;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:0.4rem;font-weight:600;">
+                <span class="material-symbols-outlined">flip_camera_ios</span> Flip
+              </button>
+              <button class="btn-stop" (click)="stopScanner()">
+                <span class="material-symbols-outlined">close</span> Stop Scanner
+              </button>
+            </div>
           </div>
         }
 
@@ -72,29 +77,6 @@
           </div>
         </section>
       }
-
-      <section class="panel">
-        <h3>Mark Rest Day (Max 2 Continuous)</h3>
-        <div class="rest-day-form">
-          <input type="date" [(ngModel)]="restDayDate" [ngModelOptions]="{ standalone: true }" />
-          <input type="text" [(ngModel)]="restDayNotes" [ngModelOptions]="{ standalone: true }" placeholder="Optional note" maxlength="300" />
-          <button type="button" (click)="submitRestDay()" [disabled]="isSubmittingRestDay">
-            {{ isSubmittingRestDay ? 'Saving...' : 'Save Rest Day' }}
-          </button>
-        </div>
-        @if (restDays.length > 0) {
-          <div class="rest-day-list">
-            @for (day of restDays; track day.id) {
-              <span class="rest-day-chip">
-                {{ day.restDate | date:'dd MMM yyyy' }}
-                <button type="button" class="btn-remove-rest" (click)="deleteRestDay(day.id)" title="Remove rest day">
-                  <i class="material-symbols-outlined">close</i>
-                </button>
-              </span>
-            }
-          </div>
-        }
-      </section>
 
       <!-- Attendance Calendar for basic plan -->
       <section class="panel attendance-calendar-panel">
@@ -129,7 +111,9 @@
                        [class.status-absent]="day.status === 'ABSENT'"
                        [class.status-rest]="day.status === 'REST'"
                        [class.status-unjoined]="day.status === 'UNJOINED'"
-                       [class.status-future]="day.status === 'FUTURE'">
+                       [class.status-future]="day.status === 'FUTURE'"
+                       (click)="toggleRestDayFromCalendar(day)"
+                       [class.interactive]="day.status === 'REST' || day.status === 'ABSENT'">
                     <span class="day-num">{{ day.dayNumber }}</span>
                     @if (day.status === 'PRESENT') { <span class="material-symbols-outlined day-icon">check_circle</span> }
                     @if (day.status === 'REST') { <span class="material-symbols-outlined day-icon">bed</span> }
@@ -143,8 +127,8 @@
         
         <div class="calendar-legend">
           <span><i class="legend-dot present"></i> Present</span>
-          <span><i class="legend-dot absent"></i> Absent</span>
-          <span><i class="legend-dot rest"></i> Rest Day</span>
+          <span><i class="legend-dot absent"></i> Absent (Click to mark Rest)</span>
+          <span><i class="legend-dot rest"></i> Rest Day (Click to remove)</span>
         </div>
       </section>
     }
@@ -247,7 +231,12 @@
         @if (showScanner) {
           <div class="scanner-panel">
             <video #scanVideo playsinline muted></video>
-            <button type="button" class="ghost-btn" (click)="stopScanner()">Stop Scanner</button>
+            <div class="scanner-btn-group" style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+              <button type="button" class="ghost-btn" (click)="toggleCamera()">
+                <span class="material-symbols-outlined" style="font-size:18px;">flip_camera_ios</span> Flip Camera
+              </button>
+              <button type="button" class="ghost-btn error" (click)="stopScanner()">Stop Scanner</button>
+            </div>
           </div>
         }
       </section>
@@ -342,29 +331,6 @@
         </form>
       </section>
 
-      <section class="panel">
-        <h3>Mark Rest Day (Max 2 Continuous)</h3>
-        <div class="rest-day-form">
-          <input type="date" [(ngModel)]="restDayDate" [ngModelOptions]="{ standalone: true }" />
-          <input type="text" [(ngModel)]="restDayNotes" [ngModelOptions]="{ standalone: true }" placeholder="Optional note" maxlength="300" />
-          <button type="button" (click)="submitRestDay()" [disabled]="isSubmittingRestDay">
-            {{ isSubmittingRestDay ? 'Saving...' : 'Save Rest Day' }}
-          </button>
-        </div>
-        @if (restDays.length > 0) {
-          <div class="rest-day-list">
-            @for (day of restDays; track day.id) {
-              <span class="rest-day-chip">
-                {{ day.restDate | date:'dd MMM yyyy' }}
-                <button type="button" class="btn-remove-rest" (click)="deleteRestDay(day.id)" title="Remove rest day">
-                  <i class="material-symbols-outlined">close</i>
-                </button>
-              </span>
-            }
-          </div>
-        }
-      </section>
-
       <!-- Attendance Calendar for full plan -->
       <section class="panel attendance-calendar-panel">
         <div class="calendar-header">
@@ -398,7 +364,9 @@
                        [class.status-absent]="day.status === 'ABSENT'"
                        [class.status-rest]="day.status === 'REST'"
                        [class.status-unjoined]="day.status === 'UNJOINED'"
-                       [class.status-future]="day.status === 'FUTURE'">
+                       [class.status-future]="day.status === 'FUTURE'"
+                       (click)="toggleRestDayFromCalendar(day)"
+                       [class.interactive]="day.status === 'REST' || day.status === 'ABSENT'">
                     <span class="day-num">{{ day.dayNumber }}</span>
                     @if (day.status === 'PRESENT') { <span class="material-symbols-outlined day-icon">check_circle</span> }
                     @if (day.status === 'REST') { <span class="material-symbols-outlined day-icon">bed</span> }
@@ -412,8 +380,8 @@
         
         <div class="calendar-legend">
           <span><i class="legend-dot present"></i> Present</span>
-          <span><i class="legend-dot absent"></i> Absent</span>
-          <span><i class="legend-dot rest"></i> Rest Day</span>
+          <span><i class="legend-dot absent"></i> Absent (Click to mark Rest)</span>
+          <span><i class="legend-dot rest"></i> Rest Day (Click to remove)</span>
         </div>
       </section>
     }

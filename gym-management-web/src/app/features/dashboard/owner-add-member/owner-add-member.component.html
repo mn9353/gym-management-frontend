@@ -89,6 +89,12 @@
                   </div>
                   
                   <footer class="camera-footer">
+                    @if (cameraStream) {
+                      <button type="button" class="flip-btn" (click)="toggleCameraFacingMode()">
+                        <span class="material-symbols-outlined">flip_camera_ios</span>
+                        {{ cameraFacingMode === 'user' ? 'Use Back Camera' : 'Use Front Camera' }}
+                      </button>
+                    }
                     <button type="button" class="cancel-btn" (click)="closeCamera()">Cancel</button>
                   </footer>
                 </div>

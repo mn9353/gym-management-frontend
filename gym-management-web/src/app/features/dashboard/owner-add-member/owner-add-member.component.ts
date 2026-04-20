@@ -44,6 +44,7 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
   isCameraOpen = false;
   cameraStream: MediaStream | null = null;
   cameraError: string | null = null;
+  cameraFacingMode: 'user' | 'environment' = 'user';
 
   readonly form;
 
@@ -79,12 +80,13 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.closeCamera();
     this.revokePreviewUrl();
   }
 
   private profileImageBase64: string | null = null;
 
-  onProfileImageSelected(event: Event): void {
+  async onProfileImageSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) {
@@ -97,36 +99,28 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Preview
     this.revokePreviewUrl();
     this.profileImagePreviewUrl = URL.createObjectURL(file);
     this.profileImageName = file.name;
 
-    // Convert to Base64 for storage
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      this.profileImageBase64 = e.target?.result as string;
-    };
-    reader.onerror = () => {
+    try {
+      this.profileImageBase64 = await this.compressFileToBase64(file);
+    } catch {
       this.notificationService.error('Unable to process the selected image.');
       this.clearProfileImage();
-    };
-    reader.readAsDataURL(file);
+    }
   }
 
   async openCamera(): Promise<void> {
     this.isCameraOpen = true;
     this.cameraError = null;
-    
-    try {
-      this.cameraStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false
-      });
-    } catch (err) {
-      this.cameraError = 'Could not access camera. Please check permissions.';
-      this.notificationService.error('Camera access denied or not available.');
-    }
+    this.cameraFacingMode = 'user';
+    await this.startCameraStream();
+  }
+
+  async toggleCameraFacingMode(): Promise<void> {
+    this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
+    await this.startCameraStream();
   }
 
   captureFromCamera(video: HTMLVideoElement): void {
@@ -150,6 +144,8 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
       this.cameraStream = null;
     }
     this.isCameraOpen = false;
+    this.cameraError = null;
+    this.cameraFacingMode = 'user';
   }
 
   clearProfileImage(): void {
@@ -486,6 +482,59 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
     if (this.profileImagePreviewUrl) {
       URL.revokeObjectURL(this.profileImagePreviewUrl);
     }
+  }
+
+  private async startCameraStream(): Promise<void> {
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach(track => track.stop());
+      this.cameraStream = null;
+    }
+
+    try {
+      this.cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: this.cameraFacingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+      this.cameraError = null;
+    } catch {
+      this.cameraError = 'Could not access camera. Please check permissions.';
+      this.notificationService.error('Camera access denied or not available.');
+    }
+  }
+
+  private compressFileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => {
+        const maxDimension = 1280;
+        const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+        const targetWidth = Math.max(1, Math.round(image.width * scale));
+        const targetHeight = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Canvas unavailable'));
+          return;
+        }
+        ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        URL.revokeObjectURL(objectUrl);
+        resolve(dataUrl);
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Image decode failed'));
+      };
+      image.src = objectUrl;
+    });
   }
 
   private openConfirmDialog(

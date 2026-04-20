@@ -92,6 +92,18 @@ export class OwnerMembersComponent implements OnInit {
 
   selectedSegment: MemberSegment = 'all';
   readonly isTrainerView: boolean;
+  readonly isOwnerView: boolean;
+  
+  isEditDrawerOpen = false;
+  isSavingEdit = false;
+  editDraft = {
+    fullName: '',
+    email: '',
+    phone: '',
+    gender: 'MALE',
+    notes: ''
+  };
+
   joinedDateMode: 'any' | 'single' | 'range' = 'any';
   expiryDateMode: 'any' | 'single' | 'range' = 'any';
   isAdvancedFiltersOpen = false;
@@ -137,6 +149,7 @@ export class OwnerMembersComponent implements OnInit {
     private readonly authService: AuthService
   ) {
     this.isTrainerView = this.authService.isTrainer();
+    this.isOwnerView = this.authService.getCurrentUser()?.role === 'OWNER';
   }
 
   ngOnInit(): void {
@@ -623,6 +636,64 @@ export class OwnerMembersComponent implements OnInit {
     this.renewalDraft.remarks = '';
   }
 
+  openEditDrawer(member: MemberListItem): void {
+    if (!this.isOwnerView) return;
+    this.selectedMember = member;
+    this.isEditDrawerOpen = true;
+    this.editDraft = {
+      fullName: member.fullName,
+      email: member.email || '',
+      phone: member.phone || '',
+      gender: member.gender || 'MALE',
+      notes: (member as { notes?: string }).notes || ''
+    };
+  }
+
+  closeEditDrawer(): void {
+    if (this.isSavingEdit) return;
+    this.isEditDrawerOpen = false;
+    this.selectedMember = null;
+  }
+
+  submitEdit(): void {
+    if (!this.selectedMember || !this.isOwnerView) return;
+    this.isSavingEdit = true;
+    const payload = {
+      fullName: this.editDraft.fullName,
+      email: this.editDraft.email,
+      phone: this.editDraft.phone,
+      gender: this.editDraft.gender,
+      notes: this.editDraft.notes
+    };
+    this.memberService.updateMember(this.selectedMember.id, payload).subscribe({
+      next: () => {
+        this.isSavingEdit = false;
+        this.notificationService.success('Member updated successfully. If email changed, new login info was sent.');
+        this.closeEditDrawer();
+        this.fetchMembers();
+      },
+      error: (err) => {
+        this.isSavingEdit = false;
+        this.notificationService.error(extractApiErrorMessage(err, 'Failed to update member.'));
+      }
+    });
+  }
+
+  deleteMember(member: MemberListItem): void {
+    if (!this.isOwnerView) return;
+    this.openConfirmDialog(
+      'Delete Member',
+      [
+        `Are you sure you want to permanently delete ${member.fullName}?`,
+        'This action cannot be undone.'
+      ],
+      'Delete',
+      'warning'
+    );
+    this.pendingConfirmAction = 'delete' as any;
+    this.selectedMember = member;
+  }
+
   savePaymentUpdate(): void {
     if (!this.selectedMember) {
       return;
@@ -750,7 +821,27 @@ export class OwnerMembersComponent implements OnInit {
     }
     if (this.pendingConfirmAction === 'renewal' && this.pendingRenewalRequest) {
       this.executeRenewal(this.pendingRenewalRequest.memberId, this.pendingRenewalRequest.payload);
+      return;
     }
+    if (this.pendingConfirmAction === ('delete' as any) && this.selectedMember) {
+      this.executeDelete(this.selectedMember.id);
+    }
+  }
+
+  executeDelete(memberId: string): void {
+    this.isSavingPayment = true; // reusing existing busy flag
+    this.memberService.deleteMember(memberId).subscribe({
+      next: () => {
+        this.isSavingPayment = false;
+        this.notificationService.success('Member deleted successfully.');
+        this.onConfirmDialogClose();
+        this.fetchMembers();
+      },
+      error: (err) => {
+        this.isSavingPayment = false;
+        this.notificationService.error(extractApiErrorMessage(err, 'Failed to delete member.'));
+      }
+    });
   }
 
   getPendingAmountPreview(): string {
