@@ -326,7 +326,7 @@ export class OwnerMembersComponent implements OnInit {
 
         // Calculate view-specific summaries
         if (this.viewType === 'pending') {
-          this.totalPendingAmount = this.members.reduce((acc, m) => acc + this.getRemainingAmount(m), 0);
+          this.totalPendingAmount = response.totalPendingAmount ?? this.members.reduce((acc, m) => acc + this.getRemainingAmount(m), 0);
         }
         this.totalFilteredCount = response.totalCount;
         if (this.selectAllMatchingFilters) {

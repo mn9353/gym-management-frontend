@@ -73,38 +73,79 @@
         </section>
       }
 
-      <!-- Recent Attendance for basic plan -->
-      <section class="panel attendance-only-panel">
-        <h3>
-          <span class="material-symbols-outlined">calendar_month</span>
-          My Attendance
-        </h3>
-        @if (!attendance || attendance.recent.length === 0) {
-          <div class="empty-state">
-            <span class="material-symbols-outlined">event_busy</span>
-            <p>No attendance records yet. Scan the gym QR code to get started.</p>
+      <section class="panel">
+        <h3>Mark Rest Day (Max 2 Continuous)</h3>
+        <div class="rest-day-form">
+          <input type="date" [(ngModel)]="restDayDate" [ngModelOptions]="{ standalone: true }" />
+          <input type="text" [(ngModel)]="restDayNotes" [ngModelOptions]="{ standalone: true }" placeholder="Optional note" maxlength="300" />
+          <button type="button" (click)="submitRestDay()" [disabled]="isSubmittingRestDay">
+            {{ isSubmittingRestDay ? 'Saving...' : 'Save Rest Day' }}
+          </button>
+        </div>
+        @if (restDays.length > 0) {
+          <div class="rest-day-list">
+            @for (day of restDays; track day.id) {
+              <span class="rest-day-chip">
+                {{ day.restDate | date:'dd MMM yyyy' }}
+                <button type="button" class="btn-remove-rest" (click)="deleteRestDay(day.id)" title="Remove rest day">
+                  <i class="material-symbols-outlined">close</i>
+                </button>
+              </span>
+            }
           </div>
-        } @else {
-          <div class="attendance-list clean">
-            @for (item of attendance.recent; track item.checkinId) {
-              <div class="att-row">
-                <div class="att-date-block">
-                  <span class="att-day">{{ item.checkinDate | date:'EEE' }}</span>
-                  <span class="att-num">{{ item.checkinDate | date:'dd' }}</span>
-                  <span class="att-month">{{ item.checkinDate | date:'MMM' }}</span>
-                </div>
-                <div class="att-info">
-                  <span class="att-time">{{ item.checkinAt | date:'hh:mm a' }}</span>
-                  <span class="att-source">{{ item.source }}</span>
-                </div>
-                <div class="att-badge">
-                  <span class="material-symbols-outlined">check_circle</span>
-                </div>
+        }
+      </section>
+
+      <!-- Attendance Calendar for basic plan -->
+      <section class="panel attendance-calendar-panel">
+        <div class="calendar-header">
+          <h3>
+            <span class="material-symbols-outlined">calendar_month</span>
+            My Attendance
+          </h3>
+          <div class="calendar-controls">
+            <button type="button" class="ghost-icon-btn" (click)="changeCalendarMonth(-1)">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <strong>{{ calendarMonth | date:'MMMM yyyy' }}</strong>
+            <button type="button" class="ghost-icon-btn" (click)="changeCalendarMonth(1)">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="calendar-grid">
+          <div class="cal-days-header">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div class="cal-weeks">
+            @for (week of calendarWeeks; track $index) {
+              <div class="cal-week-row">
+                @for (day of week; track day.dateStr) {
+                  <div class="cal-day-cell" 
+                       [class.outside-month]="!day.isCurrentMonth"
+                       [class.is-today]="day.isToday"
+                       [class.status-present]="day.status === 'PRESENT'"
+                       [class.status-absent]="day.status === 'ABSENT'"
+                       [class.status-rest]="day.status === 'REST'"
+                       [class.status-unjoined]="day.status === 'UNJOINED'"
+                       [class.status-future]="day.status === 'FUTURE'">
+                    <span class="day-num">{{ day.dayNumber }}</span>
+                    @if (day.status === 'PRESENT') { <span class="material-symbols-outlined day-icon">check_circle</span> }
+                    @if (day.status === 'REST') { <span class="material-symbols-outlined day-icon">bed</span> }
+                    @if (day.status === 'ABSENT') { <span class="material-symbols-outlined day-icon">cancel</span> }
+                  </div>
+                }
               </div>
             }
           </div>
-          <p class="att-summary-line">{{ attendance.recent.length }} records shown • {{ attendance.totalCheckins }} total check-ins</p>
-        }
+        </div>
+        
+        <div class="calendar-legend">
+          <span><i class="legend-dot present"></i> Present</span>
+          <span><i class="legend-dot absent"></i> Absent</span>
+          <span><i class="legend-dot rest"></i> Rest Day</span>
+        </div>
       </section>
     }
 
@@ -313,29 +354,67 @@
         @if (restDays.length > 0) {
           <div class="rest-day-list">
             @for (day of restDays; track day.id) {
-              <span>{{ day.restDate | date:'dd MMM yyyy' }}</span>
+              <span class="rest-day-chip">
+                {{ day.restDate | date:'dd MMM yyyy' }}
+                <button type="button" class="btn-remove-rest" (click)="deleteRestDay(day.id)" title="Remove rest day">
+                  <i class="material-symbols-outlined">close</i>
+                </button>
+              </span>
             }
           </div>
         }
       </section>
 
-      <section class="panel">
-        <h3>Recent Attendance</h3>
-        @if (!attendance || attendance.recent.length === 0) {
-          <p>No attendance records yet.</p>
-        } @else {
-          <div class="attendance-list">
-            @for (item of attendance.recent; track item.checkinId) {
-              <article class="attendance-item">
-                <div>
-                  <strong>{{ item.checkinDate | date:'dd MMM yyyy' }}</strong>
-                  <p>{{ item.checkinAt | date:'hh:mm a' }} - {{ item.source }}</p>
-                </div>
-                <small>{{ item.muscleGroups.join(', ') || 'No workout focus added' }}</small>
-              </article>
+      <!-- Attendance Calendar for full plan -->
+      <section class="panel attendance-calendar-panel">
+        <div class="calendar-header">
+          <h3>
+            <span class="material-symbols-outlined">calendar_month</span>
+            My Attendance Calendar
+          </h3>
+          <div class="calendar-controls">
+            <button type="button" class="ghost-icon-btn" (click)="changeCalendarMonth(-1)">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <strong>{{ calendarMonth | date:'MMMM yyyy' }}</strong>
+            <button type="button" class="ghost-icon-btn" (click)="changeCalendarMonth(1)">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="calendar-grid">
+          <div class="cal-days-header">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div class="cal-weeks">
+            @for (week of calendarWeeks; track $index) {
+              <div class="cal-week-row">
+                @for (day of week; track day.dateStr) {
+                  <div class="cal-day-cell" 
+                       [class.outside-month]="!day.isCurrentMonth"
+                       [class.is-today]="day.isToday"
+                       [class.status-present]="day.status === 'PRESENT'"
+                       [class.status-absent]="day.status === 'ABSENT'"
+                       [class.status-rest]="day.status === 'REST'"
+                       [class.status-unjoined]="day.status === 'UNJOINED'"
+                       [class.status-future]="day.status === 'FUTURE'">
+                    <span class="day-num">{{ day.dayNumber }}</span>
+                    @if (day.status === 'PRESENT') { <span class="material-symbols-outlined day-icon">check_circle</span> }
+                    @if (day.status === 'REST') { <span class="material-symbols-outlined day-icon">bed</span> }
+                    @if (day.status === 'ABSENT') { <span class="material-symbols-outlined day-icon">cancel</span> }
+                  </div>
+                }
+              </div>
             }
           </div>
-        }
+        </div>
+        
+        <div class="calendar-legend">
+          <span><i class="legend-dot present"></i> Present</span>
+          <span><i class="legend-dot absent"></i> Absent</span>
+          <span><i class="legend-dot rest"></i> Rest Day</span>
+        </div>
       </section>
     }
 

@@ -20,6 +20,15 @@ import {
 } from '../../../core/models/member-portal.models';
 import { ThemeService } from '../../../core/services/theme.service';
 
+export interface CalendarDay {
+  date: Date;
+  dateStr: string;
+  dayNumber: number;
+  isCurrentMonth: boolean;
+  isToday: boolean;
+  status: 'PRESENT' | 'ABSENT' | 'REST' | 'FUTURE' | 'UNJOINED';
+}
+
 Chart.register(...registerables);
 
 @Component({
@@ -55,6 +64,9 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
   restDayDate = new Date().toISOString().slice(0, 10);
   restDayNotes = '';
   isSubmittingRestDay = false;
+
+  calendarMonth = new Date();
+  calendarWeeks: CalendarDay[][] = [];
 
   muscleGroups = ['CHEST', 'BACK', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'LEGS', 'CORE', 'CARDIO'];
   selectedMuscleGroups = new Set<string>();
@@ -132,7 +144,7 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
     forkJoin({
       summary: this.memberPortalService.getSummary(),
       weightHistory: this.memberPortalService.getWeightHistory(12),
-      attendance: this.memberPortalService.getAttendance(3, 45),
+      attendance: this.memberPortalService.getAttendance(3, 100),
       missedTrend: this.memberPortalService.getMissedTrend(6),
       muscleDistribution: this.memberPortalService.getMuscleDistribution(1),
       restDays: this.memberPortalService.getRestDays(3)
@@ -147,6 +159,7 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
           this.restDays = restDays;
           this.patchMetricForm(summary);
           this.patchProfileForm(summary);
+          this.generateCalendar();
           this.chartNeedsRender = true;
           this.isLoading = false;
         },
@@ -159,11 +172,15 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
 
   loadAttendanceForBasic(): void {
     this.isLoading = true;
-    this.memberPortalService.getAttendance(3, 45)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    forkJoin({
+      attendance: this.memberPortalService.getAttendance(3, 100),
+      restDays: this.memberPortalService.getRestDays(3)
+    }).pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (attendance) => {
+        next: ({ attendance, restDays }) => {
           this.attendance = attendance;
+          this.restDays = restDays;
+          this.generateCalendar();
           this.isLoading = false;
         },
         error: () => {
@@ -415,10 +432,15 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
   }
 
   private refreshDashboardData(): void {
+    if (this.isBasicPlan) {
+      this.loadAttendanceForBasic();
+      return;
+    }
+
     forkJoin({
       summary: this.memberPortalService.getSummary(),
       weightHistory: this.memberPortalService.getWeightHistory(12),
-      attendance: this.memberPortalService.getAttendance(3, 45),
+      attendance: this.memberPortalService.getAttendance(3, 100),
       missedTrend: this.memberPortalService.getMissedTrend(6),
       muscleDistribution: this.memberPortalService.getMuscleDistribution(1),
       restDays: this.memberPortalService.getRestDays(3)
@@ -431,6 +453,7 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
           this.missedTrend = missedTrend;
           this.muscleDistribution = muscleDistribution;
           this.restDays = restDays;
+          this.generateCalendar();
           this.chartNeedsRender = true;
         }
       });
@@ -461,6 +484,24 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
         error: (err) => {
           this.notificationService.error(err?.error?.message || 'Unable to save rest day.');
           this.isSubmittingRestDay = false;
+        }
+      });
+  }
+
+  deleteRestDay(id: string): void {
+    if (!confirm('Are you sure you want to remove this rest day?')) {
+      return;
+    }
+    
+    this.memberPortalService.deleteRestDay(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.notificationService.success('Rest day removed.');
+          this.refreshDashboardData();
+        },
+        error: (err) => {
+          this.notificationService.error(err?.error?.message || 'Unable to remove rest day.');
         }
       });
   }
@@ -602,6 +643,76 @@ export class MemberDashboardComponent implements OnInit, AfterViewChecked {
         }
       }
     });
+  }
+
+  changeCalendarMonth(offset: number): void {
+    this.calendarMonth = new Date(this.calendarMonth.getFullYear(), this.calendarMonth.getMonth() + offset, 1);
+    this.generateCalendar();
+  }
+
+  private generateCalendar(): void {
+    if (!this.summary && !this.isBasicPlan) { return; }
+
+    const year = this.calendarMonth.getFullYear();
+    const month = this.calendarMonth.getMonth();
+
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+
+    const startDate = new Date(firstDayOfMonth);
+    startDate.setDate(startDate.getDate() - startDate.getDay());
+
+    const endDate = new Date(lastDayOfMonth);
+    if (endDate.getDay() !== 6) {
+      endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+    }
+
+    const joinDateStr = this.summary?.joinDate;
+    const joinDate = joinDateStr ? new Date(joinDateStr) : new Date(0);
+    const joinDateMidnight = new Date(joinDate.setHours(0, 0, 0, 0));
+
+    const checkinSet = new Set(this.attendance?.recent.map((r) => r.checkinDate) || []);
+    const restSet = new Set(this.restDays.map((r) => r.restDate));
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const weeks: CalendarDay[][] = [];
+    let currentGroup: CalendarDay[] = [];
+
+    const d = new Date(startDate);
+    while (d <= endDate) {
+      const utcYear = d.getFullYear();
+      const utcMonth = String(d.getMonth() + 1).padStart(2, '0');
+      const utcDay = String(d.getDate()).padStart(2, '0');
+      const dStr = `${utcYear}-${utcMonth}-${utcDay}`;
+      
+      const isCurrentMonth = d.getMonth() === month;
+      const isFuture = d.getTime() > today.getTime();
+      const isBeforeJoin = d.getTime() < joinDateMidnight.getTime();
+
+      let status: CalendarDay['status'] = 'ABSENT';
+      if (isFuture) status = 'FUTURE';
+      else if (isBeforeJoin) status = 'UNJOINED';
+      else if (checkinSet.has(dStr)) status = 'PRESENT';
+      else if (restSet.has(dStr)) status = 'REST';
+
+      currentGroup.push({
+        date: new Date(d),
+        dateStr: dStr,
+        dayNumber: d.getDate(),
+        isCurrentMonth,
+        isToday: d.getTime() === today.getTime(),
+        status
+      });
+
+      if (currentGroup.length === 7) {
+        weeks.push(currentGroup);
+        currentGroup = [];
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    this.calendarWeeks = weeks;
   }
 
   private destroyCharts(): void {

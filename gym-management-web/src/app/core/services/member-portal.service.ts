@@ -100,4 +100,10 @@ export class MemberPortalService {
       payload
     );
   }
+
+  deleteRestDay(restDayId: string): Observable<void> {
+    return this.http.delete<void>(
+      buildApiUrl(API_PATHS.memberPortal.base, `${API_PATHS.memberPortal.restDays}/${restDayId}`)
+    );
+  }
 }

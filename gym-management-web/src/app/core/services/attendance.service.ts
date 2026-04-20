@@ -30,7 +30,7 @@ export interface MemberAttendance {
   providedIn: 'root'
 })
 export class AttendanceService {
-  private readonly baseUrl = 'attendance';
+  private readonly baseUrl = 'api/attendance';
 
   constructor(private http: HttpClient) {}
 

@@ -29,13 +29,17 @@ export class EnquiriesComponent implements OnInit {
 
   enquiries: EnquiryListItem[] = [];
   selectedEnquiry: EnquiryDetails | null = null;
+  availableStageOptions: string[] = [];
 
   query = {
     pageNumber: 1,
-    pageSize: 20,
+    pageSize: 10,
     searchTerm: '',
     stage: ''
   };
+
+  totalCount = 0;
+  totalPages = 0;
 
   createDraft: CreateEnquiryDto = {
     fullName: '',
@@ -59,6 +63,42 @@ export class EnquiriesComponent implements OnInit {
 
   readonly stageOptions = ['NEW', 'CONTACTED', 'INTERESTED', 'TRIAL', 'CONVERTED', 'LOST'];
 
+  getAvailableStages(currentStage: string): string[] {
+    switch (currentStage) {
+      case 'NEW':
+        return ['CONTACTED', 'INTERESTED', 'TRIAL', 'CONVERTED', 'LOST'];
+      case 'CONTACTED':
+        return ['INTERESTED', 'TRIAL', 'CONVERTED', 'LOST'];
+      case 'INTERESTED':
+        return ['TRIAL', 'CONVERTED', 'LOST'];
+      case 'TRIAL':
+        return ['CONVERTED', 'LOST'];
+      case 'CONVERTED':
+      case 'LOST':
+        return []; // Terminal stages
+      default:
+        return this.stageOptions;
+    }
+  }
+
+  setStageFilter(stage: string): void {
+    this.query.stage = stage;
+    this.query.pageNumber = 1;
+    this.loadEnquiries();
+  }
+
+  getStageClass(stage: string): string {
+    switch (stage) {
+      case 'NEW': return 'stage-new';
+      case 'CONTACTED': return 'stage-contacted';
+      case 'INTERESTED': return 'stage-interested';
+      case 'TRIAL': return 'stage-trial';
+      case 'CONVERTED': return 'stage-converted';
+      case 'LOST': return 'stage-lost';
+      default: return '';
+    }
+  }
+
   constructor(
     private readonly enquiryService: EnquiryService,
     private readonly notificationService: NotificationService
@@ -80,6 +120,8 @@ export class EnquiriesComponent implements OnInit {
     }).subscribe({
       next: (response) => {
         this.enquiries = response.items;
+        this.totalCount = response.totalCount;
+        this.totalPages = response.totalPages;
         this.isLoading = false;
       },
       error: (err) => {
@@ -87,6 +129,20 @@ export class EnquiriesComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  nextPage(): void {
+    if (this.query.pageNumber < this.totalPages) {
+      this.query.pageNumber++;
+      this.loadEnquiries();
+    }
+  }
+
+  prevPage(): void {
+    if (this.query.pageNumber > 1) {
+      this.query.pageNumber--;
+      this.loadEnquiries();
+    }
   }
 
   onCreateEnquiry(): void {
@@ -132,7 +188,9 @@ export class EnquiriesComponent implements OnInit {
     this.enquiryService.getEnquiry(id).subscribe({
       next: (details) => {
         this.selectedEnquiry = details;
-        this.stageDraft.toStage = details.stage;
+        this.availableStageOptions = this.getAvailableStages(details.stage);
+        
+        this.stageDraft.toStage = this.availableStageOptions.length > 0 ? this.availableStageOptions[0] : '';
         this.stageDraft.reason = '';
         this.followupDraft = {
           outcome: '',
@@ -144,6 +202,10 @@ export class EnquiriesComponent implements OnInit {
         this.notificationService.error(err?.error?.message || 'Unable to load enquiry details.');
       }
     });
+  }
+
+  clearSelection(): void {
+    this.selectedEnquiry = null;
   }
 
   updateStage(): void {

@@ -5,11 +5,12 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: #0f172a;
-  color: #f8fafc;
+  padding-top: calc(var(--topbar-height) + 1.5rem);
+  background: var(--bg-body);
+  color: var(--text);
   position: relative;
   overflow: hidden;
-  }
+}
 
 .glass-bg {
   position: absolute;

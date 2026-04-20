@@ -219,6 +219,7 @@ export interface PagedResponse<T> {
   pageSize: number;
   totalCount: number;
   totalPages: number;
+  totalPendingAmount?: number;
 }
 
 export interface MemberSegmentCounts {

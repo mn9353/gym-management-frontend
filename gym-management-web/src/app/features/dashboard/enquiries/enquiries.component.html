@@ -1,157 +1,209 @@
-<div class="page">
-  <app-topbar title="Enquiries" subtitle="Capture leads and follow up consistently." />
+<div class="page dashboard-page">
+  <app-topbar title="Leads & Enquiries" subtitle="Manage your pipeline and never miss a follow-up." />
 
-  <section class="panel create-panel">
-    <h3>Add Enquiry</h3>
-    <div class="grid">
-      <label>
-        Full Name *
-        <input [(ngModel)]="createDraft.fullName" type="text" />
-      </label>
-      <label>
-        Phone *
-        <input [(ngModel)]="createDraft.phone" type="text" maxlength="13" (input)="onPhoneInput($event)" />
-      </label>
-      <label>
-        Email
-        <input [(ngModel)]="createDraft.email" type="email" />
-      </label>
-      <label>
-        Source
-        <input [(ngModel)]="createDraft.source" type="text" placeholder="Walk-in / Instagram / Referral" />
-      </label>
-      <label>
-        Next Follow-up
-        <input [(ngModel)]="createDraft.nextFollowupAt" type="datetime-local" />
-      </label>
-      <label class="wide">
-        Notes
-        <textarea [(ngModel)]="createDraft.notes" rows="2"></textarea>
-      </label>
-    </div>
-    <div class="actions">
-      <button type="button" class="primary" [disabled]="isSaving" (click)="onCreateEnquiry()">
-        {{ isSaving ? 'Saving...' : 'Create Enquiry' }}
-      </button>
-    </div>
-  </section>
-
-  <section class="panel filters">
-    <label>
-      Search
-      <input [(ngModel)]="query.searchTerm" type="text" placeholder="Name / phone / email" />
-    </label>
-    <label>
-      Stage
-      <select [(ngModel)]="query.stage">
-        <option value="">All</option>
-        @for (stage of stageOptions; track stage) {
-          <option [value]="stage">{{ stage }}</option>
-        }
-      </select>
-    </label>
-    <button type="button" class="ghost" (click)="loadEnquiries()">Apply</button>
-  </section>
-
-  @if (errorMessage) {
-    <p class="state error">{{ errorMessage }}</p>
-  }
-
-  <section class="layout">
-    <article class="panel">
-      <h3>Lead List</h3>
-      @if (isLoading) {
-        <p class="state">Loading enquiries...</p>
-      } @else if (enquiries.length === 0) {
-        <p class="state">No enquiries found.</p>
-      } @else {
-        <div class="list">
-          @for (item of enquiries; track trackByEnquiryId($index, item)) {
-            <button type="button" class="list-item" [class.active]="selectedEnquiry?.id === item.id" (click)="selectEnquiry(item.id)">
-              <strong>{{ item.fullName }}</strong>
-              <span>{{ item.phone }}</span>
-              <span>{{ item.stage }}</span>
-              <small>Follow-ups: {{ item.followupCount }}</small>
+  <div class="crm-layout">
+    <!-- Left Column: Leads & Filters -->
+    <div class="crm-sidebar panel flex-col-layout">
+      <div class="sidebar-header">
+        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+           <h3 style="margin: 0; font-size: 1.25rem; font-weight: 900;">Leads</h3>
+           <button class="ghost" (click)="clearSelection()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">
+             + New Lead
+           </button>
+        </div>
+        <label class="search-box">
+          <input [(ngModel)]="query.searchTerm" type="text" placeholder="Search name, phone..." (keyup.enter)="loadEnquiries()" />
+        </label>
+        <div class="stage-chips mt-2 pb-2">
+          <button type="button" class="chip" [class.active]="query.stage === ''" (click)="setStageFilter('')">All</button>
+          @for (stage of stageOptions; track stage) {
+            <button type="button" class="chip" [class.active]="query.stage === stage" (click)="setStageFilter(stage)">
+              {{ stage }}
             </button>
           }
         </div>
-      }
-    </article>
+      </div>
 
-    <article class="panel">
-      <h3>Details & Follow-up</h3>
-      @if (!selectedEnquiry) {
-        <p class="state">Select an enquiry to manage stage and follow-up.</p>
-      } @else {
-        <div class="details">
-          <p><strong>{{ selectedEnquiry.fullName }}</strong></p>
-          <p>{{ selectedEnquiry.phone }} {{ selectedEnquiry.email ? ' | ' + selectedEnquiry.email : '' }}</p>
-          <p>Current Stage: <strong>{{ selectedEnquiry.stage }}</strong></p>
-        </div>
-
-        <div class="grid">
-          <label>
-            Update Stage
-            <select [(ngModel)]="stageDraft.toStage">
-              @for (stage of stageOptions; track stage) {
-                <option [value]="stage">{{ stage }}</option>
-              }
-            </select>
-          </label>
-          <label class="wide">
-            Stage Reason
-            <input [(ngModel)]="stageDraft.reason" type="text" placeholder="Why stage changed" />
-          </label>
-        </div>
-        <div class="actions">
-          <button type="button" class="ghost" [disabled]="isUpdatingStage" (click)="updateStage()">
-            {{ isUpdatingStage ? 'Updating...' : 'Update Stage' }}
-          </button>
-        </div>
-
-        <div class="grid">
-          <label>
-            Follow-up Outcome
-            <input [(ngModel)]="followupDraft.outcome" type="text" placeholder="Called / No answer / Interested" />
-          </label>
-          <label>
-            Next Follow-up
-            <input [(ngModel)]="followupDraft.nextFollowupAt" type="datetime-local" />
-          </label>
-          <label class="wide">
-            Follow-up Notes
-            <textarea [(ngModel)]="followupDraft.notes" rows="2"></textarea>
-          </label>
-        </div>
-        <div class="actions">
-          <button type="button" class="primary" [disabled]="isAddingFollowup" (click)="addFollowup()">
-            {{ isAddingFollowup ? 'Saving...' : 'Add Follow-up' }}
-          </button>
-        </div>
-
-        <h4>Timeline</h4>
-        @if (!selectedEnquiry.timeline.length) {
-          <p class="state">No timeline entries yet.</p>
+      <div class="lead-list-container">
+        @if (isLoading) {
+          <p class="state">Loading enquiries...</p>
+        } @else if (enquiries.length === 0) {
+          <p class="state">No enquiries found.</p>
         } @else {
-          <div class="timeline">
-            @for (entry of selectedEnquiry.timeline; track entry.at + '-' + entry.type) {
-              <div class="timeline-item">
-                <strong>{{ entry.type }}</strong>
-                <span>{{ entry.at | date: 'dd MMM yyyy, hh:mm a' }}</span>
-                @if (entry.toStage) {
-                  <small>{{ entry.fromStage || '-' }} → {{ entry.toStage }}</small>
-                }
-                @if (entry.outcome) {
-                  <small>Outcome: {{ entry.outcome }}</small>
-                }
-                @if (entry.notes) {
-                  <small>{{ entry.notes }}</small>
-                }
-              </div>
+          <div class="list">
+            @for (item of enquiries; track trackByEnquiryId($index, item)) {
+              <button type="button" class="list-item" [class.active]="selectedEnquiry?.id === item.id" (click)="selectEnquiry(item.id)">
+                <div class="lead-info">
+                  <strong>{{ item.fullName }}</strong>
+                  <span class="phone">{{ item.phone }}</span>
+                </div>
+                <div class="lead-meta">
+                  <span class="status-badge" [ngClass]="getStageClass(item.stage)">{{ item.stage }}</span>
+                  <small>{{ item.followupCount }} Interactions</small>
+                </div>
+              </button>
             }
           </div>
+
+          <!-- Pagination Controls -->
+          @if (totalPages > 1) {
+            <div class="pagination-controls">
+              <button class="ghost icon-btn" [disabled]="query.pageNumber === 1" (click)="prevPage()">
+                <span class="material-symbols-outlined">chevron_left</span>
+              </button>
+              <span class="page-info">Page {{ query.pageNumber }} of {{ totalPages }}</span>
+              <button class="ghost icon-btn" [disabled]="query.pageNumber === totalPages" (click)="nextPage()">
+                <span class="material-symbols-outlined">chevron_right</span>
+              </button>
+            </div>
+          }
         }
+      </div>
+    </div>
+
+    <!-- Right Column: Details or Create Form -->
+    <div class="crm-main panel scrollable-panel">
+      @if (selectedEnquiry) {
+        <div class="details-view">
+          <div class="details-header">
+            <div class="lead-profile">
+               <div class="avatar">{{ selectedEnquiry.fullName.charAt(0) | uppercase }}</div>
+               <div class="profile-info">
+                 <h2>{{ selectedEnquiry.fullName }}</h2>
+                 <p class="contact-details">{{ selectedEnquiry.phone }} {{ selectedEnquiry.email ? ' | ' + selectedEnquiry.email : '' }}</p>
+               </div>
+            </div>
+            <span class="status-badge" [ngClass]="getStageClass(selectedEnquiry.stage)">{{ selectedEnquiry.stage }}</span>
+          </div>
+          
+          <hr class="divider"/>
+
+          <div class="details-content">
+            <div class="action-forms">
+              <div class="form-section">
+                <h4>Update Stage</h4>
+                @if (availableStageOptions.length > 0) {
+                  <div class="grid">
+                    <label>
+                      Stage
+                      <select [(ngModel)]="stageDraft.toStage">
+                        @for (stage of availableStageOptions; track stage) {
+                          <option [value]="stage">{{ stage }}</option>
+                        }
+                      </select>
+                    </label>
+                    <label>
+                      Reason
+                      <input [(ngModel)]="stageDraft.reason" type="text" placeholder="Why the change?" />
+                    </label>
+                    <button type="button" class="ghost wide mt-2" [disabled]="isUpdatingStage" (click)="updateStage()">
+                      {{ isUpdatingStage ? 'Updating...' : 'Change Stage' }}
+                    </button>
+                  </div>
+                } @else {
+                  <p class="state" style="margin-top: 0.5rem;">This lead is in a terminal stage (<strong>{{ selectedEnquiry.stage }}</strong>).</p>
+                }
+              </div>
+
+              <hr class="divider"/>
+
+              @if (['NEW', 'CONTACTED', 'INTERESTED'].includes(selectedEnquiry.stage)) {
+                <div class="form-section mt-4">
+                  <h4>Log Follow-up</h4>
+                  <div class="grid">
+                    <label class="wide">
+                      Outcome / Review
+                      <input [(ngModel)]="followupDraft.outcome" type="text" placeholder="Called / Walk-in / No answer" />
+                    </label>
+                    <label class="wide">
+                      Next Follow-up
+                      <input [(ngModel)]="followupDraft.nextFollowupAt" type="datetime-local" />
+                    </label>
+                    <label class="wide">
+                      Notes
+                      <textarea [(ngModel)]="followupDraft.notes" rows="3" placeholder="Additional details..."></textarea>
+                    </label>
+                    <button type="button" class="primary wide mt-2" [disabled]="isAddingFollowup" (click)="addFollowup()">
+                      {{ isAddingFollowup ? 'Saving...' : 'Add Follow-up' }}
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <div class="form-section mt-4">
+                  <h4>Log Follow-up</h4>
+                  <p class="state" style="margin-top: 0.5rem;">Follow-ups are not available for leads in the <strong>{{ selectedEnquiry.stage }}</strong> stage.</p>
+                </div>
+              }
+            </div>
+
+            <div class="timeline-container">
+              <h4>History & Interactions</h4>
+              @if (!selectedEnquiry.timeline.length) {
+                <p class="state">No timeline entries yet.</p>
+              } @else {
+                <div class="timeline">
+                  @for (entry of selectedEnquiry.timeline; track entry.at + '-' + entry.type) {
+                    <div class="timeline-item">
+                      <div class="time-header">
+                        <strong>{{ entry.type === 'STAGE' ? 'Stage Update' : 'Follow-up' }}</strong>
+                        <span>{{ entry.at | date: 'dd MMM, hh:mm a' }}</span>
+                      </div>
+                      @if (entry.toStage) {
+                        <small>Changed to <span class="text-bold">{{ entry.toStage }}</span></small>
+                      }
+                      @if (entry.outcome) {
+                        <span class="outcome">{{ entry.outcome }}</span>
+                      }
+                      @if (entry.notes) {
+                        <span class="notes">"{{ entry.notes }}"</span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="create-view">
+          <div class="form-hero">
+            <h2>Create New Enquiry</h2>
+            <p>Add a new lead to your pipeline.</p>
+            <hr class="divider"/>
+          </div>
+          <div class="form-body">
+            <div class="grid">
+              <label>
+                Full Name *
+                <input [(ngModel)]="createDraft.fullName" type="text" placeholder="Lead Name" />
+              </label>
+              <label>
+                Phone *
+                <input [(ngModel)]="createDraft.phone" type="text" maxlength="13" (input)="onPhoneInput($event)" placeholder="+91" />
+              </label>
+            </div>
+            <div class="grid mt-3">
+               <label>
+                 Email (Optional)
+                 <input [(ngModel)]="createDraft.email" type="email" placeholder="example@mail.com" />
+               </label>
+               <label>
+                 Source (Optional)
+                 <input [(ngModel)]="createDraft.source" type="text" placeholder="Instagram, Walk-in, Referral..." />
+               </label>
+            </div>
+            <label class="wide mt-3">
+              Notes
+              <textarea [(ngModel)]="createDraft.notes" rows="4" placeholder="Initial conversation details..."></textarea>
+            </label>
+            <div class="actions mt-4">
+              <button type="button" class="primary align-center wide" [disabled]="isSaving" (click)="onCreateEnquiry()">
+                {{ isSaving ? 'Saving...' : 'Create Enquiry' }}
+              </button>
+            </div>
+          </div>
+        </div>
       }
-    </article>
-  </section>
+    </div>
+  </div>
 </div>

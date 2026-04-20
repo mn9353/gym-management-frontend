@@ -80,6 +80,7 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
   recentMembers: RecentMember[] = [];
   expiringSoon: MemberDto[] = [];
   irregularMembers: IrregularMember[] = [];
+  totalIrregularCount = 0;
   isExpiringLoadingMore = false;
   hasMoreExpiring = false;
 
@@ -317,9 +318,13 @@ export class OwnerDashboardComponent implements OnInit, AfterViewChecked {
         this.expiringSoon = result.expiring;
         
         // Defensive mapping to support both old flat-array and new paginated responses
-        this.irregularMembers = Array.isArray(result.irregular) 
-          ? result.irregular 
-          : (result.irregular as any)?.items || [];
+        if (Array.isArray(result.irregular)) {
+          this.irregularMembers = result.irregular;
+          this.totalIrregularCount = result.irregular.length;
+        } else {
+          this.irregularMembers = (result.irregular as any)?.items || [];
+          this.totalIrregularCount = (result.irregular as any)?.totalCount || 0;
+        }
         this.expiringOffset = this.expiringSoon.length;
         this.hasMoreExpiring =
           result.expiring.length === this.expiringPageSize

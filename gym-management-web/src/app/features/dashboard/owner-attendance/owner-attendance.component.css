@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-soft);
+  min-height: 100vh;
+  padding-top: calc(var(--topbar-height) + 1rem);
 }
 
 .attendance-container {

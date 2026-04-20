@@ -308,6 +308,7 @@
 
 .expiring-list.scrollable {
   max-height: 340px;
+  overflow-y: auto;
   scrollbar-color: var(--scrollbar-thumb-strong) transparent;
   scrollbar-width: thin;
 }
