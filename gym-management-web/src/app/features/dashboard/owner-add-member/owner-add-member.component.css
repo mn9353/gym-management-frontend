@@ -329,7 +329,6 @@ select {
   border-radius: var(--radius-md);
   padding: 0.7rem 0.9rem;
   font-size: 0.95rem;
-  font-family: inherit;
   color: var(--text);
   transition: all 0.2s;
 }
