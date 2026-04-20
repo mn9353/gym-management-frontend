@@ -379,6 +379,27 @@
         <h4>Personal Details</h4>
         <div class="drawer-grid">
           <label class="full">
+            <span>Profile Picture</span>
+            <div class="edit-image-row">
+              <div class="edit-image-preview">
+                @if (editImagePreviewUrl) {
+                  <img [src]="editImagePreviewUrl" [alt]="editImageName || selectedMember.fullName" />
+                } @else {
+                  <span class="material-symbols-outlined">person</span>
+                }
+              </div>
+              <div class="edit-image-actions">
+                <label class="ghost upload-btn">
+                  <input type="file" accept="image/*" hidden (change)="onEditImageSelected($event)" />
+                  {{ editImagePreviewUrl ? 'Change Picture' : 'Add Picture' }}
+                </label>
+                @if (editImagePreviewUrl) {
+                  <button type="button" class="ghost remove-btn" (click)="clearEditImage()">Remove</button>
+                }
+              </div>
+            </div>
+          </label>
+          <label class="full">
             <span>Full Name <strong class="required">*</strong></span>
             <input type="text" [(ngModel)]="editDraft.fullName" placeholder="Member name" />
           </label>

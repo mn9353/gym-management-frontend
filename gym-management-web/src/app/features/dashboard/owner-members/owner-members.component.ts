@@ -103,6 +103,10 @@ export class OwnerMembersComponent implements OnInit {
     gender: 'MALE',
     notes: ''
   };
+  editImagePreviewUrl: string | null = null;
+  editImageDataUrl: string | null = null;
+  editImageName = '';
+  private editImageObjectUrl: string | null = null;
 
   joinedDateMode: 'any' | 'single' | 'range' = 'any';
   expiryDateMode: 'any' | 'single' | 'range' = 'any';
@@ -647,6 +651,9 @@ export class OwnerMembersComponent implements OnInit {
       gender: member.gender || 'MALE',
       notes: (member as { notes?: string }).notes || ''
     };
+    this.editImagePreviewUrl = member.profileImageUrl || null;
+    this.editImageDataUrl = null;
+    this.editImageName = '';
   }
 
   requestEditMember(member: MemberListItem): void {
@@ -668,6 +675,7 @@ export class OwnerMembersComponent implements OnInit {
     if (this.isSavingEdit) return;
     this.isEditDrawerOpen = false;
     this.selectedMember = null;
+    this.resetEditImageState();
   }
 
   submitEdit(): void {
@@ -678,7 +686,8 @@ export class OwnerMembersComponent implements OnInit {
       email: this.editDraft.email,
       phone: this.editDraft.phone,
       gender: this.editDraft.gender,
-      notes: this.editDraft.notes
+      notes: this.editDraft.notes,
+      profileImageUrl: this.editImageDataUrl ?? undefined
     };
     this.memberService.updateMember(this.selectedMember.id, payload).subscribe({
       next: () => {
@@ -692,6 +701,38 @@ export class OwnerMembersComponent implements OnInit {
         this.notificationService.error(extractApiErrorMessage(err, 'Failed to update member.'));
       }
     });
+  }
+
+  async onEditImageSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.notificationService.warning('Please select a valid image file.');
+      return;
+    }
+
+    this.revokeEditImageObjectUrl();
+    this.editImageObjectUrl = URL.createObjectURL(file);
+    this.editImagePreviewUrl = this.editImageObjectUrl;
+    this.editImageName = file.name;
+
+    try {
+      this.editImageDataUrl = await this.compressFileToBase64(file);
+    } catch {
+      this.notificationService.error('Unable to process selected image.');
+      this.clearEditImage();
+    }
+  }
+
+  clearEditImage(): void {
+    this.revokeEditImageObjectUrl();
+    this.editImagePreviewUrl = null;
+    this.editImageDataUrl = '';
+    this.editImageName = '';
   }
 
   deleteMember(member: MemberListItem): void {
@@ -988,6 +1029,51 @@ export class OwnerMembersComponent implements OnInit {
       return null;
     }
     return Number(value);
+  }
+
+  private resetEditImageState(): void {
+    this.revokeEditImageObjectUrl();
+    this.editImagePreviewUrl = null;
+    this.editImageDataUrl = null;
+    this.editImageName = '';
+  }
+
+  private revokeEditImageObjectUrl(): void {
+    if (this.editImageObjectUrl) {
+      URL.revokeObjectURL(this.editImageObjectUrl);
+      this.editImageObjectUrl = null;
+    }
+  }
+
+  private compressFileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => {
+        const maxDimension = 1280;
+        const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+        const targetWidth = Math.max(1, Math.round(image.width * scale));
+        const targetHeight = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Canvas unavailable'));
+          return;
+        }
+        ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        URL.revokeObjectURL(objectUrl);
+        resolve(dataUrl);
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Image decode failed'));
+      };
+      image.src = objectUrl;
+    });
   }
 
   private todayIsoDate(): string {
