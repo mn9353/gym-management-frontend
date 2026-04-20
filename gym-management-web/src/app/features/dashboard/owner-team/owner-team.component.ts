@@ -40,8 +40,7 @@ export class OwnerTeamComponent implements OnInit, OnDestroy {
     this.form = this.fb.group({
       fullName: ['', [Validators.required, Validators.maxLength(100)]],
       email: ['', [Validators.required, Validators.pattern(this.emailRegex), Validators.maxLength(100)]],
-      phone: ['', [Validators.pattern(this.phoneRegex)]],
-      role: ['STAFF' as 'STAFF' | 'TRAINER', Validators.required]
+      phone: ['', [Validators.pattern(this.phoneRegex)]]
     });
   }
 
@@ -76,7 +75,7 @@ export class OwnerTeamComponent implements OnInit, OnDestroy {
         email: value.email ?? '',
         phone: value.phone || null,
         profileImageUrl: this.profileImageBase64,
-        role: (value.role as 'STAFF' | 'TRAINER') ?? 'STAFF'
+        role: 'TRAINER'
       })
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
@@ -84,8 +83,7 @@ export class OwnerTeamComponent implements OnInit, OnDestroy {
           this.form.reset({
             fullName: '',
             email: '',
-            phone: '',
-            role: 'STAFF'
+            phone: ''
           });
           this.clearProfileImage();
           this.notificationService.success('Team user added successfully. Login credentials were emailed.');
@@ -272,12 +270,12 @@ export class OwnerTeamComponent implements OnInit, OnDestroy {
     });
   }
 
-  isControlInvalid(controlName: 'fullName' | 'email' | 'phone' | 'role'): boolean {
+  isControlInvalid(controlName: 'fullName' | 'email' | 'phone'): boolean {
     const control = this.form.controls[controlName];
     return !!control && control.invalid && (control.touched || control.dirty);
   }
 
-  getControlError(controlName: 'fullName' | 'email' | 'phone' | 'role'): string {
+  getControlError(controlName: 'fullName' | 'email' | 'phone'): string {
     const control = this.form.controls[controlName];
     if (!control || !control.errors || !(control.touched || control.dirty)) {
       return '';

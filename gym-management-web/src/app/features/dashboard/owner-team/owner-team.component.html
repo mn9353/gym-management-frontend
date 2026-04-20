@@ -76,14 +76,9 @@
           <label>System Role</label>
           <div class="input-wrapper">
             <span class="material-symbols-outlined input-icon">shield_person</span>
-            <select formControlName="role" [class.input-error]="isControlInvalid('role')">
-              <option value="STAFF">Staff / Reception</option>
-              <option value="TRAINER">Trainer</option>
-            </select>
+            <input type="text" value="Trainer" readonly />
           </div>
-          @if (isControlInvalid('role')) {
-            <small class="field-error">{{ getControlError('role') }}</small>
-          }
+          <small class="field-hint">Only trainer accounts can be created from this screen.</small>
         </div>
         
         @if (errorMessage) {

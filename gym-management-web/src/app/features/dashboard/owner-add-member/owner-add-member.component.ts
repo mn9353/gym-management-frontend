@@ -45,6 +45,9 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
   cameraStream: MediaStream | null = null;
   cameraError: string | null = null;
   cameraFacingMode: 'user' | 'environment' = 'user';
+  private scrollLockActive = false;
+  private previousBodyOverflow = '';
+  private previousHtmlOverflow = '';
 
   readonly form;
 
@@ -81,6 +84,7 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
     this.closeCamera();
+    this.setCameraScrollLock(false);
     this.revokePreviewUrl();
   }
 
@@ -115,6 +119,7 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
     this.isCameraOpen = true;
     this.cameraError = null;
     this.cameraFacingMode = 'user';
+    this.setCameraScrollLock(true);
     await this.startCameraStream();
   }
 
@@ -146,6 +151,7 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
     this.isCameraOpen = false;
     this.cameraError = null;
     this.cameraFacingMode = 'user';
+    this.setCameraScrollLock(false);
   }
 
   clearProfileImage(): void {
@@ -662,5 +668,26 @@ export class OwnerAddMemberComponent implements OnInit, OnDestroy {
     const digits = raw.replace(/\D/g, '');
     const tenDigits = digits.startsWith('91') ? digits.slice(2, 12) : digits.slice(0, 10);
     return `+91${tenDigits}`;
+  }
+
+  private setCameraScrollLock(lock: boolean): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    if (lock && !this.scrollLockActive) {
+      this.previousBodyOverflow = document.body.style.overflow;
+      this.previousHtmlOverflow = document.documentElement.style.overflow;
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      this.scrollLockActive = true;
+      return;
+    }
+
+    if (!lock && this.scrollLockActive) {
+      document.body.style.overflow = this.previousBodyOverflow;
+      document.documentElement.style.overflow = this.previousHtmlOverflow;
+      this.scrollLockActive = false;
+    }
   }
 }
