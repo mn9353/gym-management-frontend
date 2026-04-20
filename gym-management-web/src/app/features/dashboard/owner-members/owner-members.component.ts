@@ -65,7 +65,7 @@ export class OwnerMembersComponent implements OnInit {
     remarks: ''
   };
 
-  pendingConfirmAction: 'payment' | 'renewal' | null = null;
+  pendingConfirmAction: 'payment' | 'renewal' | 'delete' | 'edit' | null = null;
   pendingPaymentRequest: { memberId: string; payload: OwnerPaymentUpdateDto } | null = null;
   pendingRenewalRequest: { memberId: string; payload: OwnerRenewMemberDto } | null = null;
   confirmDialog = {
@@ -649,6 +649,21 @@ export class OwnerMembersComponent implements OnInit {
     };
   }
 
+  requestEditMember(member: MemberListItem): void {
+    if (!this.isOwnerView) return;
+    this.selectedMember = member;
+    this.pendingConfirmAction = 'edit';
+    this.openConfirmDialog(
+      'Edit Member',
+      [
+        `Do you want to edit ${member.fullName}?`,
+        'You can review and change details in the edit panel.'
+      ],
+      'Continue',
+      'primary'
+    );
+  }
+
   closeEditDrawer(): void {
     if (this.isSavingEdit) return;
     this.isEditDrawerOpen = false;
@@ -681,6 +696,8 @@ export class OwnerMembersComponent implements OnInit {
 
   deleteMember(member: MemberListItem): void {
     if (!this.isOwnerView) return;
+    this.pendingConfirmAction = 'delete';
+    this.selectedMember = member;
     this.openConfirmDialog(
       'Delete Member',
       [
@@ -690,8 +707,6 @@ export class OwnerMembersComponent implements OnInit {
       'Delete',
       'warning'
     );
-    this.pendingConfirmAction = 'delete' as any;
-    this.selectedMember = member;
   }
 
   savePaymentUpdate(): void {
@@ -808,6 +823,9 @@ export class OwnerMembersComponent implements OnInit {
     if (this.isSavingPayment || this.isSavingRenewal) {
       return;
     }
+    if (this.pendingConfirmAction === 'delete' || this.pendingConfirmAction === 'edit') {
+      this.selectedMember = null;
+    }
     this.confirmDialog.open = false;
     this.pendingConfirmAction = null;
     this.pendingPaymentRequest = null;
@@ -823,8 +841,14 @@ export class OwnerMembersComponent implements OnInit {
       this.executeRenewal(this.pendingRenewalRequest.memberId, this.pendingRenewalRequest.payload);
       return;
     }
-    if (this.pendingConfirmAction === ('delete' as any) && this.selectedMember) {
+    if (this.pendingConfirmAction === 'delete' && this.selectedMember) {
       this.executeDelete(this.selectedMember.id);
+      return;
+    }
+    if (this.pendingConfirmAction === 'edit' && this.selectedMember) {
+      const member = this.selectedMember;
+      this.onConfirmDialogClose();
+      this.openEditDrawer(member);
     }
   }
 

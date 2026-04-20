@@ -104,6 +104,17 @@
             } @else {
               @for (member of members; track member.id) {
                 <article class="member-card" [class.is-pending-view]="viewType === 'pending'">
+                  @if (isOwnerView) {
+                    <div class="corner-actions">
+                      <button type="button" class="icon-action-btn edit-btn" (click)="requestEditMember(member)" aria-label="Edit Member">
+                        <span class="material-symbols-outlined">edit</span>
+                      </button>
+                      <button type="button" class="icon-action-btn delete-btn" (click)="deleteMember(member)" aria-label="Delete Member">
+                        <span class="material-symbols-outlined">delete</span>
+                      </button>
+                    </div>
+                  }
+
                   <div class="member-top">
                     <div class="avatar-wrap">
                       <div class="avatar">
@@ -170,14 +181,6 @@
                   </div>
 
                   <div class="action-buttons">
-                    @if (isOwnerView) {
-                      <button type="button" class="icon-action-btn edit-btn" (click)="openEditDrawer(member)" aria-label="Edit Member" style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0.4rem;color:var(--brand);cursor:pointer;display:flex;align-items:center;">
-                        <span class="material-symbols-outlined" style="font-size:20px;">edit</span>
-                      </button>
-                      <button type="button" class="icon-action-btn delete-btn" (click)="deleteMember(member)" aria-label="Delete Member" style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0.4rem;color:var(--danger-text);cursor:pointer;display:flex;align-items:center;">
-                        <span class="material-symbols-outlined" style="font-size:20px;">delete</span>
-                      </button>
-                    }
                     @if (hasOutstandingPayment(member)) {
                       <button type="button" class="quick-pay-btn" (click)="openPaymentDrawer(member)">Collect Payment</button>
                     }
