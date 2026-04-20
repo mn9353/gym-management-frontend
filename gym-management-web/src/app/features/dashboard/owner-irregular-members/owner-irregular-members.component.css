@@ -2,6 +2,7 @@
   min-height: 100vh;
   background: #f8fafc; /* Professional neutral gray */
   color: #1e293b;
+  padding-top: calc(var(--topbar-height) + 1rem);
 }
 
 .dashboard-content {
@@ -177,7 +178,7 @@
 
 .action-btn.whatsapp:hover {
   background: #f0fdf4;
-  color: #16a34a;
+  color: var(--success);
   border-color: #bbf7d0;
 }
 

@@ -1,12 +1,9 @@
 .dashboard-page {
   display: grid;
   gap: 1rem;
-  height: calc(100vh - var(--topbar-height));
-  height: calc(100dvh - var(--topbar-height));
-  margin-top: var(--topbar-height);
-  overflow-y: auto;
-  overscroll-behavior: contain;
   padding: 1rem;
+  min-height: 100vh;
+  padding-top: calc(var(--topbar-height) + 1rem);
 }
 
 .panel {
@@ -52,7 +49,7 @@ label {
 }
 
 input {
-  background: #fff;
+  background: var(--panel);
   border: 1px solid #ccd8ea;
   border-radius: 10px;
   font-size: 0.94rem;
@@ -60,7 +57,7 @@ input {
 }
 
 select {
-  background: #fff;
+  background: var(--panel);
   border: 1px solid #ccd8ea;
   border-radius: 10px;
   font-size: 0.94rem;
@@ -120,15 +117,15 @@ th {
 .state.error {
   background: var(--danger-soft);
   border-color: var(--danger-line);
-  color: #991b1b;
+  color: var(--danger-text);
 }
 
 @media (max-width: 680px) {
   .dashboard-page {
-    height: calc(100vh - var(--topbar-height-mobile));
-    height: calc(100dvh - var(--topbar-height-mobile));
-    margin-top: var(--topbar-height-mobile);
     padding: 0.75rem;
+    min-height: 100vh;
+  padding-top: calc(var(--topbar-height) + 1rem);
+    padding-top: calc(var(--topbar-height-mobile) + 1rem);
   }
 
   .table-wrap {

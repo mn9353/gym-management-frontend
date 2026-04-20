@@ -1,12 +1,9 @@
 .dashboard-page {
   display: grid;
   gap: 1rem;
-  height: calc(100vh - var(--topbar-height));
-  height: calc(100dvh - var(--topbar-height));
-  margin-top: var(--topbar-height);
-  overflow-y: auto;
-  overscroll-behavior: contain;
   padding: 1rem;
+  min-height: 100vh;
+  padding-top: calc(var(--topbar-height) + 1rem);
 }
 
 .panel {
@@ -81,7 +78,7 @@ label {
 
 input,
 select {
-  background: #fff;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
   color: var(--text);
@@ -115,7 +112,7 @@ select {
 
 .btn.ghost,
 .icon-btn {
-  background: #fff;
+  background: var(--panel);
   color: var(--text);
 }
 
@@ -135,7 +132,7 @@ select {
 .state.error {
   background: var(--danger-soft);
   border-color: var(--danger-line);
-  color: #991b1b;
+  color: var(--danger-text);
 }
 
 .pager {
@@ -186,7 +183,7 @@ select {
   background: #fff7ea;
   border: 1px solid #f1d89d;
   border-radius: 999px;
-  color: #986300;
+  color: var(--warn-text);
   font-size: 0.72rem;
   font-weight: 700;
   padding: 0.2rem 0.45rem;
@@ -200,13 +197,12 @@ select {
 }
 
 .mobile-filter-drawer {
-  background: #fff;
+  background: var(--panel);
   border-left: 1px solid var(--line);
   display: grid;
   gap: 0.65rem;
   height: 100vh;
   height: 100dvh;
-  overflow-y: auto;
   padding: 0.9rem;
   position: fixed;
   right: 0;
@@ -237,10 +233,10 @@ select {
 
 @media (max-width: 860px) {
   .dashboard-page {
-    height: calc(100vh - var(--topbar-height-mobile));
-    height: calc(100dvh - var(--topbar-height-mobile));
-    margin-top: var(--topbar-height-mobile);
     padding: 0.75rem;
+    min-height: 100vh;
+  padding-top: calc(var(--topbar-height) + 1rem);
+    padding-top: calc(var(--topbar-height-mobile) + 1rem);
   }
 
   .desktop-only {
@@ -258,7 +254,6 @@ select {
 
   .cards-grid {
     max-height: 68vh;
-    overflow-y: auto;
     padding-right: 0.2rem;
     grid-template-columns: 1fr;
   }

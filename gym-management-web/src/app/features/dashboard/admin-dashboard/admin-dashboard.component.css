@@ -1,12 +1,9 @@
 .dashboard-page {
   display: grid;
   gap: 1rem;
-  height: calc(100vh - var(--topbar-height));
-  height: calc(100dvh - var(--topbar-height));
-  margin-top: var(--topbar-height);
-  overflow-y: auto;
-  overscroll-behavior: contain;
   padding: 1rem;
+  min-height: 100vh;
+  padding-top: calc(var(--topbar-height) + 1rem);
 }
 
 .card-grid {
@@ -16,7 +13,7 @@
 }
 
 .card {
-  background: linear-gradient(160deg, #ffffff, #f7fbff);
+  background: var(--skeleton-grad);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   box-shadow: 0 10px 22px rgba(18, 32, 51, 0.06);
@@ -327,7 +324,7 @@ th {
 .state.error {
   background: var(--danger-soft);
   border-color: var(--danger-line);
-  color: #991b1b;
+  color: var(--danger-text);
 }
 
 .skeleton-block .card,
@@ -337,7 +334,7 @@ th {
 
 .skeleton {
   animation: pulse 1.2s ease-in-out infinite;
-  background: linear-gradient(90deg, #edf2f8 25%, #f5f8fc 37%, #edf2f8 63%);
+  background: var(--skeleton-grad);
   background-size: 400% 100%;
   border-radius: 8px;
   display: inline-block;
@@ -366,7 +363,7 @@ th {
 }
 
 .modal-panel {
-  background: #ffffff;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 14px;
   box-shadow: 0 16px 30px rgba(18, 32, 51, 0.2);
@@ -439,10 +436,10 @@ th {
 
 @media (max-width: 680px) {
   .dashboard-page {
-    height: calc(100vh - var(--topbar-height-mobile));
-    height: calc(100dvh - var(--topbar-height-mobile));
-    margin-top: var(--topbar-height-mobile);
     padding: 0.75rem;
+    min-height: 100vh;
+  padding-top: calc(var(--topbar-height) + 1rem);
+    padding-top: calc(var(--topbar-height-mobile) + 1rem);
   }
 
   .card-grid {

@@ -4,6 +4,29 @@
     subtitle="Manage gyms, owners, trainers, and staff."
   />
 
+  @if (isStatsLoading) {
+    <section class="card-grid top-metrics skeleton-block" style="margin-bottom: 2rem;">
+      <article class="card"><span class="skeleton skeleton-line short"></span><span class="skeleton skeleton-line tall"></span></article>
+      <article class="card"><span class="skeleton skeleton-line short"></span><span class="skeleton skeleton-line tall"></span></article>
+      <article class="card"><span class="skeleton skeleton-line short"></span><span class="skeleton skeleton-line tall"></span></article>
+    </section>
+  } @else {
+    <section class="card-grid top-metrics" style="margin-bottom: 2rem;">
+      <article class="card">
+        <h3>Total Platform Members</h3>
+        <p>{{ totalMembers | number }}</p>
+      </article>
+      <article class="card">
+        <h3>Monthly Revenue (Est)</h3>
+        <p>₹{{ totalRevenueThisMonth | number }}</p>
+      </article>
+      <article class="card">
+        <h3>All-Time Revenue (Est)</h3>
+        <p>₹{{ totalRevenueAllTime | number }}</p>
+      </article>
+    </section>
+  }
+
   @if (isLoading) {
     <section class="card-grid skeleton-block">
       @for (item of cardSkeletons; track item) {

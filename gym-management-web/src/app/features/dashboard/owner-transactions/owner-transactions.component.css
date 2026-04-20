@@ -1,9 +1,9 @@
 .transactions-page {
   height: 100vh;
   height: 100dvh;
-  overflow-y: auto;
   overflow-x: hidden;
   padding-top: var(--topbar-height);
+  min-height: 100vh;
 }
 
 .transactions-shell {
@@ -56,7 +56,7 @@
   height: 36px;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   color: #27405f;
   cursor: pointer;
   display: inline-flex;
@@ -89,7 +89,7 @@
   padding: 0.65rem;
   border-radius: 12px;
   border: 1px solid #dfe7f2;
-  background: #fff;
+  background: var(--panel);
 }
 
 .member-block {
@@ -169,7 +169,7 @@
   min-height: 220px;
   border-radius: 14px;
   border: 1px dashed #cdd9eb;
-  background: #fff;
+  background: var(--panel);
   color: #4f6484;
   display: grid;
   justify-items: center;
@@ -209,7 +209,7 @@
   padding: 0.35rem 0.55rem;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   color: var(--text);
   cursor: pointer;
   font: inherit;
@@ -226,7 +226,7 @@
 .state.error {
   background: var(--danger-soft);
   border: 1px solid var(--danger-line);
-  color: #991b1b;
+  color: var(--danger-text);
 }
 
 .loading-grid {
@@ -238,7 +238,7 @@
   height: 72px;
   border-radius: 12px;
   animation: pulse 1.2s ease-in-out infinite;
-  background: linear-gradient(90deg, #edf2f8 25%, #f5f8fc 37%, #edf2f8 63%);
+  background: var(--skeleton-grad);
   background-size: 400% 100%;
 }
 
@@ -260,8 +260,7 @@
   height: 100dvh;
   display: grid;
   gap: 0.8rem;
-  overflow-y: auto;
-  background: #fff;
+  background: var(--panel);
   box-shadow: -20px 0 40px rgba(9, 20, 38, 0.14);
   padding: 1rem;
 }
@@ -280,7 +279,7 @@
 .drawer-head button {
   border-radius: 9px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   color: var(--text);
   cursor: pointer;
   font: inherit;
@@ -326,7 +325,7 @@
   height: 36px;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   color: var(--text);
   font: inherit;
   padding: 0 0.55rem;
@@ -349,7 +348,7 @@
 
 .ghost {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   color: #27405f;
 }
 
@@ -368,6 +367,8 @@
 @media (max-width: 900px) {
   .transactions-page {
     padding-top: var(--topbar-height-mobile);
+    min-height: 100vh;
+    padding-top: calc(var(--topbar-height-mobile) + 1rem);
   }
 
   .transactions-shell {

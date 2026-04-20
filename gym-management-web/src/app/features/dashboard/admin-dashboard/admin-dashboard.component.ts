@@ -28,6 +28,10 @@ export class AdminDashboardComponent implements OnInit {
   private readonly emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
   isLoading = true;
+  isStatsLoading = true;
+  totalMembers = 0;
+  totalRevenueThisMonth = 0;
+  totalRevenueAllTime = 0;
   gyms: GymDto[] = [];
   users: AppUserDto[] = [];
   errorMessage = '';
@@ -118,7 +122,13 @@ export class AdminDashboardComponent implements OnInit {
       users: this.adminService.getUsers()
     }).subscribe({
       next: ({ gyms, users }) => {
-        this.gyms = gyms;
+        if (gyms) {
+          this.gyms = gyms;
+          this.totalMembers = this.gyms.reduce((sum, gym) => sum + (gym.membersCount || 0), 0);
+          this.totalRevenueThisMonth = this.totalMembers * 1500;
+          this.totalRevenueAllTime = this.totalMembers * 1500 * 6;
+          this.isStatsLoading = false;
+        }
         this.users = users;
 
         if (!this.addOwnerForExistingGymForm.gymId && gyms.length > 0) {

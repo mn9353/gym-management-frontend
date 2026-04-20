@@ -5,13 +5,13 @@
   border-bottom: 1px solid var(--topbar-border);
   color: var(--topbar-text);
   display: flex;
-  height: 68px;
+  height: var(--topbar-height);
   justify-content: space-between;
-  left: 0;
   padding: 0 0.85rem;
   position: fixed;
-  right: 0;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
 }
 
@@ -189,7 +189,7 @@
 
 @media (max-width: 700px) {
   .topbar-shell {
-    height: 62px;
+    height: var(--topbar-height-mobile);
     padding: 0 0.7rem;
   }
 

@@ -5,9 +5,9 @@
   height: 100dvh;
   padding-top: var(--topbar-height);
   padding-bottom: 4rem;
-  overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  min-height: 100vh;
 }
 
 .add-panel {
@@ -450,6 +450,8 @@ input::placeholder {
     padding-top: var(--topbar-height-mobile);
     height: 100vh;
     height: 100dvh;
+    min-height: 100vh;
+    padding-top: calc(var(--topbar-height-mobile) + 1rem);
   }
   
   .add-panel {

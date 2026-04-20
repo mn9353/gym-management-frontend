@@ -34,6 +34,34 @@
   --scrollbar-thumb: rgba(17, 37, 61, 0.3);
   --scrollbar-thumb-hover: rgba(17, 37, 61, 0.5);
   --scrollbar-thumb-strong: rgba(17, 37, 61, 0.28);
+  
+  --btn-primary-bg: #163b79;
+  --btn-primary-border: #163b79;
+  --btn-primary-text: #ffffff;
+  --btn-ghost-bg: #f5f8fc;
+  --btn-ghost-border: var(--line);
+  --btn-ghost-text: #1e3a67;
+  --btn-danger-bg: #fff5f5;
+  --btn-danger-border: #fecaca;
+  --btn-danger-text: #b42318;
+  --input-bg: #f7faff;
+  --input-border: var(--line);
+  --input-border-focus: #8fb5ff;
+  --card-grad-1: #ffffff;
+  --card-grad-2: #f7fbff;
+  --surface-grad-1: #f8fbff;
+  --surface-grad-2: #ffffff;
+  --success: #16a34a;
+  --success-bg: #e9f8ee;
+  --success-text: #0a7c4e;
+  --warn: #f59e0b;
+  --warn-bg: #fff7ed;
+  --warn-text: #ea580c;
+  --warn-border: #fed7aa;
+  --danger: #dc2626;
+  --skeleton-grad: linear-gradient(90deg, #edf2f8 25%, #f5f8fc 37%, #edf2f8 63%);
+  --modal-backdrop: rgba(10, 22, 38, 0.4);
+  --focus-ring: rgba(143, 181, 255, 0.2);
 }
 
 html.theme-light,
@@ -61,6 +89,34 @@ body.theme-light {
   --scrollbar-thumb: rgba(17, 37, 61, 0.3);
   --scrollbar-thumb-hover: rgba(17, 37, 61, 0.5);
   --scrollbar-thumb-strong: rgba(17, 37, 61, 0.28);
+
+  --btn-primary-bg: #163b79;
+  --btn-primary-border: #163b79;
+  --btn-primary-text: #ffffff;
+  --btn-ghost-bg: #f5f8fc;
+  --btn-ghost-border: var(--line);
+  --btn-ghost-text: #1e3a67;
+  --btn-danger-bg: #fff5f5;
+  --btn-danger-border: #fecaca;
+  --btn-danger-text: #b42318;
+  --input-bg: #f7faff;
+  --input-border: var(--line);
+  --input-border-focus: #8fb5ff;
+  --card-grad-1: #ffffff;
+  --card-grad-2: #f7fbff;
+  --surface-grad-1: #f8fbff;
+  --surface-grad-2: #ffffff;
+  --success: #16a34a;
+  --success-bg: #e9f8ee;
+  --success-text: #0a7c4e;
+  --warn: #f59e0b;
+  --warn-bg: #fff7ed;
+  --warn-text: #ea580c;
+  --warn-border: #fed7aa;
+  --danger: #dc2626;
+  --skeleton-grad: linear-gradient(90deg, #edf2f8 25%, #f5f8fc 37%, #edf2f8 63%);
+  --modal-backdrop: rgba(10, 22, 38, 0.4);
+  --focus-ring: rgba(143, 181, 255, 0.2);
 }
 
 html.theme-dark,
@@ -88,6 +144,35 @@ body.theme-dark {
   --scrollbar-thumb: rgba(171, 198, 236, 0.34);
   --scrollbar-thumb-hover: rgba(171, 198, 236, 0.54);
   --scrollbar-thumb-strong: rgba(171, 198, 236, 0.45);
+
+  --btn-primary-bg: #3f6092;
+  --btn-primary-border: #3f6092;
+  --btn-primary-text: #ffffff;
+  --btn-ghost-bg: color-mix(in srgb, var(--panel) 80%, transparent);
+  --btn-ghost-border: var(--line);
+  --btn-ghost-text: #dce9fb;
+  --btn-danger-bg: #2a1111;
+  --btn-danger-border: #522121;
+  --btn-danger-text: #f87171;
+  --input-bg: #0d182b;
+  --input-border: var(--line);
+  --input-border-focus: #60a5fa;
+  --skeleton-grad: linear-gradient(90deg, #132238 25%, #1a2e4a 37%, #132238 63%);
+  --card-grad-1: #0f1b2d;
+  --card-grad-2: #0b1424;
+  --surface-grad-1: #0d182b;
+  --surface-grad-2: #0f1b2d;
+  --success: #10b981;
+  --success-bg: #062f1c;
+  --success-text: #34d399;
+  --warn: #f59e0b;
+  --warn-bg: #3a1e0b;
+  --warn-text: #fb923c;
+  --warn-border: #7c2d12;
+  --danger: #ef4444;
+  --skeleton-grad: linear-gradient(90deg, #16263e 25%, #1e3352 37%, #16263e 63%);
+  --modal-backdrop: rgba(0, 0, 0, 0.65);
+  --focus-ring: rgba(96, 165, 250, 0.2);
 }
 
 * {
@@ -108,7 +193,6 @@ body {
   color: var(--text);
   font-family: "Plus Jakarta Sans", "Manrope", "Segoe UI", sans-serif;
   line-height: 1.4;
-  overflow: hidden;
   transition: background-color 0.24s ease, color 0.24s ease;
 }
 
