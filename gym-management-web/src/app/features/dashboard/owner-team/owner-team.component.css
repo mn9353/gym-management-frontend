@@ -398,6 +398,7 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  overflow: hidden;
 }
 
 .camera-container {
@@ -407,6 +408,9 @@
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  max-height: 100dvh;
 }
 
 .camera-container header {
@@ -437,11 +441,12 @@
 
 .video-wrapper {
   position: relative;
-  aspect-ratio: 4 / 3;
+  flex: 1;
   background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 0;
 }
 
 .video-wrapper video {
@@ -485,6 +490,7 @@
   gap: 0.6rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--line);
+  flex-wrap: wrap;
 }
 
 .flip-btn,
@@ -526,5 +532,34 @@
   .trainer-photo-block {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .camera-modal {
+    padding: 0;
+  }
+
+  .camera-container {
+    max-width: none;
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+
+  .camera-container header {
+    padding: 1rem;
+  }
+
+  .camera-footer {
+    padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom));
+    gap: 0.5rem;
+    justify-content: space-between;
+  }
+
+  .flip-btn,
+  .cancel-btn {
+    flex: 1 1 48%;
+    justify-content: center;
   }
 }
