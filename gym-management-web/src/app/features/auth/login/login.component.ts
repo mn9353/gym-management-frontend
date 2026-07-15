@@ -163,4 +163,12 @@ export class LoginComponent {
         }
       });
   }
+
+  useDemoCredentials(): void {
+    this.form.patchValue({
+      identifier: 'demo@gmail.com',
+      password: 'demo@1234'
+    });
+    this.submit();
+  }
 }

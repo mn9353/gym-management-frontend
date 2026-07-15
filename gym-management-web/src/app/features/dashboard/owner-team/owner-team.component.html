@@ -14,29 +14,31 @@
       </div>
       
       <form [formGroup]="form" (ngSubmit)="submit()" class="modern-form">
-        <div class="trainer-photo-block">
-          <div class="trainer-avatar-preview">
-            @if (profileImagePreviewUrl) {
-              <img [src]="profileImagePreviewUrl" [alt]="profileImageName || 'Trainer photo'" />
-            } @else {
-              <span class="material-symbols-outlined">account_circle</span>
-            }
+        @if (false) {
+          <div class="trainer-photo-block">
+            <div class="trainer-avatar-preview">
+              @if (profileImagePreviewUrl) {
+                <img [src]="profileImagePreviewUrl" [alt]="profileImageName || 'Trainer photo'" />
+              } @else {
+                <span class="material-symbols-outlined">account_circle</span>
+              }
+            </div>
+            <div class="trainer-photo-actions">
+              <button type="button" class="photo-action-btn" (click)="openCamera()">
+                <span class="material-symbols-outlined">photo_camera</span>
+                Take Photo
+              </button>
+              <label class="photo-action-btn">
+                <input type="file" accept="image/*" hidden (change)="onProfileImageSelected($event)" />
+                <span class="material-symbols-outlined">upload_file</span>
+                Upload
+              </label>
+              @if (profileImagePreviewUrl) {
+                <button type="button" class="photo-clear-btn" (click)="clearProfileImage()">Remove</button>
+              }
+            </div>
           </div>
-          <div class="trainer-photo-actions">
-            <button type="button" class="photo-action-btn" (click)="openCamera()">
-              <span class="material-symbols-outlined">photo_camera</span>
-              Take Photo
-            </button>
-            <label class="photo-action-btn">
-              <input type="file" accept="image/*" hidden (change)="onProfileImageSelected($event)" />
-              <span class="material-symbols-outlined">upload_file</span>
-              Upload
-            </label>
-            @if (profileImagePreviewUrl) {
-              <button type="button" class="photo-clear-btn" (click)="clearProfileImage()">Remove</button>
-            }
-          </div>
-        </div>
+        }
 
         <div class="input-group">
           <label>Full Name</label>

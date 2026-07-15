@@ -232,3 +232,67 @@ button:disabled {
     padding: 1.4rem;
   }
 }
+
+.demo-box {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed #dbe4f2;
+  text-align: center;
+}
+
+.demo-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.demo-divider::before,
+.demo-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #dbe4f2;
+}
+
+.demo-divider span {
+  padding: 0 0.5rem;
+}
+
+.demo-btn {
+  background: linear-gradient(135deg, #152947, #0c1a2e);
+  color: #e9f4ff;
+  border: 1px solid #dbe4f2;
+  border-radius: 12px;
+  padding: 0.8rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.demo-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1a3659, #152947);
+  box-shadow: 0 8px 16px rgba(12, 26, 46, 0.15);
+  transform: translateY(-1px);
+}
+
+.demo-credentials {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.demo-credentials p {
+  margin: 0;
+}

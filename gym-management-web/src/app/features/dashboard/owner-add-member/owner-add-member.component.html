@@ -29,34 +29,36 @@
             <h4>Personal Information</h4>
           </header>
 
-          <div class="profile-layout">
-            <div class="avatar-column">
-              <div class="avatar-preview">
-                @if (profileImagePreviewUrl) {
-                  <img [src]="profileImagePreviewUrl" [alt]="profileImageName" />
-                } @else {
-                  <div class="avatar-placeholder">
-                    <span class="material-symbols-outlined">add_a_photo</span>
+          <div class="profile-layout" style="grid-template-columns: 1fr;">
+            @if (false) {
+              <div class="avatar-column">
+                <div class="avatar-preview">
+                  @if (profileImagePreviewUrl) {
+                    <img [src]="profileImagePreviewUrl" [alt]="profileImageName" />
+                  } @else {
+                    <div class="avatar-placeholder">
+                      <span class="material-symbols-outlined">add_a_photo</span>
+                    </div>
+                  }
+                  
+                  <div class="photo-actions-overlay">
+                    <button type="button" class="action-btn" (click)="openCamera()" title="Take Photo">
+                      <span class="material-symbols-outlined">photo_camera</span>
+                    </button>
+                    <label class="action-btn" title="Upload Photo">
+                      <input type="file" (change)="onProfileImageSelected($event)" accept="image/*" hidden />
+                      <span class="material-symbols-outlined">upload_file</span>
+                    </label>
                   </div>
-                }
-                
-                <div class="photo-actions-overlay">
-                  <button type="button" class="action-btn" (click)="openCamera()" title="Take Photo">
-                    <span class="material-symbols-outlined">photo_camera</span>
-                  </button>
-                  <label class="action-btn" title="Upload Photo">
-                    <input type="file" (change)="onProfileImageSelected($event)" accept="image/*" hidden />
-                    <span class="material-symbols-outlined">upload_file</span>
-                  </label>
-                </div>
 
-                @if (profileImagePreviewUrl) {
-                  <button type="button" class="clear-photo" (click)="clearProfileImage()">
-                    <span class="material-symbols-outlined">close</span>
-                  </button>
-                }
+                  @if (profileImagePreviewUrl) {
+                    <button type="button" class="clear-photo" (click)="clearProfileImage()">
+                      <span class="material-symbols-outlined">close</span>
+                    </button>
+                  }
+                </div>
               </div>
-            </div>
+            }
 
             <!-- Camera Viewfinder Modal -->
             @if (isCameraOpen) {
